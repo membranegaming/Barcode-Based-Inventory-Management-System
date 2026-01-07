@@ -1,0 +1,2 @@
+# Barcode-Based-Inventory-Management-System
+I developed this barcode based inventory management system for my father's textile factory in C#, i made this in Visual Studio, Windows Forms .net Framework, it has all the steps, it can print and config the barcode printer.
