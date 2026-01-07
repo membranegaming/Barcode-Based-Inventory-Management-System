@@ -552,6 +552,13 @@ Same as original guide - run the installer on each client.
 The application will save the connection string into `CustomConnectionString` and set `UseCustomConnection` to `true` so future runs use the user-provided connection.
 
 ---
+**USERS AND PASSWORD**
+NORMAL USER --
+username: user
+password: password
+ADMIN USER --
+username: admin
+password: admin
 
 ## PHASE 5: BACKUP & MAINTENANCE (DOCKER VERSION)
 
