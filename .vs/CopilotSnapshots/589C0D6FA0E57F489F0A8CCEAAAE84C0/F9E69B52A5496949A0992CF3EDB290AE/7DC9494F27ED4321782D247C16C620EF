@@ -1,0 +1,115 @@
+﻿; Store Parts Management System - Inno Setup Installer Script
+; ============================================================
+; To use this script:
+; 1. Download Inno Setup from https://jrsoftware.org/isdl.php
+; 2. Build your project in Release mode first
+; 3. Open this file in Inno Setup Compiler
+; 4. Press F9 to compile the installer
+; ============================================================
+
+#define MyAppName "Store Parts Management"
+#define MyAppVersion "1.0.0"
+#define MyAppPublisher "Your Company Name"
+#define MyAppURL "https://yourwebsite.com"
+#define MyAppExeName "store parts.exe"
+
+[Setup]
+; Application information
+AppId={{YOUR-UNIQUE-GUID-HERE}
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}
+
+; Installation settings
+DefaultDirName={autopf}\Store Parts
+DefaultGroupName={#MyAppName}
+DisableProgramGroupPage=yes
+
+; Output settings
+OutputDir=InstallerOutput
+OutputBaseFilename=StorePartsSetup_v{#MyAppVersion}
+
+; Compression
+Compression=lzma2/ultra64
+SolidCompression=yes
+
+; Visual settings
+WizardStyle=modern
+SetupIconFile=store parts\Resources\app.ico
+
+; Privileges (change to 'lowest' for per-user install)
+PrivilegesRequired=admin
+
+; Uninstaller
+UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayName={#MyAppName}
+
+; Minimum Windows version (Windows 7 SP1 or later for .NET 4.7.2)
+MinVersion=6.1sp1
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
+Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
+
+[Files]
+; Main application files - ADJUST THIS PATH to your Release folder
+Source: "store parts\bin\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "store parts\bin\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "store parts\bin\Release\*.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "store parts\bin\Release\*.xml"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+
+; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+
+[Icons]
+; Start Menu shortcuts
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+
+; Desktop shortcut
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+; Quick Launch (for older Windows)
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
+
+[Run]
+; Option to run application after installation
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// Check for .NET Framework 4.7.2
+function IsDotNetDetected(): Boolean;
+var
+    release: Cardinal;
+begin
+    Result := False;
+    if RegQueryDWordValue(HKLM, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', release) then
+    begin
+        // 461808 = .NET Framework 4.7.2
+        Result := (release >= 461808);
+    end;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+    Result := True;
+    
+    if not IsDotNetDetected() then
+    begin
+        MsgBox('This application requires .NET Framework 4.7.2 or later.' + #13#10 + #13#10 +
+               'Please download and install it from:' + #13#10 +
+               'https://dotnet.microsoft.com/download/dotnet-framework/net472' + #13#10 + #13#10 +
+               'Setup will now exit.', mbError, MB_OK);
+        Result := False;
+    end;
+end;
+
+[Registry]
+; Optional: Add registry entries for your application
+Root: HKLM; Subkey: "SOFTWARE\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"

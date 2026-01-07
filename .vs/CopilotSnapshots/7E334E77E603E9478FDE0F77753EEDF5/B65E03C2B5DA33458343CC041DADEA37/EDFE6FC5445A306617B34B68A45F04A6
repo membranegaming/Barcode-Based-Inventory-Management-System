@@ -1,0 +1,153 @@
+﻿# Master List Implementation Guide
+
+## Overview
+This implementation adds master list management for Party Names and Items in your machinery parts store system.
+
+## Files Created
+
+### 1. SQL Script
+- **CreateMasterTables.sql** - Creates PartyMaster and ItemMaster tables in the database
+
+### 2. Forms
+- **PartyMasterForm.cs** - Code-behind for managing parties
+- **PartyMasterForm.Designer.cs** - UI design for Party Master form
+- **ItemMasterForm.cs** - Code-behind for managing items  
+- **ItemMasterForm.Designer.cs** - UI design for Item Master form
+
+### 3. Updated Files
+- **Form1.cs** - Added methods to open master list forms
+- **Form1.Designer.cs** - Added "Manage Parties" and "Manage Items" buttons
+
+## Step-by-Step Installation Instructions
+
+### Step 1: Create Database Tables
+
+1. Open **Server Explorer** in Visual Studio (View -> Server Explorer)
+2. Expand **Data Connections** and locate your **MainDB.mdf** database
+3. Right-click on the database connection and select **New Query**
+4. Copy the contents of **CreateMasterTables.sql** and paste into the query window
+5. Click **Execute** (or press Ctrl+Shift+E) to run the script
+6. Verify the tables were created by refreshing **Tables** in Server Explorer
+
+### Step 2: Add Tables to Dataset
+
+1. In Solution Explorer, double-click **MainDB.xsd** to open the Dataset Designer
+2. Right-click on an empty area in the designer surface
+3. Select **Add -> TableAdapter**
+4. Follow the wizard:
+   - **Choose Your Data Connection**: Select MainDB
+   - **Choose Command Type**: Select "Use SQL statements"
+   - **Enter SQL Statement**: 
+     ```sql
+     SELECT id, party_name, contact_person, phone, address, is_active 
+     FROM PartyMaster
+     ```
+   - Click **Finish**
+5. Repeat for ItemMaster:
+   - **Enter SQL Statement**:
+     ```sql
+     SELECT id, item_name, item_code, description, unit, is_active 
+     FROM ItemMaster
+     ```
+   - Click **Finish**
+6. Save the dataset (Ctrl+S)
+
+### Step 3: Add Forms to Project
+
+The forms have already been created:
+- PartyMasterForm.cs / PartyMasterForm.Designer.cs
+- ItemMasterForm.cs / ItemMasterForm.Designer.cs
+
+If they're not showing in Solution Explorer:
+1. Right-click on the project
+2. Select **Add -> Existing Item**
+3. Select all four form files
+4. Click **Add**
+
+### Step 4: Build and Test
+
+1. Press **Ctrl+Shift+B** to build the solution
+2. Fix any remaining errors (should build successfully after Step 2)
+3. Press **F5** to run the application
+
+##Features
+
+### Party Master Form
+- **Add New**: Create new party entries
+- **Edit**: Modify existing party information (Name, Contact Person, Phone, Address)
+- **Delete**: Remove parties from the system
+- **Active/Inactive**: Toggle party status
+- **DataGridView**: View all parties in a searchable grid
+
+### Item Master Form
+- **Add New**: Create new item entries
+- **Edit**: Modify item details (Name, Code, Description, Unit)
+- **Delete**: Remove items from the system
+- **Active/Inactive**: Toggle item status
+- **DataGridView**: View all items in a searchable grid
+
+### Main Form Updates
+- **Manage Parties Button**: Opens Party Master form
+- **Manage Items Button**: Opens Item Master form
+
+## Future Enhancements (Optional)
+
+To make the main form use dropdown lists from master data:
+
+1. Replace `party_nameTextBox` with `party_nameComboBox`:
+   - DataSource: PartyMasterBindingSource
+   - DisplayMember: party_name
+   - ValueMember: party_name
+
+2. Replace `itemTextBox` with `itemComboBox`:
+   - DataSource: ItemMasterBindingSource
+   - DisplayMember: item_name
+   - ValueMember: item_name
+
+3. Load master data in Form1_Load:
+   ```csharp
+   this.partyMasterTableAdapter.Fill(this.mainDB.PartyMaster);
+   this.itemMasterTableAdapter.Fill(this.mainDB.ItemMaster);
+   ```
+
+## Database Schema
+
+### PartyMaster Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INT (PK, Identity) | Primary key |
+| party_name | VARCHAR(255) NOT NULL | Party name |
+| contact_person | VARCHAR(255) NULL | Contact person name |
+| phone | VARCHAR(50) NULL | Phone number |
+| address | VARCHAR(500) NULL | Full address |
+| is_active | BIT NOT NULL (Default: 1) | Active status |
+
+### ItemMaster Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INT (PK, Identity) | Primary key |
+| item_name | VARCHAR(255) NOT NULL | Item name |
+| item_code | VARCHAR(50) NULL | Item code/SKU |
+| description | VARCHAR(500) NULL | Item description |
+| unit | VARCHAR(50) NULL | Unit of measurement |
+| is_active | BIT NOT NULL (Default: 1) | Active status |
+
+## Troubleshooting
+
+**Issue**: Build errors about missing TableAdapter
+**Solution**: Complete Step 2 above to add TableAdapters to the dataset
+
+**Issue**: Forms don't open
+**Solution**: Check that all form files are included in the project
+
+**Issue**: Database connection errors
+**Solution**: Verify the connection string in App.config points to the correct MainDB.mdf path
+
+## Support
+
+If you encounter issues, check:
+1. All four form files are in the project
+2. Database tables exist and have correct schema
+3. TableAdapters are added to MainDB.xsd
+4. Project builds without errors
+

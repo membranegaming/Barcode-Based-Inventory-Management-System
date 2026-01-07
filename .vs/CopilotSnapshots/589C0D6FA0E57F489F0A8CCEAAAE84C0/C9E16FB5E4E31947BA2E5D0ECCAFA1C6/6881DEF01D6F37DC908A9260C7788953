@@ -1,0 +1,1113 @@
+﻿Complete Step-by-Step Guide: Deploying Store Parts with MySQL Database
+======================================================================
+
+Version: 2.1
+Last Updated: 2024
+
+======================================================================
+TABLE OF CONTENTS
+======================================================================
+1. OVERVIEW - Application Features
+2. PHASE 1 - MySQL Server Setup (Database Server)
+3. PHASE 2 - Build the Application
+4. PHASE 3 - Deploy to Client Computers
+5. PHASE 4 - Verification & Testing
+6. PHASE 5 - Backup & Maintenance
+7. PHASE 6 - Troubleshooting Guide
+8. PHASE 7 - Advanced Configuration
+8. PHASE 8 - User Management
+APPENDICES
+
+======================================================================
+1. OVERVIEW - APPLICATION FEATURES
+======================================================================
+
+Store Parts Management is a comprehensive inventory management system for 
+tracking machinery parts with the following features:
+
+CORE FEATURES:
+- Parts Entry (Inward) - Record new parts received
+- Parts Usage Tracking - Track usage with full history
+- Barcode Printing - Print barcode labels for parts (TSC/TSPL printers)
+- Dashboard & Reports - Analytics and usage reports
+- Multi-user Support - Admin and regular users
+- Database Configuration - Easy setup for MySQL databases
+
+ARCHITECTURE:
+- 1 MySQL Server (Database) - Central server machine
+- Multiple Client PCs - Run the application, connect to server
+- Network - All PCs on same network
+
+DATABASE: MySQL Community Server (FREE)
+- Fast and reliable
+- Easy to install and configure
+- Perfect for multi-user/multi-PC setups
+- Handles concurrent connections excellently
+
+DATABASE TABLES:
+- machinery_item_inward_unit2 - Main parts data
+- PartsUsageHistory - Complete usage history
+- PartyMaster - Suppliers
+- ItemMaster - Item types
+- MachineMaster - Machines
+- PersonMaster - Employees
+
+======================================================================
+PHASE 1: MYSQL SERVER SETUP (DATABASE SERVER)
+======================================================================
+
+This phase is done on the SERVER computer only (the PC that will 
+host the database). Client PCs will connect to this server.
+
+---
+
+Step 1.1: Download MySQL Community Server
+-----------------------------------------
+1. Go to: https://dev.mysql.com/downloads/installer/
+
+2. Download "MySQL Installer for Windows"
+   - Click on: mysql-installer-web-community-8.0.xx.msi
+   - Size: ~2 MB (downloads rest during installation)
+
+3. Click "No thanks, just start my download" (skip login)
+
+4. Save the file to your Downloads folder
+
+---
+
+Step 1.2: Install MySQL Server
+------------------------------
+1. Double-click the downloaded installer (mysql-installer-web-community-8.0.xx.msi)
+
+2. If prompted by User Account Control, click "Yes"
+
+3. **Choosing a Setup Type:**
+   - Select: "Custom"
+   - Click "Next"
+
+4. **Select Products:**
+   From "Available Products" on left, expand and select:
+   
+   ✅ MySQL Servers → MySQL Server 8.0 → MySQL Server 8.0.xx - X64
+      Click the right arrow (→) to add it
+   
+   ✅ Applications → MySQL Workbench → MySQL Workbench 8.0.xx - X64
+      Click the right arrow (→) to add it
+   
+   Your "Products To Be Installed" (right side) should show:
+   - MySQL Server 8.0.xx
+   - MySQL Workbench 8.0.xx
+   
+   Click "Next"
+
+5. **Download:**
+   - Click "Execute"
+   - Wait for downloads to complete (green checkmarks)
+   - Click "Next"
+
+6. **Installation:**
+   - Click "Execute"
+   - Wait for installation to complete (green checkmarks)
+   - Click "Next"
+
+7. **Product Configuration:**
+   - Click "Next"
+
+8. **Type and Networking (IMPORTANT!):**
+   
+   Config Type: "Development Computer"
+   (Or "Server Computer" if this is a dedicated server)
+   
+   Connectivity:
+   ✅ TCP/IP: CHECKED
+   - Port: 3306 (leave default)
+   ✅ Open Windows Firewall port for network access: CHECKED
+   
+   Click "Next"
+
+9. **Authentication Method:**
+   - Select: "Use Strong Password Encryption for Authentication (RECOMMENDED)"
+   - Click "Next"
+
+10. **Accounts and Roles (VERY IMPORTANT!):**
+    
+    MySQL Root Password:
+    - Enter a strong password (e.g., Root@123456)
+    - Confirm password
+    - ⚠️ WRITE THIS PASSWORD DOWN! You'll need it!
+    
+    MySQL User Accounts (Add a user for the application):
+    - Click "Add User"
+    - Username: storeparts
+    - Host: % (this means "any host" - allows network access)
+    - Role: DB Admin
+    - Password: StoreParts@123
+    - Confirm Password
+    - Click "OK"
+    
+    ⚠️ WRITE DOWN THESE CREDENTIALS:
+    - Root Password: ________________
+    - App Username: storeparts
+    - App Password: StoreParts@123
+    
+    Click "Next"
+
+11. **Windows Service:**
+    ✅ Configure MySQL Server as a Windows Service: CHECKED
+    - Windows Service Name: MySQL80 (leave default)
+    ✅ Start the MySQL Server at System Startup: CHECKED
+    - Run Windows Service as: Standard System Account
+    
+    Click "Next"
+
+12. **Server File Permissions:**
+    - Select: "Yes, grant full access..." (first option)
+    - Click "Next"
+
+13. **Apply Configuration:**
+    - Click "Execute"
+    - Wait for all steps to show green checkmarks:
+      ✅ Writing configuration file
+      ✅ Updating Windows Firewall rules
+      ✅ Adjusting Windows service
+      ✅ Initializing database
+      ✅ Starting the server
+      ✅ Applying security settings
+      ✅ Creating user accounts
+    
+    - Click "Finish"
+
+14. **Product Configuration:**
+    - Click "Next"
+
+15. **Installation Complete:**
+    - ✅ Start MySQL Workbench after Setup: CHECKED
+    - Click "Finish"
+
+---
+
+Step 1.3: Verify MySQL Service is Running
+-----------------------------------------
+1. Press Windows + R
+
+2. Type: services.msc
+
+3. Press Enter
+
+4. Scroll down to find "MySQL80"
+
+5. Verify:
+   - Status: Running
+   - Startup Type: Automatic
+
+6. If NOT running:
+   - Right-click "MySQL80"
+   - Click "Start"
+   - It should start within seconds!
+
+✅ MySQL service starts much more reliably than SQL Server Express!
+
+---
+
+Step 1.4: Connect to MySQL with Workbench
+-----------------------------------------
+1. MySQL Workbench should open automatically
+   (If not, search for "MySQL Workbench" in Start Menu)
+
+2. You'll see "MySQL Connections" section
+
+3. Click on "Local instance MySQL80"
+
+4. Enter the root password you set during installation
+
+5. Click "OK"
+
+6. ✅ If you see the MySQL Workbench main screen with 
+   Query tab, you're connected!
+
+---
+
+Step 1.5: Create the Database
+-----------------------------
+1. In MySQL Workbench, you should be connected to local instance
+
+2. Click the "Create Schema" icon (cylinder with + sign)
+   OR
+   Right-click in "SCHEMAS" panel (left side) → Create Schema
+
+3. Schema Name: MainDB
+
+4. Character Set: utf8mb4 (default)
+
+5. Collation: utf8mb4_0900_ai_ci (default)
+
+6. Click "Apply"
+
+7. Review the SQL statement, click "Apply"
+
+8. Click "Finish"
+
+9. You should see "MainDB" in the SCHEMAS panel on the left
+
+---
+
+Step 1.6: Create Database Tables
+--------------------------------
+1. In MySQL Workbench, double-click "MainDB" in SCHEMAS panel
+   (It becomes bold, meaning it's the active database)
+
+2. Click "File" → "New Query Tab"
+   OR press Ctrl + T
+
+3. Copy and paste this ENTIRE script:
+
+-- ============================================
+-- Store Parts Database Setup Script for MySQL
+-- Version 2.1
+-- ============================================
+
+USE MainDB;
+
+-- Table: machinery_item_inward_unit2 (Main Data)
+CREATE TABLE IF NOT EXISTS machinery_item_inward_unit2 (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    challan_no VARCHAR(50) NOT NULL,
+    date DATE NOT NULL DEFAULT (CURRENT_DATE),
+    party_name VARCHAR(100) NOT NULL,
+    item VARCHAR(100) NOT NULL,
+    qty INT NOT NULL DEFAULT 0,
+    unit VARCHAR(20) NULL DEFAULT 'pcs',
+    used_qty INT NOT NULL DEFAULT 0,
+    reference_bill_no VARCHAR(50) NULL,
+    bill_date DATE NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: PartsUsageHistory (Tracks all usage events)
+CREATE TABLE IF NOT EXISTS PartsUsageHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inward_item_id INT NOT NULL,
+    quantity_used INT NOT NULL DEFAULT 1,
+    used_in_machine VARCHAR(100) NOT NULL,
+    taken_by VARCHAR(100) NOT NULL,
+    usage_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    remarks VARCHAR(500) NULL,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX IX_PartsUsageHistory_InwardItemId (inward_item_id),
+    INDEX IX_PartsUsageHistory_UsageDate (usage_date),
+    INDEX IX_PartsUsageHistory_Machine (used_in_machine),
+    FOREIGN KEY (inward_item_id) REFERENCES machinery_item_inward_unit2(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: PartyMaster (Suppliers)
+CREATE TABLE IF NOT EXISTS PartyMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    party_name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NULL,
+    contact VARCHAR(50) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert default party
+INSERT IGNORE INTO PartyMaster (id, party_name, is_active) VALUES (1, 'Default Party', TRUE);
+
+-- Table: ItemMaster (Item types)
+CREATE TABLE IF NOT EXISTS ItemMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    item_name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NULL,
+    unit VARCHAR(20) NULL DEFAULT 'PCS',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert default item
+INSERT IGNORE INTO ItemMaster (id, item_name, is_active) VALUES (1, 'Default Item', TRUE);
+
+-- Table: MachineMaster (Machines)
+CREATE TABLE IF NOT EXISTS MachineMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    machine_name VARCHAR(100) NOT NULL,
+    location VARCHAR(100) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: PersonMaster (Employees)
+CREATE TABLE IF NOT EXISTS PersonMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    person_name VARCHAR(100) NOT NULL,
+    department VARCHAR(100) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- View: Parts with Usage Summary
+CREATE OR REPLACE VIEW vw_PartsWithUsageSummary AS
+SELECT 
+    p.id, 
+    p.challan_no, 
+    p.date, 
+    p.party_name, 
+    p.item, 
+    p.qty, 
+    p.unit,
+    IFNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as used_qty,
+    p.qty - IFNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as remaining_qty,
+    p.reference_bill_no, 
+    p.bill_date,
+    (SELECT used_in_machine FROM PartsUsageHistory WHERE inward_item_id = p.id ORDER BY usage_date DESC LIMIT 1) as last_used_in_machine,
+    (SELECT taken_by FROM PartsUsageHistory WHERE inward_item_id = p.id ORDER BY usage_date DESC LIMIT 1) as last_taken_by,
+    (SELECT usage_date FROM PartsUsageHistory WHERE inward_item_id = p.id ORDER BY usage_date DESC LIMIT 1) as last_usage_date,
+    (SELECT COUNT(*) FROM PartsUsageHistory WHERE inward_item_id = p.id) as usage_event_count
+FROM machinery_item_inward_unit2 p;
+
+SELECT 'Database setup complete!' AS Result;
+
+4. Click the lightning bolt icon (⚡) to execute
+   OR press Ctrl + Shift + Enter
+
+5. Check the "Action Output" panel at bottom:
+   - You should see green checkmarks
+   - Last row should show: "Database setup complete!"
+
+6. In SCHEMAS panel, right-click "MainDB" → "Refresh All"
+
+7. Expand MainDB → Tables
+   - You should see all 6 tables created
+
+✅ Database setup is complete!
+
+---
+
+Step 1.7: Get Server IP Address
+-------------------------------
+1. Press Windows + R
+
+2. Type: cmd
+
+3. Press Enter
+
+4. Type: ipconfig
+
+5. Look for "IPv4 Address" under your network adapter
+   Example: 192.168.1.100
+
+6. ⚠️ WRITE THIS DOWN! Clients will use this to connect.
+
+---
+
+Step 1.8: Test Network Access (Optional but Recommended)
+--------------------------------------------------------
+From the SERVER machine:
+
+1. Open Command Prompt
+
+2. Type: netstat -an | findstr 3306
+
+3. You should see:
+   TCP    0.0.0.0:3306    0.0.0.0:0    LISTENING
+   
+   This means MySQL is listening for network connections!
+
+---
+
+Step 1.9: Create Application User with Remote Access
+----------------------------------------------------
+The user 'storeparts' was created during installation, but let's 
+verify it can connect from any machine:
+
+1. In MySQL Workbench, open a new query tab (Ctrl + T)
+
+2. Run these commands:
+
+-- Ensure storeparts user can connect from anywhere
+CREATE USER IF NOT EXISTS 'storeparts'@'%' IDENTIFIED BY 'StoreParts@123';
+
+-- Grant all privileges on MainDB
+GRANT ALL PRIVILEGES ON MainDB.* TO 'storeparts'@'%';
+
+-- Apply changes
+FLUSH PRIVILEGES;
+
+-- Verify user exists
+SELECT User, Host FROM mysql.user WHERE User = 'storeparts';
+
+3. Click the lightning bolt (⚡) to execute
+
+4. You should see 'storeparts' with Host '%' (means any host)
+
+---
+
+Step 1.10: Verify Firewall is Configured
+----------------------------------------
+The installer should have added firewall rules, but verify:
+
+1. Press Windows + R
+
+2. Type: wf.msc
+
+3. Press Enter
+
+4. Click "Inbound Rules"
+
+5. Look for rules containing "MySQL"
+   - You should see rules allowing port 3306
+
+6. If NO MySQL rules exist, create one:
+   - Click "New Rule..." (right panel)
+   - Rule Type: Port → Next
+   - Protocol: TCP, Specific port: 3306 → Next
+   - Allow the connection → Next
+   - Check all profiles (Domain, Private, Public) → Next
+   - Name: MySQL Server 3306 → Finish
+
+---
+
+SERVER SETUP COMPLETE!
+======================
+Your MySQL server is ready. Save this information:
+
+Server IP Address: _________________ (from Step 1.7)
+MySQL Port: 3306
+Database Name: MainDB
+Username: storeparts
+Password: StoreParts@123
+Root Password: _________________ (your root password)
+
+======================================================================
+PHASE 2: BUILD THE APPLICATION
+======================================================================
+
+Step 2.1: Build Release Version in Visual Studio
+------------------------------------------------
+1. Open Visual Studio
+
+2. Open the Solution:
+   - File → Open → Project/Solution
+   - Navigate to your project folder
+   - Open store parts.sln
+
+3. Set Build Configuration to Release:
+   - In the toolbar dropdown, change "Debug" to "Release"
+
+4. Build the Solution:
+   - Build → Build Solution
+   - OR press Ctrl + Shift + B
+
+5. Wait for "Build succeeded" message
+
+6. Verify output files exist in:
+   store parts\bin\Release\
+   - store parts.exe
+   - MySql.Data.dll
+   - Other .dll files
+
+---
+
+Step 2.2: Create Installer with Inno Setup
+------------------------------------------
+1. Download Inno Setup from: https://jrsoftware.org/isdl.php
+
+2. Install Inno Setup
+
+3. Open StorePartsSetup.iss from your project folder
+
+4. Press Ctrl + F9 to compile
+
+5. Installer will be created in: InstallerOutput\StorePartsSetup_v2.0.0.exe
+
+---
+
+======================================================================
+PHASE 3: DEPLOY TO CLIENT COMPUTERS
+======================================================================
+
+Do these steps on EACH CLIENT computer that will use the application.
+
+---
+
+Step 3.1: Prerequisites for Each Client
+---------------------------------------
+Before installing, ensure:
+
+1. Windows 7 SP1 or later (Windows 10/11 recommended)
+
+2. .NET Framework 4.7.2 or later:
+   - Most Windows 10/11 PCs have this pre-installed
+   - If needed, download from:
+     https://dotnet.microsoft.com/download/dotnet-framework/net472
+
+3. Network connectivity to the server:
+   - Client must be on same network as server
+   - Or server must be accessible via IP
+
+---
+
+Step 3.2: Install Application on Client
+---------------------------------------
+1. Copy the installer to the client computer:
+   - USB drive, network share, or download
+   - File: StorePartsSetup_v2.0.0.exe
+
+2. Double-click the installer
+
+3. If prompted by Windows Defender/SmartScreen:
+   - Click "More info"
+   - Click "Run anyway"
+
+4. Follow the installation wizard:
+   - Click "Next"
+   - Accept default folder or choose custom
+   - Click "Next"
+   - Check "Create desktop shortcut"
+   - Click "Install"
+   - Wait for completion
+   - Click "Finish"
+
+---
+
+Step 3.3: Configure Database Connection
+---------------------------------------
+1. Launch "Store Parts Management" from desktop or Start Menu
+
+2. You'll see the Login screen
+
+3. Click "Configure Database" button
+
+4. Enter the MySQL connection details:
+
+   Server Name: 192.168.1.100
+   (Use the IP address from Step 1.7)
+   
+   Port: 3306
+   
+   Database Name: MainDB
+   
+   Authentication: MySQL Authentication
+   
+   Username: storeparts
+   
+   Password: StoreParts@123
+
+5. Click "Test Connection"
+   
+   ✅ Success: "Connection successful!" in green
+   ❌ Failed: Check server IP, firewall, MySQL service
+
+6. Click "Save and Connect"
+
+7. You'll return to Login screen
+
+8. Login with default credentials:
+   - Username: admin
+   - Password: admin
+
+---
+
+Step 3.4: Verify Connection Works
+---------------------------------
+1. After logging in, you should see the main form
+
+2. Click "Show Data" - should open without errors
+
+3. Try adding a test entry:
+   - Challan No: TEST001
+   - Select Party and Item
+   - Qty: 5
+   - Click Save
+
+4. If everything works, the application is ready!
+
+---
+
+======================================================================
+PHASE 4: VERIFICATION & TESTING
+======================================================================
+
+Step 4.1: Test from Server Computer
+-----------------------------------
+1. Install and run Store Parts on the server
+2. Configure database connection to: localhost or 127.0.0.1
+3. Login with admin/admin
+4. Add a test entry
+5. Verify it appears in Show Data
+
+Step 4.2: Test from Client Computer
+-----------------------------------
+1. Install and run Store Parts on a client PC
+2. Configure database to server IP: 192.168.1.100
+3. Login with admin/admin
+4. Verify you can see the entry created from server
+5. Add another entry
+6. Go back to server, verify the new entry appears
+
+Step 4.3: Test Multi-User Access
+--------------------------------
+1. Have 2-3 users logged in simultaneously (different PCs)
+2. One user adds an entry
+3. Other users click "Refresh"
+4. All users should see the new entry
+
+Step 4.4: Test Parts Usage
+--------------------------
+1. Click "Parts Usage"
+2. Select a part from the grid
+3. Fill in Machine, Person, Quantity
+4. Click "Record Usage"
+5. Verify usage appears in history
+
+Step 4.5: Test Dashboard
+------------------------
+1. Click "Dashboard"
+2. Verify charts and reports load
+3. Check Usage History tab
+4. Export a report to CSV
+
+---
+
+======================================================================
+PHASE 5: BACKUP & MAINTENANCE
+======================================================================
+
+Step 5.1: Create Backup Script
+------------------------------
+Create a batch file named BackupMySQL.bat on the server:
+
+@echo off
+REM MySQL Backup Script for Store Parts
+setlocal
+
+set MYSQL_PATH="C:\Program Files\MySQL\MySQL Server 8.0\bin"
+set DB_USER=root
+set DB_PASS=YourRootPassword
+set DB_NAME=MainDB
+set BACKUP_FOLDER=C:\DatabaseBackups\StoreParts
+set DAYS_TO_KEEP=30
+
+REM Create backup folder if not exists
+if not exist "%BACKUP_FOLDER%" mkdir "%BACKUP_FOLDER%"
+
+REM Generate timestamp
+set TIMESTAMP=%date:~-4%%date:~4,2%%date:~7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
+set TIMESTAMP=%TIMESTAMP: =0%
+
+REM Backup filename
+set BACKUP_FILE=%BACKUP_FOLDER%\%DB_NAME%_%TIMESTAMP%.sql
+
+echo ========================================
+echo MySQL Backup - Store Parts Database
+echo ========================================
+echo Date: %date% %time%
+echo Backing up to: %BACKUP_FILE%
+echo.
+
+REM Run mysqldump
+%MYSQL_PATH%\mysqldump.exe -u %DB_USER% -p%DB_PASS% %DB_NAME% > "%BACKUP_FILE%"
+
+if %ERRORLEVEL% EQU 0 (
+    echo Backup completed successfully!
+    echo File: %BACKUP_FILE%
+) else (
+    echo ERROR: Backup failed!
+)
+
+REM Clean old backups
+echo.
+echo Cleaning backups older than %DAYS_TO_KEEP% days...
+forfiles /p "%BACKUP_FOLDER%" /s /m *.sql /d -%DAYS_TO_KEEP% /c "cmd /c del @path && echo Deleted: @file" 2>nul
+
+echo.
+echo Done!
+echo %date% %time% - Backup: %BACKUP_FILE% >> "%BACKUP_FOLDER%\backup_log.txt"
+
+endlocal
+pause
+
+---
+
+Step 5.2: Schedule Automatic Backups
+------------------------------------
+1. Open Task Scheduler (taskschd.msc)
+
+2. Click "Create Task"
+
+3. General tab:
+   - Name: MySQL Store Parts Backup
+   - Run whether user is logged on or not
+   - Run with highest privileges
+
+4. Triggers tab:
+   - New → Daily at 11:00 PM → OK
+
+5. Actions tab:
+   - New → Start a program
+   - Program: C:\DatabaseBackups\BackupMySQL.bat
+   - OK
+
+6. Click OK, enter password
+
+7. Right-click task → Run (to test)
+
+---
+
+Step 5.3: Restore from Backup
+-----------------------------
+If you need to restore:
+
+1. Open Command Prompt as Administrator
+
+2. Navigate to MySQL bin folder:
+   cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+
+3. Run restore command:
+   mysql -u root -p MainDB < "C:\DatabaseBackups\StoreParts\MainDB_20240115.sql"
+
+4. Enter root password when prompted
+
+5. Database will be restored
+
+---
+
+Step 5.4: Database Maintenance
+------------------------------
+Run monthly in MySQL Workbench:
+
+-- Optimize tables for better performance
+OPTIMIZE TABLE MainDB.machinery_item_inward_unit2;
+OPTIMIZE TABLE MainDB.PartsUsageHistory;
+OPTIMIZE TABLE MainDB.PartyMaster;
+OPTIMIZE TABLE MainDB.ItemMaster;
+OPTIMIZE TABLE MainDB.MachineMaster;
+OPTIMIZE TABLE MainDB.PersonMaster;
+
+-- Check for errors
+CHECK TABLE MainDB.machinery_item_inward_unit2;
+CHECK TABLE MainDB.PartsUsageHistory;
+
+-- Sync used_qty from history (if needed)
+UPDATE MainDB.machinery_item_inward_unit2 p
+SET used_qty = IFNULL((
+    SELECT SUM(quantity_used) 
+    FROM MainDB.PartsUsageHistory 
+    WHERE inward_item_id = p.id
+), 0);
+
+SELECT 'Maintenance complete!' AS Result;
+
+---
+
+======================================================================
+PHASE 6: TROUBLESHOOTING GUIDE
+======================================================================
+
+Issue 6.1: Cannot Connect from Client PC
+----------------------------------------
+Symptoms:
+- "Unable to connect to host"
+- "Connection refused"
+- Timeout errors
+
+Solutions:
+
+A. Verify server is running:
+   - On server, check services.msc
+   - MySQL80 service should be "Running"
+
+B. Test network connectivity:
+   - On client, open Command Prompt
+   - Run: ping 192.168.1.100 (use server IP)
+   - Should see replies, not "Request timed out"
+
+C. Test MySQL port:
+   - On client, run: telnet 192.168.1.100 3306
+   - If connects (weird characters appear): Port is open
+   - If "Could not open connection": Firewall blocking
+
+D. Check firewall on server:
+   - Ensure port 3306 is allowed inbound
+   - See Step 1.10
+
+E. Verify user can connect remotely:
+   - In MySQL Workbench on server, run:
+     SELECT User, Host FROM mysql.user WHERE User = 'storeparts';
+   - Host should be '%' (any host)
+   - If not, run: CREATE USER 'storeparts'@'%' IDENTIFIED BY 'StoreParts@123';
+
+---
+
+Issue 6.2: "Access denied for user"
+-----------------------------------
+Symptoms:
+- "Access denied for user 'storeparts'@'192.168.1.x'"
+
+Solutions:
+
+A. Verify password is correct:
+   - Password is case-sensitive!
+   - Default: StoreParts@123
+
+B. Grant privileges again:
+   - On server, in MySQL Workbench:
+     GRANT ALL PRIVILEGES ON MainDB.* TO 'storeparts'@'%';
+     FLUSH PRIVILEGES;
+
+C. Reset user password:
+   ALTER USER 'storeparts'@'%' IDENTIFIED BY 'NewPassword123';
+   FLUSH PRIVILEGES;
+
+---
+
+Issue 6.3: MySQL Service Won't Start
+------------------------------------
+Unlike SQL Server Express, MySQL rarely has this issue, but if it happens:
+
+A. Check error log:
+   - Go to: C:\ProgramData\MySQL\MySQL Server 8.0\Data
+   - Open the .err file with Notepad
+   - Look for errors at the end
+
+B. Check if port is in use:
+   - Command Prompt: netstat -ano | findstr 3306
+   - If another process is using it, stop that process
+
+C. Run MySQL as Administrator:
+   - Stop MySQL service
+   - Open Command Prompt as Admin
+   - cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+   - mysqld --console
+   - Watch for errors
+
+D. Reinstall (last resort):
+   - Uninstall MySQL from Control Panel
+   - Delete C:\ProgramData\MySQL folder
+   - Delete C:\Program Files\MySQL folder
+   - Reinstall following Phase 1
+
+---
+
+Issue 6.4: Application Shows "Database not found"
+-------------------------------------------------
+Solutions:
+
+A. Verify database exists:
+   - Open MySQL Workbench
+   - Connect to server
+   - Check if "MainDB" appears in SCHEMAS
+
+B. Run database setup script again:
+   - Copy script from Step 1.6
+   - Execute in MySQL Workbench
+
+C. Check connection string in app:
+   - Database name is case-sensitive in some configs
+   - Should be: MainDB
+
+---
+
+Issue 6.5: Slow Performance
+---------------------------
+Solutions:
+
+A. Run optimization (Step 5.4)
+
+B. Check network:
+   - Use wired connection, not WiFi
+   - Ensure gigabit network if possible
+
+C. Increase MySQL memory (on server):
+   - Edit my.ini file
+   - Increase innodb_buffer_pool_size
+   - Restart MySQL service
+
+---
+
+======================================================================
+PHASE 7: ADVANCED CONFIGURATION
+======================================================================
+
+Step 7.1: Change MySQL Port (if needed)
+---------------------------------------
+If port 3306 is blocked or in use:
+
+1. Open MySQL Workbench
+
+2. Connect to server
+
+3. Run: SHOW VARIABLES LIKE 'port';
+   (Shows current port)
+
+4. To change port:
+   - Edit my.ini file (C:\ProgramData\MySQL\MySQL Server 8.0\my.ini)
+   - Find [mysqld] section
+   - Change: port=3306 to port=3307
+   - Save file
+   - Restart MySQL service
+
+5. Update firewall rule for new port
+
+6. Update all client connection strings
+
+---
+
+Step 7.2: Configure Static IP on Server
+---------------------------------------
+Important for production! Prevents IP changes.
+
+1. Press Windows + R, type: ncpa.cpl, Enter
+
+2. Right-click your network adapter → Properties
+
+3. Select "Internet Protocol Version 4" → Properties
+
+4. Select "Use the following IP address"
+
+5. Enter:
+   - IP address: 192.168.1.100 (your server IP)
+   - Subnet mask: 255.255.255.0
+   - Default gateway: 192.168.1.1 (your router)
+   - Preferred DNS: 8.8.8.8
+   - Alternate DNS: 8.8.4.4
+
+6. Click OK → OK
+
+---
+
+Step 7.3: SSL Encryption (Optional)
+-----------------------------------
+For secure connections over network:
+
+1. MySQL 8.0 has SSL enabled by default
+
+2. To verify, in MySQL Workbench run:
+   SHOW VARIABLES LIKE '%ssl%';
+
+3. To force SSL connections:
+   ALTER USER 'storeparts'@'%' REQUIRE SSL;
+   FLUSH PRIVILEGES;
+
+---
+
+======================================================================
+PHASE 8: USER MANAGEMENT
+======================================================================
+
+Step 8.1: Default Login
+-----------------------
+- Username: admin
+- Password: admin
+
+Step 8.2: Creating Database Users
+---------------------------------
+To create additional MySQL users:
+
+-- Create user for specific PC (more secure)
+CREATE USER 'user1'@'192.168.1.101' IDENTIFIED BY 'Password123';
+GRANT SELECT, INSERT, UPDATE ON MainDB.* TO 'user1'@'192.168.1.101';
+
+-- Create user for any PC
+CREATE USER 'user2'@'%' IDENTIFIED BY 'Password456';
+GRANT ALL PRIVILEGES ON MainDB.* TO 'user2'@'%';
+
+FLUSH PRIVILEGES;
+
+---
+
+======================================================================
+APPENDIX A: Quick Reference Card
+======================================================================
+
+SERVER INFORMATION:
+- Server IP: _________________
+- MySQL Port: 3306
+- Database Name: MainDB
+- App Username: storeparts
+- App Password: StoreParts@123
+- Root Password: _________________
+
+DEFAULT APP LOGIN:
+- Username: admin
+- Password: admin
+
+IMPORTANT PATHS (Server):
+- MySQL Data: C:\ProgramData\MySQL\MySQL Server 8.0\Data
+- MySQL Bin: C:\Program Files\MySQL\MySQL Server 8.0\bin
+- Backups: C:\DatabaseBackups\StoreParts
+
+IMPORTANT COMMANDS:
+- Start MySQL: net start MySQL80
+- Stop MySQL: net stop MySQL80
+- Check status: services.msc → MySQL80
+- Open firewall: wf.msc
+- MySQL CLI: mysql -u root -p
+
+CONNECTION STRING FORMAT:
+Server=192.168.1.100;Port=3306;Database=MainDB;Uid=storeparts;Pwd=StoreParts@123;
+
+---
+
+======================================================================
+APPENDIX B: Daily Checklist
+======================================================================
+
+Morning (Server Admin):
+☐ Verify MySQL80 service is running
+☐ Check disk space (maintain >20% free)
+☐ Review backup logs
+
+Weekly:
+☐ Verify all client PCs can connect
+☐ Check backup file sizes
+☐ Test restoring a backup (on test database)
+
+Monthly:
+☐ Run database optimization (Step 5.4)
+☐ Review error logs
+☐ Update MySQL if security patches available
+☐ Clean old backup files
+
+---
+
+======================================================================
+APPENDIX C: Version History
+======================================================================
+
+Version 2.1 (Current)
+- MySQL database support
+- Simplified installation process
+- Multi-PC centralized database
+- PartsUsageHistory tracking
+- Dashboard with analytics
+- Barcode printing
+
+Version 2.0
+- Added SQL Server support
+- Parts Usage History feature
+- Dashboard improvements
+
+Version 1.0
+- Initial release
+- Basic inventory management
+
+---
+
+======================================================================
+APPENDIX D: Contact & Support
+======================================================================
+
+For technical issues:
+1. Check this guide first (Phase 6 Troubleshooting)
+2. Review MySQL error logs
+3. Contact your IT administrator
+
+MySQL Official Documentation:
+https://dev.mysql.com/doc/
+
+MySQL Community Forums:
+https://forums.mysql.com/
+
+---
+
+======================================================================
+END OF DEPLOYMENT GUIDE
+======================================================================

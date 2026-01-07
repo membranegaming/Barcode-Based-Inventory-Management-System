@@ -1,0 +1,1204 @@
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace store_parts
+{
+    /// <summary>
+    /// Dashboard form with reports and analytics
+    /// </summary>
+    public partial class DashboardForm : Form
+    {
+        private DataTable _partsData;
+        private DataTable _usageByMachine;
+        private DataTable _usageByPerson;
+        private DataTable _usageByItem;
+        private DataTable _monthlyUsage;
+
+        public DashboardForm()
+        {
+            InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+
+            // Form properties
+            this.Text = "Dashboard - Store Parts Analytics";
+            this.Size = new Size(1200, 800);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(240, 240, 245);
+            this.Font = new Font("Segoe UI", 9);
+
+            // Create main layout
+            CreateMainLayout();
+
+            this.ResumeLayout(false);
+        }
+
+        private void CreateMainLayout()
+        {
+            // Main split container
+            SplitContainer mainSplit = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Horizontal,
+                SplitterDistance = 150,
+                IsSplitterFixed = true,
+                Panel1MinSize = 150,
+                BackColor = Color.FromArgb(240, 240, 245)
+            };
+
+            // Top panel - Summary cards
+            Panel topPanel = CreateSummaryPanel();
+            mainSplit.Panel1.Controls.Add(topPanel);
+
+            // Bottom panel - Charts and reports
+            TabControl tabControl = CreateReportsTabControl();
+            mainSplit.Panel2.Controls.Add(tabControl);
+
+            this.Controls.Add(mainSplit);
+        }
+
+        private Panel CreateSummaryPanel()
+        {
+            Panel panel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(20, 10, 20, 10),
+                BackColor = Color.FromArgb(240, 240, 245)
+            };
+
+            // Title
+            Label titleLabel = new Label
+            {
+                Text = "?? Store Parts Dashboard",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                AutoSize = true,
+                Location = new Point(20, 5)
+            };
+            panel.Controls.Add(titleLabel);
+
+            // Refresh button
+            Button btnRefresh = new Button
+            {
+                Text = "?? Refresh",
+                Location = new Point(panel.Width - 120, 5),
+                Size = new Size(100, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(0, 122, 204),
+                ForeColor = Color.White
+            };
+            btnRefresh.Click += (s, e) => LoadDashboardData();
+            panel.Controls.Add(btnRefresh);
+
+            // Summary cards container
+            FlowLayoutPanel cardsPanel = new FlowLayoutPanel
+            {
+                Location = new Point(20, 45),
+                Size = new Size(panel.Width - 40, 100),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true
+            };
+
+            // Card 1 - Total Parts
+            cardsPanel.Controls.Add(CreateSummaryCard("Total Parts Entries", "0", Color.FromArgb(52, 152, 219), "??", "cardTotalParts"));
+            
+            // Card 2 - Total Quantity
+            cardsPanel.Controls.Add(CreateSummaryCard("Total Quantity", "0", Color.FromArgb(46, 204, 113), "??", "cardTotalQty"));
+            
+            // Card 3 - Used Quantity
+            cardsPanel.Controls.Add(CreateSummaryCard("Used Quantity", "0", Color.FromArgb(230, 126, 34), "??", "cardUsedQty"));
+            
+            // Card 4 - Remaining Quantity
+            cardsPanel.Controls.Add(CreateSummaryCard("Remaining Quantity", "0", Color.FromArgb(155, 89, 182), "??", "cardRemainingQty"));
+            
+            // Card 5 - Low Stock Items
+            cardsPanel.Controls.Add(CreateSummaryCard("Low Stock Items", "0", Color.FromArgb(231, 76, 60), "??", "cardLowStock"));
+
+            panel.Controls.Add(cardsPanel);
+
+            return panel;
+        }
+
+        private Panel CreateSummaryCard(string title, string value, Color color, string icon, string name)
+        {
+            Panel card = new Panel
+            {
+                Name = name,
+                Size = new Size(200, 90),
+                Margin = new Padding(5),
+                BackColor = Color.White,
+                Tag = title
+            };
+
+            // Add shadow effect
+            card.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(30, 0, 0, 0), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+                
+                // Draw color bar at top
+                using (SolidBrush brush = new SolidBrush(color))
+                {
+                    e.Graphics.FillRectangle(brush, 0, 0, card.Width, 4);
+                }
+            };
+
+            // Icon
+            Label lblIcon = new Label
+            {
+                Text = icon,
+                Font = new Font("Segoe UI", 24),
+                Location = new Point(10, 15),
+                Size = new Size(50, 50),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            card.Controls.Add(lblIcon);
+
+            // Value
+            Label lblValue = new Label
+            {
+                Name = name + "_value",
+                Text = value,
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = color,
+                Location = new Point(60, 15),
+                Size = new Size(130, 35),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            card.Controls.Add(lblValue);
+
+            // Title
+            Label lblTitle = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.Gray,
+                Location = new Point(60, 50),
+                Size = new Size(130, 30),
+                TextAlign = ContentAlignment.TopLeft
+            };
+            card.Controls.Add(lblTitle);
+
+            return card;
+        }
+
+        private TabControl CreateReportsTabControl()
+        {
+            TabControl tabControl = new TabControl
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 10),
+                Padding = new Point(20, 10)
+            };
+
+            // Tab 1 - Usage by Machine
+            TabPage tabMachine = new TabPage("?? Usage by Machine");
+            tabMachine.Controls.Add(CreateMachineUsagePanel());
+            tabControl.TabPages.Add(tabMachine);
+
+            // Tab 2 - Usage by Person
+            TabPage tabPerson = new TabPage("?? Usage by Person");
+            tabPerson.Controls.Add(CreatePersonUsagePanel());
+            tabControl.TabPages.Add(tabPerson);
+
+            // Tab 3 - Usage by Item
+            TabPage tabItem = new TabPage("?? Usage by Item");
+            tabItem.Controls.Add(CreateItemUsagePanel());
+            tabControl.TabPages.Add(tabItem);
+
+            // Tab 4 - Monthly Trends
+            TabPage tabTrends = new TabPage("?? Monthly Trends");
+            tabTrends.Controls.Add(CreateTrendsPanel());
+            tabControl.TabPages.Add(tabTrends);
+
+            // Tab 5 - Low Stock Report
+            TabPage tabLowStock = new TabPage("?? Low Stock Report");
+            tabLowStock.Controls.Add(CreateLowStockPanel());
+            tabControl.TabPages.Add(tabLowStock);
+
+            // Tab 6 - Detailed Report
+            TabPage tabDetailed = new TabPage("?? Detailed Report");
+            tabDetailed.Controls.Add(CreateDetailedReportPanel());
+            tabControl.TabPages.Add(tabDetailed);
+
+            return tabControl;
+        }
+
+        private Panel CreateMachineUsagePanel()
+        {
+            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+
+            SplitContainer split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterDistance = 400
+            };
+
+            // Left - Chart
+            Chart chart = new Chart
+            {
+                Name = "chartMachineUsage",
+                Dock = DockStyle.Fill,
+                BackColor = Color.White
+            };
+            
+            ChartArea chartArea = new ChartArea("MainArea");
+            chartArea.AxisX.Title = "Machine";
+            chartArea.AxisY.Title = "Quantity Used";
+            chartArea.AxisX.LabelStyle.Angle = -45;
+            chartArea.AxisX.Interval = 1;
+            chart.ChartAreas.Add(chartArea);
+
+            Series series = new Series("Usage")
+            {
+                ChartType = SeriesChartType.Column,
+                Color = Color.FromArgb(52, 152, 219),
+                IsValueShownAsLabel = true,
+                LabelForeColor = Color.Black
+            };
+            chart.Series.Add(series);
+
+            Legend legend = new Legend("MainLegend");
+            chart.Legends.Add(legend);
+
+            Title title = new Title("Parts Usage by Machine", Docking.Top, new Font("Segoe UI", 14, FontStyle.Bold), Color.DarkSlateGray);
+            chart.Titles.Add(title);
+
+            split.Panel1.Controls.Add(chart);
+
+            // Right - Data grid
+            DataGridView grid = new DataGridView
+            {
+                Name = "gridMachineUsage",
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false
+            };
+            split.Panel2.Controls.Add(grid);
+
+            panel.Controls.Add(split);
+
+            // Export button
+            Button btnExport = new Button
+            {
+                Text = "?? Export to CSV",
+                Size = new Size(120, 30),
+                Location = new Point(10, 10),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White
+            };
+            btnExport.Click += (s, e) => ExportGridToCSV(grid, "MachineUsageReport");
+            
+            Panel buttonPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 50
+            };
+            buttonPanel.Controls.Add(btnExport);
+            btnExport.Location = new Point(buttonPanel.Width - 130, 10);
+            panel.Controls.Add(buttonPanel);
+
+            return panel;
+        }
+
+        private Panel CreatePersonUsagePanel()
+        {
+            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+
+            SplitContainer split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterDistance = 400
+            };
+
+            // Left - Chart
+            Chart chart = new Chart
+            {
+                Name = "chartPersonUsage",
+                Dock = DockStyle.Fill,
+                BackColor = Color.White
+            };
+
+            ChartArea chartArea = new ChartArea("MainArea");
+            chartArea.AxisX.Title = "Person";
+            chartArea.AxisY.Title = "Quantity Taken";
+            chartArea.AxisX.LabelStyle.Angle = -45;
+            chartArea.AxisX.Interval = 1;
+            chart.ChartAreas.Add(chartArea);
+
+            Series series = new Series("Taken")
+            {
+                ChartType = SeriesChartType.Bar,
+                Color = Color.FromArgb(155, 89, 182),
+                IsValueShownAsLabel = true
+            };
+            chart.Series.Add(series);
+
+            Title title = new Title("Parts Taken by Person", Docking.Top, new Font("Segoe UI", 14, FontStyle.Bold), Color.DarkSlateGray);
+            chart.Titles.Add(title);
+
+            split.Panel1.Controls.Add(chart);
+
+            // Right - Data grid
+            DataGridView grid = new DataGridView
+            {
+                Name = "gridPersonUsage",
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false
+            };
+            split.Panel2.Controls.Add(grid);
+
+            panel.Controls.Add(split);
+
+            // Export button panel
+            Panel buttonPanel = new Panel { Dock = DockStyle.Bottom, Height = 50 };
+            Button btnExport = new Button
+            {
+                Text = "?? Export to CSV",
+                Size = new Size(120, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White
+            };
+            btnExport.Click += (s, e) => ExportGridToCSV(grid, "PersonUsageReport");
+            buttonPanel.Controls.Add(btnExport);
+            panel.Controls.Add(buttonPanel);
+
+            return panel;
+        }
+
+        private Panel CreateItemUsagePanel()
+        {
+            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+
+            SplitContainer split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterDistance = 400
+            };
+
+            // Left - Pie Chart
+            Chart chart = new Chart
+            {
+                Name = "chartItemUsage",
+                Dock = DockStyle.Fill,
+                BackColor = Color.White
+            };
+
+            ChartArea chartArea = new ChartArea("MainArea");
+            chart.ChartAreas.Add(chartArea);
+
+            Series series = new Series("ItemUsage")
+            {
+                ChartType = SeriesChartType.Pie,
+                IsValueShownAsLabel = true,
+                LabelFormat = "{0} ({1:P1})"
+            };
+            series["PieLabelStyle"] = "Outside";
+            series["PieLineColor"] = "Black";
+            chart.Series.Add(series);
+
+            Legend legend = new Legend("MainLegend");
+            legend.Docking = Docking.Right;
+            chart.Legends.Add(legend);
+
+            Title title = new Title("Parts Usage by Item Type", Docking.Top, new Font("Segoe UI", 14, FontStyle.Bold), Color.DarkSlateGray);
+            chart.Titles.Add(title);
+
+            split.Panel1.Controls.Add(chart);
+
+            // Right - Data grid
+            DataGridView grid = new DataGridView
+            {
+                Name = "gridItemUsage",
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false
+            };
+            split.Panel2.Controls.Add(grid);
+
+            panel.Controls.Add(split);
+
+            // Export button panel
+            Panel buttonPanel = new Panel { Dock = DockStyle.Bottom, Height = 50 };
+            Button btnExport = new Button
+            {
+                Text = "?? Export to CSV",
+                Size = new Size(120, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White
+            };
+            btnExport.Click += (s, e) => ExportGridToCSV(grid, "ItemUsageReport");
+            buttonPanel.Controls.Add(btnExport);
+            panel.Controls.Add(buttonPanel);
+
+            return panel;
+        }
+
+        private Panel CreateTrendsPanel()
+        {
+            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+
+            // Chart
+            Chart chart = new Chart
+            {
+                Name = "chartTrends",
+                Dock = DockStyle.Fill,
+                BackColor = Color.White
+            };
+
+            ChartArea chartArea = new ChartArea("MainArea");
+            chartArea.AxisX.Title = "Month";
+            chartArea.AxisY.Title = "Quantity";
+            chartArea.AxisX.LabelStyle.Format = "MMM yyyy";
+            chartArea.AxisX.IntervalType = DateTimeIntervalType.Months;
+            chartArea.AxisX.Interval = 1;
+            chart.ChartAreas.Add(chartArea);
+
+            Series seriesInward = new Series("Inward")
+            {
+                ChartType = SeriesChartType.Line,
+                Color = Color.FromArgb(46, 204, 113),
+                BorderWidth = 3,
+                MarkerStyle = MarkerStyle.Circle,
+                MarkerSize = 8
+            };
+            chart.Series.Add(seriesInward);
+
+            Series seriesUsed = new Series("Used")
+            {
+                ChartType = SeriesChartType.Line,
+                Color = Color.FromArgb(231, 76, 60),
+                BorderWidth = 3,
+                MarkerStyle = MarkerStyle.Circle,
+                MarkerSize = 8
+            };
+            chart.Series.Add(seriesUsed);
+
+            Legend legend = new Legend("MainLegend");
+            legend.Docking = Docking.Bottom;
+            chart.Legends.Add(legend);
+
+            Title title = new Title("Monthly Inward vs Usage Trends", Docking.Top, new Font("Segoe UI", 14, FontStyle.Bold), Color.DarkSlateGray);
+            chart.Titles.Add(title);
+
+            panel.Controls.Add(chart);
+
+            return panel;
+        }
+
+        private Panel CreateLowStockPanel()
+        {
+            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+
+            // Filter panel
+            Panel filterPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 50,
+                BackColor = Color.White
+            };
+
+            Label lblThreshold = new Label
+            {
+                Text = "Low Stock Threshold:",
+                Location = new Point(10, 15),
+                AutoSize = true
+            };
+            filterPanel.Controls.Add(lblThreshold);
+
+            NumericUpDown numThreshold = new NumericUpDown
+            {
+                Name = "numLowStockThreshold",
+                Location = new Point(150, 12),
+                Width = 80,
+                Minimum = 1,
+                Maximum = 1000,
+                Value = 10
+            };
+            filterPanel.Controls.Add(numThreshold);
+
+            Button btnApply = new Button
+            {
+                Text = "Apply Filter",
+                Location = new Point(250, 10),
+                Size = new Size(100, 28),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White
+            };
+            btnApply.Click += (s, e) => LoadLowStockData((int)numThreshold.Value);
+            filterPanel.Controls.Add(btnApply);
+
+            panel.Controls.Add(filterPanel);
+
+            // Grid
+            DataGridView grid = new DataGridView
+            {
+                Name = "gridLowStock",
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false
+            };
+            grid.CellFormatting += GridLowStock_CellFormatting;
+            panel.Controls.Add(grid);
+
+            // Export button panel
+            Panel buttonPanel = new Panel { Dock = DockStyle.Bottom, Height = 50 };
+            Button btnExport = new Button
+            {
+                Text = "?? Export to CSV",
+                Size = new Size(120, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White
+            };
+            btnExport.Click += (s, e) => ExportGridToCSV(grid, "LowStockReport");
+            buttonPanel.Controls.Add(btnExport);
+            panel.Controls.Add(buttonPanel);
+
+            return panel;
+        }
+
+        private Panel CreateDetailedReportPanel()
+        {
+            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+
+            // Filter panel
+            Panel filterPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 80,
+                BackColor = Color.White,
+                Padding = new Padding(10)
+            };
+
+            // Date range
+            Label lblFrom = new Label { Text = "From:", Location = new Point(10, 15), AutoSize = true };
+            filterPanel.Controls.Add(lblFrom);
+
+            DateTimePicker dtpFrom = new DateTimePicker
+            {
+                Name = "dtpFrom",
+                Location = new Point(55, 12),
+                Width = 120,
+                Format = DateTimePickerFormat.Short,
+                Value = DateTime.Today.AddMonths(-1)
+            };
+            filterPanel.Controls.Add(dtpFrom);
+
+            Label lblTo = new Label { Text = "To:", Location = new Point(190, 15), AutoSize = true };
+            filterPanel.Controls.Add(lblTo);
+
+            DateTimePicker dtpTo = new DateTimePicker
+            {
+                Name = "dtpTo",
+                Location = new Point(220, 12),
+                Width = 120,
+                Format = DateTimePickerFormat.Short,
+                Value = DateTime.Today
+            };
+            filterPanel.Controls.Add(dtpTo);
+
+            // Machine filter
+            Label lblMachine = new Label { Text = "Machine:", Location = new Point(10, 45), AutoSize = true };
+            filterPanel.Controls.Add(lblMachine);
+
+            ComboBox cmbMachine = new ComboBox
+            {
+                Name = "cmbFilterMachine",
+                Location = new Point(75, 42),
+                Width = 150,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbMachine.Items.Add("All Machines");
+            cmbMachine.SelectedIndex = 0;
+            filterPanel.Controls.Add(cmbMachine);
+
+            // Person filter
+            Label lblPerson = new Label { Text = "Person:", Location = new Point(240, 45), AutoSize = true };
+            filterPanel.Controls.Add(lblPerson);
+
+            ComboBox cmbPerson = new ComboBox
+            {
+                Name = "cmbFilterPerson",
+                Location = new Point(300, 42),
+                Width = 150,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbPerson.Items.Add("All Persons");
+            cmbPerson.SelectedIndex = 0;
+            filterPanel.Controls.Add(cmbPerson);
+
+            Button btnGenerate = new Button
+            {
+                Text = "Generate Report",
+                Location = new Point(470, 25),
+                Size = new Size(120, 35),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White
+            };
+            btnGenerate.Click += BtnGenerateDetailedReport_Click;
+            filterPanel.Controls.Add(btnGenerate);
+
+            panel.Controls.Add(filterPanel);
+
+            // Grid
+            DataGridView grid = new DataGridView
+            {
+                Name = "gridDetailedReport",
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false
+            };
+            panel.Controls.Add(grid);
+
+            // Export button panel
+            Panel buttonPanel = new Panel { Dock = DockStyle.Bottom, Height = 50 };
+            Button btnExport = new Button
+            {
+                Text = "?? Export to CSV",
+                Size = new Size(120, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White
+            };
+            btnExport.Click += (s, e) => ExportGridToCSV(grid, "DetailedReport");
+            buttonPanel.Controls.Add(btnExport);
+            panel.Controls.Add(buttonPanel);
+
+            return panel;
+        }
+
+        private void DashboardForm_Load(object sender, EventArgs e)
+        {
+            LoadDashboardData();
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            LoadDashboardData();
+        }
+
+        private void LoadDashboardData()
+        {
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+
+                string connectionString = global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Load summary data
+                    LoadSummaryData(connection);
+
+                    // Load machine usage data
+                    LoadMachineUsageData(connection);
+
+                    // Load person usage data
+                    LoadPersonUsageData(connection);
+
+                    // Load item usage data
+                    LoadItemUsageData(connection);
+
+                    // Load monthly trends
+                    LoadMonthlyTrends(connection);
+
+                    // Load low stock data
+                    LoadLowStockData(10);
+
+                    // Load filter dropdowns
+                    LoadFilterDropdowns(connection);
+                }
+
+                Cursor = Cursors.Default;
+            }
+            catch (Exception ex)
+            {
+                Cursor = Cursors.Default;
+                MessageBox.Show("Error loading dashboard data: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadSummaryData(SqlConnection connection)
+        {
+            string sql = @"SELECT 
+                            COUNT(*) as TotalParts,
+                            ISNULL(SUM(qty), 0) as TotalQty,
+                            ISNULL(SUM(ISNULL(used_qty, 0)), 0) as UsedQty,
+                            ISNULL(SUM(qty - ISNULL(used_qty, 0)), 0) as RemainingQty,
+                            (SELECT COUNT(*) FROM machinery_item_inward_unit2 WHERE qty - ISNULL(used_qty, 0) <= 10 AND qty - ISNULL(used_qty, 0) > 0) as LowStock
+                           FROM machinery_item_inward_unit2";
+
+            using (SqlCommand cmd = new SqlCommand(sql, connection))
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        UpdateCardValue("cardTotalParts", reader["TotalParts"].ToString());
+                        UpdateCardValue("cardTotalQty", reader["TotalQty"].ToString());
+                        UpdateCardValue("cardUsedQty", reader["UsedQty"].ToString());
+                        UpdateCardValue("cardRemainingQty", reader["RemainingQty"].ToString());
+                        UpdateCardValue("cardLowStock", reader["LowStock"].ToString());
+                    }
+                }
+            }
+        }
+
+        private void UpdateCardValue(string cardName, string value)
+        {
+            var controls = this.Controls.Find(cardName + "_value", true);
+            if (controls.Length > 0 && controls[0] is Label lbl)
+            {
+                lbl.Text = value;
+            }
+        }
+
+        private void LoadMachineUsageData(SqlConnection connection)
+        {
+            string sql = @"SELECT 
+                            ISNULL(used_in_machine, 'Not Assigned') as Machine,
+                            SUM(ISNULL(used_qty, 0)) as TotalUsed,
+                            COUNT(*) as PartCount
+                           FROM machinery_item_inward_unit2
+                           WHERE ISNULL(used_qty, 0) > 0
+                           GROUP BY used_in_machine
+                           ORDER BY TotalUsed DESC";
+
+            _usageByMachine = new DataTable();
+            using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+            {
+                adapter.Fill(_usageByMachine);
+            }
+
+            // Update chart
+            var charts = this.Controls.Find("chartMachineUsage", true);
+            if (charts.Length > 0 && charts[0] is Chart chart)
+            {
+                chart.Series["Usage"].Points.Clear();
+                foreach (DataRow row in _usageByMachine.Rows)
+                {
+                    chart.Series["Usage"].Points.AddXY(row["Machine"].ToString(), Convert.ToInt32(row["TotalUsed"]));
+                }
+            }
+
+            // Update grid
+            var grids = this.Controls.Find("gridMachineUsage", true);
+            if (grids.Length > 0 && grids[0] is DataGridView grid)
+            {
+                grid.DataSource = _usageByMachine;
+                if (grid.Columns.Contains("Machine"))
+                    grid.Columns["Machine"].HeaderText = "Machine Name";
+                if (grid.Columns.Contains("TotalUsed"))
+                    grid.Columns["TotalUsed"].HeaderText = "Total Qty Used";
+                if (grid.Columns.Contains("PartCount"))
+                    grid.Columns["PartCount"].HeaderText = "Part Entries";
+            }
+        }
+
+        private void LoadPersonUsageData(SqlConnection connection)
+        {
+            string sql = @"SELECT 
+                            ISNULL(taken_by, 'Not Assigned') as Person,
+                            SUM(ISNULL(used_qty, 0)) as TotalTaken,
+                            COUNT(*) as PartCount
+                           FROM machinery_item_inward_unit2
+                           WHERE ISNULL(used_qty, 0) > 0
+                           GROUP BY taken_by
+                           ORDER BY TotalTaken DESC";
+
+            _usageByPerson = new DataTable();
+            using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+            {
+                adapter.Fill(_usageByPerson);
+            }
+
+            // Update chart
+            var charts = this.Controls.Find("chartPersonUsage", true);
+            if (charts.Length > 0 && charts[0] is Chart chart)
+            {
+                chart.Series["Taken"].Points.Clear();
+                foreach (DataRow row in _usageByPerson.Rows)
+                {
+                    chart.Series["Taken"].Points.AddXY(row["Person"].ToString(), Convert.ToInt32(row["TotalTaken"]));
+                }
+            }
+
+            // Update grid
+            var grids = this.Controls.Find("gridPersonUsage", true);
+            if (grids.Length > 0 && grids[0] is DataGridView grid)
+            {
+                grid.DataSource = _usageByPerson;
+            }
+        }
+
+        private void LoadItemUsageData(SqlConnection connection)
+        {
+            string sql = @"SELECT 
+                            item as Item,
+                            SUM(qty) as TotalQty,
+                            SUM(ISNULL(used_qty, 0)) as TotalUsed,
+                            SUM(qty - ISNULL(used_qty, 0)) as Remaining
+                           FROM machinery_item_inward_unit2
+                           GROUP BY item
+                           ORDER BY TotalUsed DESC";
+
+            _usageByItem = new DataTable();
+            using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+            {
+                adapter.Fill(_usageByItem);
+            }
+
+            // Update pie chart
+            var charts = this.Controls.Find("chartItemUsage", true);
+            if (charts.Length > 0 && charts[0] is Chart chart)
+            {
+                chart.Series["ItemUsage"].Points.Clear();
+                Color[] colors = { Color.FromArgb(52, 152, 219), Color.FromArgb(46, 204, 113), 
+                                   Color.FromArgb(155, 89, 182), Color.FromArgb(230, 126, 34),
+                                   Color.FromArgb(231, 76, 60), Color.FromArgb(241, 196, 15) };
+                int colorIndex = 0;
+
+                foreach (DataRow row in _usageByItem.Rows)
+                {
+                    int totalUsed = Convert.ToInt32(row["TotalUsed"]);
+                    if (totalUsed > 0)
+                    {
+                        DataPoint point = new DataPoint();
+                        point.SetValueXY(row["Item"].ToString(), totalUsed);
+                        point.Color = colors[colorIndex % colors.Length];
+                        point.LegendText = row["Item"].ToString();
+                        chart.Series["ItemUsage"].Points.Add(point);
+                        colorIndex++;
+                    }
+                }
+            }
+
+            // Update grid
+            var grids = this.Controls.Find("gridItemUsage", true);
+            if (grids.Length > 0 && grids[0] is DataGridView grid)
+            {
+                grid.DataSource = _usageByItem;
+            }
+        }
+
+        private void LoadMonthlyTrends(SqlConnection connection)
+        {
+            string sql = @"SELECT 
+                            DATEFROMPARTS(YEAR(date), MONTH(date), 1) as Month,
+                            SUM(qty) as Inward,
+                            SUM(ISNULL(used_qty, 0)) as Used
+                           FROM machinery_item_inward_unit2
+                           WHERE date >= DATEADD(month, -12, GETDATE())
+                           GROUP BY DATEFROMPARTS(YEAR(date), MONTH(date), 1)
+                           ORDER BY Month";
+
+            _monthlyUsage = new DataTable();
+            using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+            {
+                adapter.Fill(_monthlyUsage);
+            }
+
+            // Update chart
+            var charts = this.Controls.Find("chartTrends", true);
+            if (charts.Length > 0 && charts[0] is Chart chart)
+            {
+                chart.Series["Inward"].Points.Clear();
+                chart.Series["Used"].Points.Clear();
+
+                foreach (DataRow row in _monthlyUsage.Rows)
+                {
+                    DateTime month = Convert.ToDateTime(row["Month"]);
+                    chart.Series["Inward"].Points.AddXY(month, Convert.ToInt32(row["Inward"]));
+                    chart.Series["Used"].Points.AddXY(month, Convert.ToInt32(row["Used"]));
+                }
+            }
+        }
+
+        private void LoadLowStockData(int threshold)
+        {
+            try
+            {
+                string connectionString = global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+
+                string sql = $@"SELECT 
+                                id as ID,
+                                challan_no as [Challan No],
+                                item as Item,
+                                party_name as Party,
+                                qty as [Total Qty],
+                                ISNULL(used_qty, 0) as [Used Qty],
+                                qty - ISNULL(used_qty, 0) as [Remaining Qty],
+                                date as [Date]
+                               FROM machinery_item_inward_unit2
+                               WHERE qty - ISNULL(used_qty, 0) <= {threshold} AND qty - ISNULL(used_qty, 0) > 0
+                               ORDER BY qty - ISNULL(used_qty, 0) ASC";
+
+                DataTable lowStockData = new DataTable();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        adapter.Fill(lowStockData);
+                    }
+                }
+
+                var grids = this.Controls.Find("gridLowStock", true);
+                if (grids.Length > 0 && grids[0] is DataGridView grid)
+                {
+                    grid.DataSource = lowStockData;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("LoadLowStockData error: " + ex.Message);
+            }
+        }
+
+        private void GridLowStock_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            DataGridView grid = sender as DataGridView;
+            if (grid == null) return;
+
+            if (grid.Columns[e.ColumnIndex].Name == "Remaining Qty" && e.Value != null)
+            {
+                int remaining = Convert.ToInt32(e.Value);
+                if (remaining <= 5)
+                {
+                    e.CellStyle.BackColor = Color.FromArgb(255, 200, 200);
+                    e.CellStyle.ForeColor = Color.DarkRed;
+                    e.CellStyle.Font = new Font(e.CellStyle.Font, FontStyle.Bold);
+                }
+                else
+                {
+                    e.CellStyle.BackColor = Color.FromArgb(255, 255, 200);
+                    e.CellStyle.ForeColor = Color.DarkOrange;
+                }
+            }
+        }
+
+        private void LoadFilterDropdowns(SqlConnection connection)
+        {
+            // Load machines
+            var cmbMachine = this.Controls.Find("cmbFilterMachine", true);
+            if (cmbMachine.Length > 0 && cmbMachine[0] is ComboBox cmb)
+            {
+                string sql = "SELECT DISTINCT used_in_machine FROM machinery_item_inward_unit2 WHERE used_in_machine IS NOT NULL AND used_in_machine <> ''";
+                using (SqlCommand cmd = new SqlCommand(sql, connection))
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            cmb.Items.Add(reader[0].ToString());
+                        }
+                    }
+                }
+            }
+
+            // Load persons
+            var cmbPerson = this.Controls.Find("cmbFilterPerson", true);
+            if (cmbPerson.Length > 0 && cmbPerson[0] is ComboBox cmb2)
+            {
+                string sql = "SELECT DISTINCT taken_by FROM machinery_item_inward_unit2 WHERE taken_by IS NOT NULL AND taken_by <> ''";
+                using (SqlCommand cmd = new SqlCommand(sql, connection))
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            cmb2.Items.Add(reader[0].ToString());
+                        }
+                    }
+                }
+            }
+        }
+
+        private void BtnGenerateDetailedReport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var dtpFrom = this.Controls.Find("dtpFrom", true);
+                var dtpTo = this.Controls.Find("dtpTo", true);
+                var cmbMachine = this.Controls.Find("cmbFilterMachine", true);
+                var cmbPerson = this.Controls.Find("cmbFilterPerson", true);
+                var grid = this.Controls.Find("gridDetailedReport", true);
+
+                if (dtpFrom.Length == 0 || dtpTo.Length == 0 || grid.Length == 0) return;
+
+                DateTime fromDate = ((DateTimePicker)dtpFrom[0]).Value.Date;
+                DateTime toDate = ((DateTimePicker)dtpTo[0]).Value.Date.AddDays(1).AddSeconds(-1);
+                string machine = cmbMachine.Length > 0 ? ((ComboBox)cmbMachine[0]).Text : "All Machines";
+                string person = cmbPerson.Length > 0 ? ((ComboBox)cmbPerson[0]).Text : "All Persons";
+
+                string connectionString = global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+
+                string sql = @"SELECT 
+                                id as ID,
+                                challan_no as [Challan No],
+                                date as [Date],
+                                party_name as Party,
+                                item as Item,
+                                qty as [Total Qty],
+                                ISNULL(used_qty, 0) as [Used Qty],
+                                qty - ISNULL(used_qty, 0) as [Remaining],
+                                ISNULL(used_in_machine, '') as Machine,
+                                ISNULL(taken_by, '') as [Taken By]
+                               FROM machinery_item_inward_unit2
+                               WHERE date >= @fromDate AND date <= @toDate";
+
+                if (machine != "All Machines")
+                    sql += " AND used_in_machine = @machine";
+                if (person != "All Persons")
+                    sql += " AND taken_by = @person";
+
+                sql += " ORDER BY date DESC";
+
+                DataTable reportData = new DataTable();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@fromDate", fromDate);
+                        cmd.Parameters.AddWithValue("@toDate", toDate);
+                        if (machine != "All Machines")
+                            cmd.Parameters.AddWithValue("@machine", machine);
+                        if (person != "All Persons")
+                            cmd.Parameters.AddWithValue("@person", person);
+
+                        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                        {
+                            adapter.Fill(reportData);
+                        }
+                    }
+                }
+
+                ((DataGridView)grid[0]).DataSource = reportData;
+
+                MessageBox.Show($"Report generated with {reportData.Rows.Count} records.", "Report Generated",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error generating report: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ExportGridToCSV(DataGridView grid, string reportName)
+        {
+            try
+            {
+                if (grid.DataSource == null || grid.Rows.Count == 0)
+                {
+                    MessageBox.Show("No data to export.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                    FilterIndex = 1,
+                    FileName = $"{reportName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+                    // Headers
+                    for (int i = 0; i < grid.Columns.Count; i++)
+                    {
+                        sb.Append("\"" + grid.Columns[i].HeaderText.Replace("\"", "\"\"") + "\"");
+                        if (i < grid.Columns.Count - 1) sb.Append(",");
+                    }
+                    sb.AppendLine();
+
+                    // Data
+                    foreach (DataGridViewRow row in grid.Rows)
+                    {
+                        if (!row.IsNewRow)
+                        {
+                            for (int i = 0; i < grid.Columns.Count; i++)
+                            {
+                                string value = row.Cells[i].Value?.ToString() ?? "";
+                                sb.Append("\"" + value.Replace("\"", "\"\"") + "\"");
+                                if (i < grid.Columns.Count - 1) sb.Append(",");
+                            }
+                            sb.AppendLine();
+                        }
+                    }
+
+                    System.IO.File.WriteAllText(saveDialog.FileName, sb.ToString(), System.Text.Encoding.UTF8);
+
+                    MessageBox.Show($"Report exported successfully to:\n{saveDialog.FileName}", "Export Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error exporting report: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}
+

@@ -1,0 +1,814 @@
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    /// <summary>
+    /// Admin form for searching and modifying any entry in the database
+    /// Note: used_in_machine and taken_by are no longer stored in the main table.
+    /// Usage info is stored in PartsUsageHistory table.
+    /// </summary>
+    public partial class AdminEditForm : Form
+    {
+        private DataTable _dataTable;
+        private int _selectedId = -1;
+
+        // Controls
+        private TextBox txtSearch;
+        private ComboBox cmbSearchField;
+        private Button btnSearch;
+        private Button btnClearSearch;
+        private DataGridView dataGridView;
+        private GroupBox grpEdit;
+        private TextBox txtId;
+        private TextBox txtChallanNo;
+        private DateTimePicker dtpDate;
+        private ComboBox cmbPartyName;
+        private ComboBox cmbItem;
+        private TextBox txtQty;
+        private TextBox txtUsedQty;
+        private TextBox txtRefBillNo;
+        private DateTimePicker dtpBillDate;
+        private Button btnSave;
+        private Button btnDelete;
+        private Button btnClear;
+        private Label lblStatus;
+        private Label lblUsageInfo;
+
+        public AdminEditForm()
+        {
+            InitializeFormComponents();
+            this.Load += AdminEditForm_Load;
+        }
+
+        private void AdminEditForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                LoadData();
+                LoadComboBoxData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void InitializeFormComponents()
+        {
+            this.SuspendLayout();
+
+            this.Text = "Admin - Edit Entries";
+            this.Size = new Size(1200, 700);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(240, 240, 245);
+            this.Font = new Font("Segoe UI", 9);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+
+            // Title
+            Label lblTitle = new Label
+            {
+                Text = "[Admin Panel] - Modify Entries",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                Location = new Point(20, 15),
+                AutoSize = true
+            };
+            this.Controls.Add(lblTitle);
+
+            // Search Panel
+            Panel searchPanel = new Panel
+            {
+                Location = new Point(20, 55),
+                Size = new Size(1140, 50),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            Label lblSearchBy = new Label
+            {
+                Text = "Search By:",
+                Location = new Point(10, 15),
+                AutoSize = true
+            };
+            searchPanel.Controls.Add(lblSearchBy);
+
+            cmbSearchField = new ComboBox
+            {
+                Location = new Point(85, 12),
+                Size = new Size(150, 25),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbSearchField.Items.AddRange(new object[] { "ID", "Challan No", "Party Name", "Item" });
+            cmbSearchField.SelectedIndex = 0;
+            searchPanel.Controls.Add(cmbSearchField);
+
+            txtSearch = new TextBox
+            {
+                Location = new Point(250, 12),
+                Size = new Size(300, 25),
+                Font = new Font("Segoe UI", 10)
+            };
+            txtSearch.KeyPress += TxtSearch_KeyPress;
+            searchPanel.Controls.Add(txtSearch);
+
+            btnSearch = new Button
+            {
+                Text = "Search",
+                Location = new Point(565, 10),
+                Size = new Size(100, 30),
+                BackColor = Color.FromArgb(0, 122, 204),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnSearch.Click += BtnSearch_Click;
+            searchPanel.Controls.Add(btnSearch);
+
+            btnClearSearch = new Button
+            {
+                Text = "Clear",
+                Location = new Point(675, 10),
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnClearSearch.Click += BtnClearSearch_Click;
+            searchPanel.Controls.Add(btnClearSearch);
+
+            lblStatus = new Label
+            {
+                Text = "Total Records: 0",
+                Location = new Point(800, 15),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            searchPanel.Controls.Add(lblStatus);
+
+            this.Controls.Add(searchPanel);
+
+            // DataGridView
+            dataGridView = new DataGridView
+            {
+                Location = new Point(20, 115),
+                Size = new Size(850, 350),
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false,
+                MultiSelect = false
+            };
+            dataGridView.SelectionChanged += DataGridView_SelectionChanged;
+            dataGridView.CellDoubleClick += DataGridView_CellDoubleClick;
+            this.Controls.Add(dataGridView);
+
+            // Edit Panel
+            grpEdit = new GroupBox
+            {
+                Text = "Edit Entry",
+                Location = new Point(880, 115),
+                Size = new Size(290, 520),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+
+            int y = 30;
+            int labelWidth = 85;
+            int controlWidth = 180;
+            int spacing = 40;
+
+            // ID (Read-only)
+            AddLabelAndControl(grpEdit, "ID:", ref y, labelWidth);
+            txtId = new TextBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                ReadOnly = true,
+                BackColor = Color.LightGray,
+                Font = new Font("Segoe UI", 9)
+            };
+            grpEdit.Controls.Add(txtId);
+            y += spacing;
+
+            // Challan No
+            AddLabelAndControl(grpEdit, "Challan No:", ref y, labelWidth);
+            txtChallanNo = new TextBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                Font = new Font("Segoe UI", 9)
+            };
+            grpEdit.Controls.Add(txtChallanNo);
+            y += spacing;
+
+            // Date
+            AddLabelAndControl(grpEdit, "Date:", ref y, labelWidth);
+            dtpDate = new DateTimePicker
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                Format = DateTimePickerFormat.Short
+            };
+            grpEdit.Controls.Add(dtpDate);
+            y += spacing;
+
+            // Party Name
+            AddLabelAndControl(grpEdit, "Party Name:", ref y, labelWidth);
+            cmbPartyName = new ComboBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                DropDownStyle = ComboBoxStyle.DropDown,
+                Font = new Font("Segoe UI", 9)
+            };
+            grpEdit.Controls.Add(cmbPartyName);
+            y += spacing;
+
+            // Item
+            AddLabelAndControl(grpEdit, "Item:", ref y, labelWidth);
+            cmbItem = new ComboBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                DropDownStyle = ComboBoxStyle.DropDown,
+                Font = new Font("Segoe UI", 9)
+            };
+            grpEdit.Controls.Add(cmbItem);
+            y += spacing;
+
+            // Qty
+            AddLabelAndControl(grpEdit, "Total Qty:", ref y, labelWidth);
+            txtQty = new TextBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                Font = new Font("Segoe UI", 9)
+            };
+            grpEdit.Controls.Add(txtQty);
+            y += spacing;
+
+            // Used Qty (Read-only - calculated from history)
+            AddLabelAndControl(grpEdit, "Used Qty:", ref y, labelWidth);
+            txtUsedQty = new TextBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                Font = new Font("Segoe UI", 9),
+                ReadOnly = true,
+                BackColor = Color.FromArgb(255, 255, 220)
+            };
+            grpEdit.Controls.Add(txtUsedQty);
+            y += spacing;
+
+            // Reference Bill No
+            AddLabelAndControl(grpEdit, "Ref Bill No:", ref y, labelWidth);
+            txtRefBillNo = new TextBox
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                Font = new Font("Segoe UI", 9)
+            };
+            grpEdit.Controls.Add(txtRefBillNo);
+            y += spacing;
+
+            // Bill Date
+            AddLabelAndControl(grpEdit, "Bill Date:", ref y, labelWidth);
+            dtpBillDate = new DateTimePicker
+            {
+                Location = new Point(95, y - 5),
+                Size = new Size(controlWidth, 25),
+                Format = DateTimePickerFormat.Short
+            };
+            grpEdit.Controls.Add(dtpBillDate);
+            y += spacing;
+
+            // Info label about usage history
+            lblUsageInfo = new Label
+            {
+                Text = "Note: Usage info (Machine, Taken By)\nis tracked in Parts Usage form.",
+                Location = new Point(15, y),
+                Size = new Size(260, 40),
+                Font = new Font("Segoe UI", 8, FontStyle.Italic),
+                ForeColor = Color.DarkBlue
+            };
+            grpEdit.Controls.Add(lblUsageInfo);
+            y += 50;
+
+            // Buttons
+            btnSave = new Button
+            {
+                Text = "Save Changes",
+                Location = new Point(15, y),
+                Size = new Size(125, 35),
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            btnSave.Click += BtnSave_Click;
+            grpEdit.Controls.Add(btnSave);
+
+            btnDelete = new Button
+            {
+                Text = "Delete",
+                Location = new Point(150, y),
+                Size = new Size(125, 35),
+                BackColor = Color.FromArgb(231, 76, 60),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            btnDelete.Click += BtnDelete_Click;
+            grpEdit.Controls.Add(btnDelete);
+
+            y += 45;
+
+            btnClear = new Button
+            {
+                Text = "Clear Form",
+                Location = new Point(15, y),
+                Size = new Size(260, 30),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnClear.Click += BtnClear_Click;
+            grpEdit.Controls.Add(btnClear);
+
+            this.Controls.Add(grpEdit);
+
+            // Close button
+            Button btnClose = new Button
+            {
+                Text = "Close",
+                Location = new Point(1050, 15),
+                Size = new Size(100, 30),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnClose.Click += (s, ev) => this.Close();
+            this.Controls.Add(btnClose);
+
+            // Refresh button
+            Button btnRefresh = new Button
+            {
+                Text = "Refresh",
+                Location = new Point(940, 15),
+                Size = new Size(100, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White
+            };
+            btnRefresh.Click += (s, ev) => LoadData();
+            this.Controls.Add(btnRefresh);
+
+            this.ResumeLayout(false);
+            this.PerformLayout();
+        }
+
+        private void AddLabelAndControl(GroupBox parent, string text, ref int y, int labelWidth)
+        {
+            Label label = new Label
+            {
+                Text = text,
+                Location = new Point(10, y),
+                Size = new Size(labelWidth, 20),
+                Font = new Font("Segoe UI", 9),
+                TextAlign = ContentAlignment.MiddleRight
+            };
+            parent.Controls.Add(label);
+        }
+
+        private string GetConnectionString()
+        {
+            return global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+        }
+
+        private void LoadData()
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    // Calculate used_qty from PartsUsageHistory for accurate display
+                    string sql = @"SELECT p.id as ID, p.challan_no as [Challan No], p.date as [Date], 
+                                   p.party_name as [Party Name], p.item as Item, p.qty as [Total Qty], 
+                                   ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as [Used Qty], 
+                                   p.reference_bill_no as [Ref Bill No], p.bill_date as [Bill Date]
+                                   FROM machinery_item_inward_unit2 p
+                                   ORDER BY p.id DESC";
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        _dataTable = new DataTable();
+                        adapter.Fill(_dataTable);
+                        dataGridView.DataSource = _dataTable;
+                        UpdateStatus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadComboBoxData()
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    connection.Open();
+
+                    // Load Party Names
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("SELECT DISTINCT party_name FROM PartyMaster WHERE is_active = 1", connection))
+                        {
+                            using (SqlDataReader reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    cmbPartyName.Items.Add(reader["party_name"].ToString());
+                                }
+                            }
+                        }
+                    }
+                    catch { /* Table may not exist */ }
+
+                    // Load Items
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("SELECT DISTINCT item_name FROM ItemMaster WHERE is_active = 1", connection))
+                        {
+                            using (SqlDataReader reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    cmbItem.Items.Add(reader["item_name"].ToString());
+                                }
+                            }
+                        }
+                    }
+                    catch { /* Table may not exist */ }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error loading combo data: " + ex.Message);
+            }
+        }
+
+        private void UpdateStatus()
+        {
+            if (lblStatus != null)
+            {
+                lblStatus.Text = "Total Records: " + (_dataTable?.Rows.Count ?? 0).ToString();
+            }
+        }
+
+        private void TxtSearch_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = true;
+                BtnSearch_Click(sender, e);
+            }
+        }
+
+        private void BtnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string searchText = txtSearch.Text.Trim();
+                string searchField = cmbSearchField.SelectedItem?.ToString() ?? "ID";
+
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    LoadData();
+                    return;
+                }
+
+                string columnName = "";
+                switch (searchField)
+                {
+                    case "ID":
+                        columnName = "p.id";
+                        break;
+                    case "Challan No":
+                        columnName = "p.challan_no";
+                        break;
+                    case "Party Name":
+                        columnName = "p.party_name";
+                        break;
+                    case "Item":
+                        columnName = "p.item";
+                        break;
+                    default:
+                        columnName = "p.id";
+                        break;
+                }
+
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    string sql;
+                    if (searchField == "ID")
+                    {
+                        sql = @"SELECT p.id as ID, p.challan_no as [Challan No], p.date as [Date], 
+                                p.party_name as [Party Name], p.item as Item, p.qty as [Total Qty], 
+                                ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as [Used Qty], 
+                                p.reference_bill_no as [Ref Bill No], p.bill_date as [Bill Date]
+                                FROM machinery_item_inward_unit2 p
+                                WHERE p.id = @search
+                                ORDER BY p.id DESC";
+                    }
+                    else
+                    {
+                        sql = @"SELECT p.id as ID, p.challan_no as [Challan No], p.date as [Date], 
+                                p.party_name as [Party Name], p.item as Item, p.qty as [Total Qty], 
+                                ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as [Used Qty], 
+                                p.reference_bill_no as [Ref Bill No], p.bill_date as [Bill Date]
+                                FROM machinery_item_inward_unit2 p
+                                WHERE " + columnName + @" LIKE @search
+                                ORDER BY p.id DESC";
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        if (searchField == "ID")
+                        {
+                            int id;
+                            if (int.TryParse(searchText, out id))
+                            {
+                                cmd.Parameters.AddWithValue("@search", id);
+                            }
+                            else
+                            {
+                                MessageBox.Show("Please enter a valid numeric ID.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
+                        }
+
+                        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                        {
+                            _dataTable = new DataTable();
+                            adapter.Fill(_dataTable);
+                            dataGridView.DataSource = _dataTable;
+                            UpdateStatus();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Search error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Clear();
+            cmbSearchField.SelectedIndex = 0;
+            LoadData();
+        }
+
+        private void DataGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dataGridView.SelectedRows.Count > 0)
+            {
+                LoadSelectedRow();
+            }
+        }
+
+        private void DataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                LoadSelectedRow();
+            }
+        }
+
+        private void LoadSelectedRow()
+        {
+            try
+            {
+                if (dataGridView.SelectedRows.Count == 0) return;
+
+                DataGridViewRow row = dataGridView.SelectedRows[0];
+                
+                if (row.Cells["ID"].Value == null || row.Cells["ID"].Value == DBNull.Value)
+                    return;
+
+                _selectedId = Convert.ToInt32(row.Cells["ID"].Value);
+
+                txtId.Text = row.Cells["ID"].Value?.ToString() ?? "";
+                txtChallanNo.Text = row.Cells["Challan No"].Value?.ToString() ?? "";
+                
+                if (row.Cells["Date"].Value != null && row.Cells["Date"].Value != DBNull.Value)
+                    dtpDate.Value = Convert.ToDateTime(row.Cells["Date"].Value);
+                else
+                    dtpDate.Value = DateTime.Today;
+
+                cmbPartyName.Text = row.Cells["Party Name"].Value?.ToString() ?? "";
+                cmbItem.Text = row.Cells["Item"].Value?.ToString() ?? "";
+                txtQty.Text = row.Cells["Total Qty"].Value?.ToString() ?? "0";
+                txtUsedQty.Text = row.Cells["Used Qty"].Value?.ToString() ?? "0";
+                txtRefBillNo.Text = row.Cells["Ref Bill No"].Value?.ToString() ?? "";
+                
+                if (row.Cells["Bill Date"].Value != null && row.Cells["Bill Date"].Value != DBNull.Value)
+                    dtpBillDate.Value = Convert.ToDateTime(row.Cells["Bill Date"].Value);
+                else
+                    dtpBillDate.Value = DateTime.Today;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error loading row: " + ex.Message);
+            }
+        }
+
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            if (_selectedId <= 0)
+            {
+                MessageBox.Show("Please select a record to edit.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validate
+            if (string.IsNullOrWhiteSpace(txtChallanNo.Text))
+            {
+                MessageBox.Show("Challan No is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtChallanNo.Focus();
+                return;
+            }
+
+            int qty;
+            if (!int.TryParse(txtQty.Text, out qty) || qty < 0)
+            {
+                MessageBox.Show("Please enter a valid quantity.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtQty.Focus();
+                return;
+            }
+
+            // Check if new qty would be less than already used
+            int usedQty = 0;
+            int.TryParse(txtUsedQty.Text, out usedQty);
+            if (qty < usedQty)
+            {
+                MessageBox.Show($"Total quantity ({qty}) cannot be less than already used quantity ({usedQty}).", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtQty.Focus();
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    // Note: used_in_machine and taken_by are no longer in main table
+                    // They are stored in PartsUsageHistory only
+                    string sql = @"UPDATE machinery_item_inward_unit2 
+                                   SET challan_no = @challan_no,
+                                       date = @date,
+                                       party_name = @party_name,
+                                       item = @item,
+                                       qty = @qty,
+                                       reference_bill_no = @ref_bill_no,
+                                       bill_date = @bill_date
+                                   WHERE id = @id";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@id", _selectedId);
+                        cmd.Parameters.AddWithValue("@challan_no", txtChallanNo.Text.Trim());
+                        cmd.Parameters.AddWithValue("@date", dtpDate.Value.Date);
+                        cmd.Parameters.AddWithValue("@party_name", cmbPartyName.Text ?? "");
+                        cmd.Parameters.AddWithValue("@item", cmbItem.Text ?? "");
+                        cmd.Parameters.AddWithValue("@qty", qty);
+                        cmd.Parameters.AddWithValue("@ref_bill_no", string.IsNullOrEmpty(txtRefBillNo.Text) ? (object)DBNull.Value : txtRefBillNo.Text.Trim());
+                        cmd.Parameters.AddWithValue("@bill_date", dtpBillDate.Value.Date);
+
+                        connection.Open();
+                        int affected = cmd.ExecuteNonQuery();
+
+                        if (affected > 0)
+                        {
+                            MessageBox.Show("Record ID " + _selectedId + " updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show("No changes were saved.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving changes: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnDelete_Click(object sender, EventArgs e)
+        {
+            if (_selectedId <= 0)
+            {
+                MessageBox.Show("Please select a record to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check if there's usage history
+            int usageCount = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM PartsUsageHistory WHERE inward_item_id = @id", connection))
+                    {
+                        cmd.Parameters.AddWithValue("@id", _selectedId);
+                        usageCount = (int)cmd.ExecuteScalar();
+                    }
+                }
+            }
+            catch { }
+
+            string warningMessage = "Are you sure you want to permanently delete record ID " + _selectedId + "?";
+            if (usageCount > 0)
+            {
+                warningMessage += $"\n\nWARNING: This record has {usageCount} usage history record(s) that will also be deleted!";
+            }
+            warningMessage += "\n\nThis action cannot be undone!";
+
+            DialogResult result = MessageBox.Show(
+                warningMessage,
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+
+            if (result != DialogResult.Yes) return;
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    
+                    // Delete usage history first (if any)
+                    using (SqlCommand cmdHistory = new SqlCommand("DELETE FROM PartsUsageHistory WHERE inward_item_id = @id", connection))
+                    {
+                        cmdHistory.Parameters.AddWithValue("@id", _selectedId);
+                        cmdHistory.ExecuteNonQuery();
+                    }
+                    
+                    // Delete main record
+                    using (SqlCommand cmd = new SqlCommand("DELETE FROM machinery_item_inward_unit2 WHERE id = @id", connection))
+                    {
+                        cmd.Parameters.AddWithValue("@id", _selectedId);
+                        int affected = cmd.ExecuteNonQuery();
+
+                        if (affected > 0)
+                        {
+                            MessageBox.Show("Record ID " + _selectedId + " deleted successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            BtnClear_Click(sender, e);
+                            LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Record not found or already deleted.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting record: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnClear_Click(object sender, EventArgs e)
+        {
+            _selectedId = -1;
+            txtId.Clear();
+            txtChallanNo.Clear();
+            dtpDate.Value = DateTime.Today;
+            cmbPartyName.SelectedIndex = -1;
+            cmbPartyName.Text = "";
+            cmbItem.SelectedIndex = -1;
+            cmbItem.Text = "";
+            txtQty.Clear();
+            txtUsedQty.Clear();
+            txtRefBillNo.Clear();
+            dtpBillDate.Value = DateTime.Today;
+            dataGridView.ClearSelection();
+        }
+    }
+}

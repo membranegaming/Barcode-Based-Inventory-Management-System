@@ -1,0 +1,205 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void machinery_item_inward_unit2BindingNavigatorSaveItem_Click(object sender, EventArgs e)
+        {
+            this.Validate();
+            this.machinery_item_inward_unit2BindingSource.EndEdit();
+            this.tableAdapterManager.UpdateAll(this.mainDB);
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                // Load data into the 'mainDB.machinery_item_inward_unit2' table
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                
+                // Automatically prepare for new data entry
+                this.machinery_item_inward_unit2BindingSource.AddNew();
+                
+                // Focus on the first editable field
+                this.challan_noTextBox.Focus();
+                
+                // Subscribe to binding source events to handle ID display
+                this.machinery_item_inward_unit2BindingSource.CurrentChanged += 
+                    new EventHandler(BindingSource_CurrentChanged);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading form: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BindingSource_CurrentChanged(object sender, EventArgs e)
+        {
+            // Show "Auto" for new records (negative ID), actual ID for saved records
+            if (this.machinery_item_inward_unit2BindingSource.Current != null)
+            {
+                var currentRow = ((DataRowView)this.machinery_item_inward_unit2BindingSource.Current).Row;
+                if (currentRow != null)
+                {
+                    var id = currentRow["id"];
+                    if (id != DBNull.Value && Convert.ToInt32(id) < 0)
+                    {
+                        this.idTextBox.Text = "Auto";
+                    }
+                }
+            }
+        }
+
+        private void btnAddData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Add a new row to the binding source
+                this.machinery_item_inward_unit2BindingSource.AddNew();
+                
+                // Focus on the first input field for data entry
+                this.challan_noTextBox.Focus();
+                
+                MessageBox.Show("Ready to add new data. Fill in the fields and click Save.", 
+                    "Add New Record", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding new record: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Validate the form
+                this.Validate();
+                
+                // End any edits in progress
+                this.machinery_item_inward_unit2BindingSource.EndEdit();
+                
+                // Save changes to the database
+                this.tableAdapterManager.UpdateAll(this.mainDB);
+                
+                MessageBox.Show("Data saved successfully!", 
+                    "Save Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                // Automatically add a new record after saving
+                this.machinery_item_inward_unit2BindingSource.AddNew();
+                this.challan_noTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void machinery_item_inward_unit2DataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Optional: Handle cell click events if needed
+        }
+
+        private void btnManageParties_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                MessageBox.Show("Party Master feature coming soon!\n\n" +
+                    "To enable this feature:\n" +
+                    "1. Run CreateMasterTables.sql in your database\n" +
+                    "2. Add PartyMaster table to MainDB.xsd dataset\n" +
+                    "3. Add the PartyMasterForm files back to the project", 
+                    "Feature Not Available", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnManageItems_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                MessageBox.Show("Item Master feature coming soon!\n\n" +
+                    "To enable this feature:\n" +
+                    "1. Run CreateMasterTables.sql in your database\n" +
+                    "2. Add ItemMaster table to MainDB.xsd dataset\n" +
+                    "3. Add the ItemMasterForm files back to the project", 
+                    "Feature Not Available", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnNew_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Add a new record
+                this.machinery_item_inward_unit2BindingSource.AddNew();
+                this.challan_noTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding new record: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Cancel current edit and start fresh
+                this.machinery_item_inward_unit2BindingSource.CancelEdit();
+                this.machinery_item_inward_unit2BindingSource.AddNew();
+                this.challan_noTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error clearing form: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnShowTable_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ShowTableForm showTableForm = new ShowTableForm();
+                showTableForm.ShowDialog();
+                
+                // Refresh main form data after closing show table form
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening table view: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}

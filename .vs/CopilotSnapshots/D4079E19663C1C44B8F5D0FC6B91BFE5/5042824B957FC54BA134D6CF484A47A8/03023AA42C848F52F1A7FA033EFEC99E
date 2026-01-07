@@ -1,0 +1,532 @@
+﻿using System;
+using System.Data;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class PartsUsageForm : Form
+    {
+        private bool _isLoading = false;
+
+        public PartsUsageForm()
+        {
+            InitializeComponent();
+        }
+
+        private void PartsUsageForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                _isLoading = true;
+
+                // Load master data for dropdowns
+                LoadMasterData();
+                
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                ShowUnusedParts();
+                UpdateRecordCount();
+
+                _isLoading = false;
+            }
+            catch (Exception ex)
+            {
+                _isLoading = false;
+                ShowError("Error loading data", ex);
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            try
+            {
+                // Load MachineMaster data for dropdown (only active machines)
+                this.machineMasterTableAdapter.Fill(this.mainDB.MachineMaster);
+                
+                // Load PersonMaster data for dropdown (only active persons)
+                this.personMasterTableAdapter.Fill(this.mainDB.PersonMaster);
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error loading master data", ex);
+            }
+        }
+
+        private void ShowUnusedParts()
+        {
+            this.machinery_item_inward_unit2BindingSource.Filter = 
+                "used_in_machine IS NULL OR used_in_machine = ''";
+            lblFilterStatus.Text = "Showing: Unused Parts Only";
+            UpdateRecordCount();
+        }
+
+        private void ShowAllParts()
+        {
+            this.machinery_item_inward_unit2BindingSource.RemoveFilter();
+            lblFilterStatus.Text = "Showing: All Parts";
+            UpdateRecordCount();
+        }
+
+        private void ShowUsedParts()
+        {
+            this.machinery_item_inward_unit2BindingSource.Filter = 
+                "used_in_machine IS NOT NULL AND used_in_machine <> ''";
+            lblFilterStatus.Text = "Showing: Used Parts Only";
+            UpdateRecordCount();
+        }
+
+        private void btnRecordUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!ValidateUsageInput())
+                    return;
+
+                // CRITICAL FIX: Get the actual DataRow from the selected DataGridView row
+                DataGridViewRow selectedRow = this.machinery_item_inward_unit2DataGridView.SelectedRows[0];
+                DataRowView rowView = selectedRow.DataBoundItem as DataRowView;
+                
+                if (rowView == null)
+                {
+                    MessageBox.Show("Unable to get row data. Please try again.", 
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                DataRow currentRow = rowView.Row;
+                
+                // Check if already has usage recorded
+                if (currentRow["used_in_machine"] != DBNull.Value && 
+                    !string.IsNullOrWhiteSpace(currentRow["used_in_machine"].ToString()))
+                {
+                    DialogResult result = MessageBox.Show(
+                        "This part already has usage recorded. Do you want to update it?",
+                        "Usage Already Exists",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+                    
+                    if (result == DialogResult.No)
+                        return;
+                }
+
+                // CRITICAL FIX: Begin edit before modifying
+                currentRow.BeginEdit();
+                currentRow["used_in_machine"] = this.cmbMachineName.Text.Trim();
+                currentRow["taken_by"] = this.cmbTakenBy.Text.Trim();
+                currentRow.EndEdit();
+
+                // CRITICAL: Mark the row as modified if it's not already
+                if (currentRow.RowState == DataRowState.Unchanged)
+                {
+                    currentRow.SetModified();
+                }
+
+                // Save to database
+                int recordsSaved = this.machinery_item_inward_unit2TableAdapter.Update(this.mainDB.machinery_item_inward_unit2);
+
+                if (recordsSaved > 0)
+                {
+                    // Accept changes after successful save
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                    
+                    MessageBox.Show("Parts usage recorded successfully!", 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    ClearInputFields();
+                    RefreshData();
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved. Please try again.\nRow State: " + currentRow.RowState.ToString(), 
+                        "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error recording parts usage", ex);
+            }
+        }
+
+        private void btnBulkUpdate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!ValidateUsageInput())
+                    return;
+
+                int count = this.machinery_item_inward_unit2DataGridView.SelectedRows.Count;
+                DialogResult result = MessageBox.Show(
+                    "Are you sure you want to record usage for " + count.ToString() + " selected item(s)?",
+                    "Confirm Bulk Update",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.No)
+                    return;
+
+                string machineName = this.cmbMachineName.Text.Trim();
+                string takenBy = this.cmbTakenBy.Text.Trim();
+                int modifiedCount = 0;
+
+                // CRITICAL FIX: Get actual DataRows from selected DataGridView rows
+                foreach (DataGridViewRow row in this.machinery_item_inward_unit2DataGridView.SelectedRows)
+                {
+                    DataRowView rowView = row.DataBoundItem as DataRowView;
+                    if (rowView != null)
+                    {
+                        DataRow currentRow = rowView.Row;
+                        
+                        // CRITICAL FIX: Begin edit before modifying
+                        currentRow.BeginEdit();
+                        currentRow["used_in_machine"] = machineName;
+                        currentRow["taken_by"] = takenBy;
+                        currentRow.EndEdit();
+
+                        // CRITICAL: Mark the row as modified if it's not already
+                        if (currentRow.RowState == DataRowState.Unchanged)
+                        {
+                            currentRow.SetModified();
+                        }
+                        
+                        modifiedCount++;
+                    }
+                }
+
+                // Save to database
+                int recordsSaved = this.machinery_item_inward_unit2TableAdapter.Update(this.mainDB.machinery_item_inward_unit2);
+
+                if (recordsSaved > 0)
+                {
+                    // Accept changes after successful save
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                    
+                    MessageBox.Show("Successfully recorded usage for " + recordsSaved.ToString() + " item(s)!", 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    ClearInputFields();
+                    RefreshData();
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved. Modified rows: " + modifiedCount.ToString() + 
+                        "\nPlease ensure the data is different from existing values.", 
+                        "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error recording bulk parts usage", ex);
+            }
+        }
+
+        private void btnClearUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count == 0)
+                {
+                    MessageBox.Show("Please select a parts entry to clear usage.", 
+                        "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                DialogResult result = MessageBox.Show(
+                    "Are you sure you want to clear the usage information for the selected item(s)?",
+                    "Confirm Clear Usage",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.No)
+                    return;
+
+                int modifiedCount = 0;
+
+                // CRITICAL FIX: Get actual DataRows from selected DataGridView rows
+                foreach (DataGridViewRow row in this.machinery_item_inward_unit2DataGridView.SelectedRows)
+                {
+                    DataRowView rowView = row.DataBoundItem as DataRowView;
+                    if (rowView != null)
+                    {
+                        DataRow currentRow = rowView.Row;
+                        
+                        // CRITICAL FIX: Begin edit before modifying
+                        currentRow.BeginEdit();
+                        currentRow["used_in_machine"] = DBNull.Value;
+                        currentRow["taken_by"] = DBNull.Value;
+                        currentRow.EndEdit();
+
+                        // CRITICAL: Mark the row as modified if it's not already
+                        if (currentRow.RowState == DataRowState.Unchanged)
+                        {
+                            currentRow.SetModified();
+                        }
+                        
+                        modifiedCount++;
+                    }
+                }
+
+                // Save to database
+                int recordsSaved = this.machinery_item_inward_unit2TableAdapter.Update(this.mainDB.machinery_item_inward_unit2);
+
+                if (recordsSaved > 0)
+                {
+                    // Accept changes after successful save
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                    
+                    MessageBox.Show("Usage information cleared successfully!", 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    RefreshData();
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved. Modified rows: " + modifiedCount.ToString(), 
+                        "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error clearing usage", ex);
+            }
+        }
+
+        private bool ValidateUsageInput()
+        {
+            if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a parts entry to record usage.", 
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.cmbMachineName.Text))
+            {
+                MessageBox.Show("Please select the machine name where parts will be used.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.cmbMachineName.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.cmbTakenBy.Text))
+            {
+                MessageBox.Show("Please select who is taking the parts.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.cmbTakenBy.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ShowError(string message, Exception ex)
+        {
+            string errorMessage = message + ": " + ex.Message;
+            System.Diagnostics.Debug.WriteLine(errorMessage);
+            System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void rbUnused_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUnused.Checked)
+            {
+                ShowUnusedParts();
+            }
+        }
+
+        private void rbUsed_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUsed.Checked)
+            {
+                ShowUsedParts();
+            }
+        }
+
+        private void rbAll_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbAll.Checked)
+            {
+                ShowAllParts();
+            }
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            RefreshData();
+        }
+
+        private void RefreshData()
+        {
+            try
+            {
+                bool showUnused = rbUnused.Checked;
+                bool showUsed = rbUsed.Checked;
+                bool showAll = rbAll.Checked;
+
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+
+                if (showUnused)
+                    ShowUnusedParts();
+                else if (showUsed)
+                    ShowUsedParts();
+                else if (showAll)
+                    ShowAllParts();
+
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ClearInputFields()
+        {
+            this.cmbMachineName.SelectedIndex = -1;
+            this.cmbTakenBy.SelectedIndex = -1;
+            this.cmbMachineName.Focus();
+        }
+
+        private void btnClearFields_Click(object sender, EventArgs e)
+        {
+            ClearInputFields();
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.machinery_item_inward_unit2BindingSource.Count;
+            lblRecordCount.Text = "Parts Entries: " + totalRecords.ToString();
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void machinery_item_inward_unit2DataGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count > 0)
+            {
+                try
+                {
+                    DataGridViewRow selectedRow = this.machinery_item_inward_unit2DataGridView.SelectedRows[0];
+                    
+                    var machineCell = selectedRow.Cells["dataGridViewTextBoxColumn9"];
+                    var takenByCell = selectedRow.Cells["dataGridViewTextBoxColumn10"];
+
+                    if (!cmbMachineName.Focused && !cmbTakenBy.Focused)
+                    {
+                        if (machineCell.Value != null && machineCell.Value != DBNull.Value)
+                        {
+                            this.cmbMachineName.Text = machineCell.Value.ToString();
+                        }
+                        else
+                        {
+                            this.cmbMachineName.SelectedIndex = -1;
+                        }
+
+                        if (takenByCell.Value != null && takenByCell.Value != DBNull.Value)
+                        {
+                            this.cmbTakenBy.Text = takenByCell.Value.ToString();
+                        }
+                        else
+                        {
+                            this.cmbTakenBy.SelectedIndex = -1;
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string searchText = txtSearch.Text.Trim();
+                
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    MessageBox.Show("Please enter a search term.", 
+                        "Search", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                string baseFilter = string.Format(
+                    "challan_no LIKE '%{0}%' OR " +
+                    "party_name LIKE '%{0}%' OR " +
+                    "item LIKE '%{0}%' OR " +
+                    "used_in_machine LIKE '%{0}%' OR " +
+                    "taken_by LIKE '%{0}%'",
+                    searchText.Replace("'", "''"));
+
+                string currentFilter = "";
+                if (rbUnused.Checked)
+                    currentFilter = "(used_in_machine IS NULL OR used_in_machine = '')";
+                else if (rbUsed.Checked)
+                    currentFilter = "(used_in_machine IS NOT NULL AND used_in_machine <> '')";
+
+                if (!string.IsNullOrEmpty(currentFilter))
+                    this.machinery_item_inward_unit2BindingSource.Filter = currentFilter + " AND (" + baseFilter + ")";
+                else
+                    this.machinery_item_inward_unit2BindingSource.Filter = baseFilter;
+
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error searching", ex);
+            }
+        }
+
+        private void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Clear();
+            
+            if (rbUnused.Checked)
+                ShowUnusedParts();
+            else if (rbUsed.Checked)
+                ShowUsedParts();
+            else
+                ShowAllParts();
+        }
+
+        private void btnManageMachines_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (MachineMasterForm machineMasterForm = new MachineMasterForm())
+                {
+                    machineMasterForm.ShowDialog();
+                }
+                
+                // Refresh machine dropdown after closing the form
+                LoadMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Machine Master form", ex);
+            }
+        }
+
+        private void btnManagePersons_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PersonMasterForm personMasterForm = new PersonMasterForm())
+                {
+                    personMasterForm.ShowDialog();
+                }
+                
+                // Refresh person dropdown after closing the form
+                LoadMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Person Master form", ex);
+            }
+        }
+    }
+}

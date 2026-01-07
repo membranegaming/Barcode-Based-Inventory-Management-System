@@ -1,0 +1,453 @@
+﻿Complete Step-by-Step Guide: Deploying Store Parts with Centralized Database
+I'll provide you with every step needed to deploy your Store Parts application with a centralized database that multiple computers can access.
+---
+PHASE 1: PREPARE THE SERVER (Database Server)
+Step 1.1: Install SQL Server on the Server Machine
+1.	Download SQL Server Express (Free):
+•	Go to: https://www.microsoft.com/en-us/sql-server/sql-server-downloads
+•	Click "Download now" under Express edition
+•	Run the installer
+2.	During Installation:
+•	Choose "Basic" installation type
+•	Accept the license terms
+•	Choose installation location (default is fine)
+•	Click Install
+•	IMPORTANT: Note down the connection string shown at the end:
+ Server=YOUR-SERVER-NAME\SQLEXPRESS
+3.	Install SQL Server Management Studio (SSMS):
+•	Download from: https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms
+•	Run installer and follow prompts
+•	This is needed to manage the database
+---
+Step 1.2: Configure SQL Server for Network Access
+1.	Open SQL Server Configuration Manager:
+•	Press Windows + R
+•	Type: SQLServerManager15.msc (or SQLServerManager14.msc for older versions)
+•	Press Enter
+2.	Enable TCP/IP Protocol:
+•	Expand SQL Server Network Configuration
+•	Click Protocols for SQLEXPRESS
+•	Right-click TCP/IP → Enable
+•	Double-click TCP/IP → Go to IP Addresses tab
+•	Scroll to IPAll section at bottom
+•	Set TCP Port to 1433
+•	Clear TCP Dynamic Ports (leave empty)
+•	Click OK
+3.	Enable SQL Server Browser:
+•	In left panel, click SQL Server Services
+•	Right-click SQL Server Browser → Properties
+•	Set Start Mode to Automatic
+•	Click OK
+•	Right-click SQL Server Browser → Start
+4.	Restart SQL Server:
+•	Right-click SQL Server (SQLEXPRESS) → Restart
+---
+Step 1.3: Configure Windows Firewall
+1.	Open Windows Firewall:
+•	Press Windows + R
+•	Type: firewall.cpl
+•	Press Enter
+2.	Click "Advanced settings" (left panel)
+3.	Create Inbound Rule for SQL Server:
+•	Click Inbound Rules → New Rule...
+•	Select Port → Next
+•	Select TCP, enter 1433 → Next
+•	Select Allow the connection → Next
+•	Check all profiles (Domain, Private, Public) → Next
+•	Name: SQL Server Port 1433 → Finish
+4.	Create Inbound Rule for SQL Browser:
+•	Click Inbound Rules → New Rule...
+•	Select Port → Next
+•	Select UDP, enter 1434 → Next
+•	Select Allow the connection → Next
+•	Check all profiles → Next
+•	Name: SQL Server Browser UDP 1434 → Finish
+---
+Step 1.4: Create the Database
+1.	Open SQL Server Management Studio (SSMS)
+2.	Connect to Server:
+•	Server name: .\SQLEXPRESS or YOUR-COMPUTER-NAME\SQLEXPRESS
+•	Authentication: Windows Authentication
+•	Click Connect
+3.	Create Database:
+•	Right-click Databases → New Database...
+•	Database name: MainDB
+•	Click OK
+4.	Run the Setup Script:
+•	Click New Query button
+•	Copy and paste this script:
+-- ============================================
+-- Store Parts Database Creation Script
+-- ============================================
+
+USE MainDB;
+GO
+
+-- Table: machinery_item_inward_unit2 (Main Data)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'machinery_item_inward_unit2')
+BEGIN
+    CREATE TABLE machinery_item_inward_unit2 (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        challan_no NVARCHAR(50) NOT NULL,
+        date DATE NOT NULL DEFAULT GETDATE(),
+        party_name NVARCHAR(100) NOT NULL,
+        item NVARCHAR(100) NOT NULL,
+        qty INT NOT NULL DEFAULT 0,
+        used_qty INT NOT NULL DEFAULT 0,
+        reference_bill_no NVARCHAR(50) NULL,
+        bill_date DATE NULL,
+        used_in_machine NVARCHAR(100) NULL DEFAULT '',
+        taken_by NVARCHAR(100) NULL DEFAULT ''
+    );
+    PRINT 'Table machinery_item_inward_unit2 created.';
+END
+GO
+
+-- Table: PartyMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PartyMaster')
+BEGIN
+    CREATE TABLE PartyMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        party_name NVARCHAR(100) NOT NULL,
+        address NVARCHAR(255) NULL,
+        contact NVARCHAR(50) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    INSERT INTO PartyMaster (party_name, is_active) VALUES ('Default Party', 1);
+    PRINT 'Table PartyMaster created.';
+END
+GO
+
+-- Table: ItemMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ItemMaster')
+BEGIN
+    CREATE TABLE ItemMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        item_name NVARCHAR(100) NOT NULL,
+        description NVARCHAR(255) NULL,
+        unit NVARCHAR(20) NULL DEFAULT 'PCS',
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    INSERT INTO ItemMaster (item_name, is_active) VALUES ('Default Item', 1);
+    PRINT 'Table ItemMaster created.';
+END
+GO
+
+-- Table: MachineMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MachineMaster')
+BEGIN
+    CREATE TABLE MachineMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        machine_name NVARCHAR(100) NOT NULL,
+        location NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table MachineMaster created.';
+END
+GO
+
+-- Table: PersonMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PersonMaster')
+BEGIN
+    CREATE TABLE PersonMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        person_name NVARCHAR(100) NOT NULL,
+        department NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table PersonMaster created.';
+END
+GO
+
+PRINT '';
+PRINT 'Database setup complete!';
+GO
+5.	Execute the Script:
+•	Click Execute button (or press F5)
+•	You should see "Database setup complete!" in the Messages tab
+---
+Step 1.5: Get Server IP Address
+1.	Open Command Prompt on the server:
+•	Press Windows + R
+•	Type: cmd
+•	Press Enter
+2.	Get IP Address:
+ipconfig
+3.	Note the IPv4 Address (e.g., 192.168.1.100)
+•	This is what client computers will use to connect
+---
+Step 1.6: Test SQL Server Accessibility
+1.	On the Server, open Command Prompt and run:
+netstat -an | findstr 1433
+•	You should see: TCP 0.0.0.0:1433 ... LISTENING
+---
+PHASE 2: BUILD THE APPLICATION
+Step 2.1: Build Release Version in Visual Studio
+1.	Open Visual Studio
+2.	Open the Solution:
+•	File → Open → Project/Solution
+•	Navigate to: C:\Users\Vardh\Desktop\EUP\store parts\
+•	Open store parts.sln
+3.	Set Build Configuration to Release:
+•	In the toolbar, change Debug to Release
+•	Or go to: Build → Configuration Manager → Set Active solution configuration to Release
+4.	Build the Solution:
+•	Build → Build Solution (or press Ctrl + Shift + B)
+•	Wait for "Build succeeded" message
+5.	Verify Output:
+•	Navigate to: store parts\store parts\bin\Release\
+•	You should see:
+•	store parts.exe
+•	Various .dll files
+•	store parts.exe.config
+---
+Step 2.2: Create Installer with Inno Setup
+1.	Download and Install Inno Setup:
+•	Go to: https://jrsoftware.org/isdl.php
+•	Download the latest version
+•	Run installer
+2.	Create the Installer Script:
+•	Create a new file named StorePartsInstaller.iss in your project folder
+•	Copy this content:
+; ============================================
+; Store Parts Management - Installer Script
+; ============================================
+; INSTRUCTIONS:
+; 1. Install Inno Setup from https://jrsoftware.org/isdl.php
+; 2. Build your project in Release mode in Visual Studio
+; 3. Open this file in Inno Setup
+; 4. Press Ctrl+F9 to compile the installer
+; ============================================
+
+#define MyAppName "Store Parts Management"
+#define MyAppVersion "1.0.0"
+#define MyAppPublisher "Your Company Name"
+#define MyAppExeName "store parts.exe"
+
+; IMPORTANT: Update this path to match your actual Release folder
+#define SourcePath "store parts\bin\Release"
+
+[Setup]
+AppId={{8A2B3C4D-5E6F-7890-ABCD-EF1234567890}
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
+DefaultDirName={autopf}\Store Parts
+DefaultGroupName={#MyAppName}
+DisableProgramGroupPage=yes
+OutputDir=Installer_Output
+OutputBaseFilename=StorePartsSetup_v{#MyAppVersion}
+Compression=lzma2/ultra64
+SolidCompression=yes
+WizardStyle=modern
+PrivilegesRequired=admin
+UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayName={#MyAppName}
+MinVersion=6.1sp1
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
+
+[Files]
+; Application files
+Source: "{#SourcePath}\store parts.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\*.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#SourcePath}\*.config"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#SourcePath}\*.xml"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+
+; Documentation
+Source: "DATABASE_SETUP_GUIDE.md"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "DatabaseSetup.sql"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+
+[Icons]
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch Store Parts"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// Check for .NET Framework 4.7.2
+function IsDotNetDetected(): Boolean;
+var
+    release: Cardinal;
+begin
+    Result := False;
+    if RegQueryDWordValue(HKLM, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', release) then
+    begin
+        Result := (release >= 461808); // 461808 = .NET Framework 4.7.2
+    end;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+    Result := True;
+    if not IsDotNetDetected() then
+    begin
+        MsgBox('This application requires .NET Framework 4.7.2 or later.' + #13#10 + #13#10 +
+               'Please download and install it from:' + #13#10 +
+               'https://dotnet.microsoft.com/download/dotnet-framework/net472' + #13#10 + #13#10 +
+               'After installing .NET Framework, run this setup again.', mbError, MB_OK);
+        Result := False;
+    end;
+end;
+
+[Messages]
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nIMPORTANT: After installation, you will need to configure the database connection to connect to your SQL Server.%n%nClick Next to continue.
+3.	Compile the Installer:
+•	Open StorePartsInstaller.iss in Inno Setup
+•	Press Ctrl + F9 or click Build → Compile
+•	Wait for compilation to complete
+•	Installer will be created in: Installer_Output\StorePartsSetup_v1.0.0.exe
+---
+PHASE 3: DEPLOY TO CLIENT COMPUTERS
+Step 3.1: Prerequisites for Each Client Computer
+Before installing on each client computer, ensure:
+1.	Windows 7 SP1 or later (Windows 10/11 recommended)
+2.	.NET Framework 4.7.2 or later:
+•	Most Windows 10/11 computers have this pre-installed
+•	If not installed, download from: https://dotnet.microsoft.com/download/dotnet-framework/net472
+3.	Network connectivity to the server
+---
+Step 3.2: Install Application on Client Computer
+1.	Copy the Installer:
+•	Copy StorePartsSetup_v1.0.0.exe to a USB drive or network share
+2.	Run the Installer on each client computer:
+•	Double-click StorePartsSetup_v1.0.0.exe
+•	If prompted by Windows Defender/UAC, click Yes or Run anyway
+•	Follow the installation wizard:
+•	Click Next
+•	Accept default installation folder (or choose custom)
+•	Click Next
+•	Check "Create desktop shortcut" if desired
+•	Click Install
+•	Wait for installation to complete
+•	Check "Launch Store Parts" and click Finish
+---
+Step 3.3: Configure Database Connection on Each Client
+When the application launches for the first time:
+1.	You'll see the Login screen with a message about database connection
+2.	Click "Configure Database" button
+3.	Enter the following details:
+| Field | Value | |-------|-------| | Server Name | SERVER_IP\SQLEXPRESS (e.g., 192.168.1.100\SQLEXPRESS) | | Database Name | MainDB | | Authentication | Windows Authentication (recommended) |
+Example Server Names:
+•	If server IP is 192.168.1.100: Enter 192.168.1.100\SQLEXPRESS
+•	If server computer name is OFFICE-SERVER: Enter OFFICE-SERVER\SQLEXPRESS
+4.	Click "Test Connection":
+•	If successful: You'll see "Connection successful!" in green
+•	If failed: Check server IP, firewall settings, and SQL Server configuration
+5.	Click "Save and Connect":
+•	The connection settings will be saved
+•	Database tables will be created if needed
+6.	Login to the Application:
+•	Username: admin
+•	Password: admin
+---
+PHASE 4: VERIFICATION & TESTING
+Step 4.1: Test from Server Computer
+1.	Launch Store Parts on the server
+2.	Login with admin/admin
+3.	Add a test entry:
+•	Click Add New
+•	Enter Challan No: TEST001
+•	Select Party and Item
+•	Enter Qty: 10
+•	Click Save
+4.	Verify the entry appears in the grid
+Step 4.2: Test from Client Computer
+1.	Launch Store Parts on a client computer
+2.	Login with admin/admin
+3.	Verify you can see the test entry created from the server
+4.	Add another entry from the client
+5.	Go back to the server and verify the new entry appears
+Step 4.3: Test Multi-User Access
+1.	Have multiple users logged in simultaneously
+2.	One user adds an entry
+3.	Other users click Refresh and verify they see the new entry
+---
+PHASE 5: BACKUP & MAINTENANCE
+Step 5.1: Create Backup Script
+Create a batch file on the server for backups:
+Continuing with the complete deployment guide...
+---
+PHASE 5: BACKUP & MAINTENANCE (Continued)
+Step 5.1: Create Backup Script
+@echo off
+REM ============================================
+REM Store Parts Database Backup Script
+REM ============================================
+REM Run this script daily to backup your database
+REM Schedule using Windows Task Scheduler
+REM ============================================
+
+setlocal
+
+REM Configuration - MODIFY THESE VALUES
+set SERVER_NAME=.\SQLEXPRESS
+set DATABASE_NAME=MainDB
+set BACKUP_FOLDER=C:\DatabaseBackups\StoreParts
+set DAYS_TO_KEEP=30
+
+REM Create backup folder if it doesn't exist
+if not exist "%BACKUP_FOLDER%" mkdir "%BACKUP_FOLDER%"
+
+REM Generate timestamp for filename
+set TIMESTAMP=%date:~-4%%date:~4,2%%date:~7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
+set TIMESTAMP=%TIMESTAMP: =0%
+
+REM Set backup filename
+set BACKUP_FILE=%BACKUP_FOLDER%\%DATABASE_NAME%_%TIMESTAMP%.bak
+
+echo ============================================
+echo Store Parts Database Backup
+echo ============================================
+echo Date/Time: %date% %time%
+echo Server: %SERVER_NAME%
+echo Database: %DATABASE_NAME%
+echo Backup File: %BACKUP_FILE%
+echo ============================================
+echo.
+
+REM Perform backup using sqlcmd
+echo Creating backup...
+sqlcmd -S %SERVER_NAME% -E -Q "BACKUP DATABASE [%DATABASE_NAME%] TO DISK='%BACKUP_FILE%' WITH FORMAT, INIT, NAME='%DATABASE_NAME% Full Backup', SKIP, NOREWIND, NOUNLOAD, STATS=10"
+
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo Backup completed successfully!
+    echo File: %BACKUP_FILE%
+    
+    REM Get file size
+    for %%A in ("%BACKUP_FILE%") do echo Size: %%~zA bytes
+) else (
+    echo.
+    echo ERROR: Backup failed! Error code: %ERRORLEVEL%
+    echo Please check SQL Server is running and accessible.
+)
+
+echo.
+echo ============================================
+echo Cleaning up old backups (older than %DAYS_TO_KEEP% days)...
+echo ============================================
+
+REM Delete backups older than specified days
+forfiles /p "%BACKUP_FOLDER%" /s /m *.bak /d -%DAYS_TO_KEEP% /c "cmd /c del @path && echo Deleted: @file" 2>nul
+
+echo.
+echo Backup process complete.
+echo ============================================
+
+REM Log to file
+echo %date% %time% - Backup completed: %BACKUP_FILE% >> "%BACKUP_FOLDER%\backup_log.txt"
+
+endlocal
+pause
+Step 5.2: Create Restore Script

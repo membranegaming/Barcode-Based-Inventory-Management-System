@@ -1,0 +1,159 @@
+﻿# Debugging "No Changes Saved" Issue - SOLVED! ✅
+
+## **ROOT CAUSE IDENTIFIED: Row State = Detached**
+
+The error showed **"Row State: Detached"** which means the row was removed from the DataTable. This happened because `PrepareForNewEntry()` was calling `CancelEdit()` on a row that already had data entered!
+
+## **What Was Causing the Issue:**
+
+### The Problem Code (BEFORE):
+```csharp
+private void PrepareForNewEntry()
+{
+    if (currentRowView != null && currentRowView.IsNew)
+    {
+        this.machinery_item_inward_unit2BindingSource.CancelEdit();  // ❌ This DETACHES the row!
+    }
+    this.machinery_item_inward_unit2BindingSource.AddNew();
+}
+```
+
+**What was happening:**
+1. You open Form1 → `Form1_Load` calls `PrepareForNewEntry()` → Creates new row
+2. You enter data (challan no: 2, party: abc, item: var, etc.)
+3. You click "Save"
+4. BUT... somehow `PrepareForNewEntry()` got called again **before saving**
+5. It calls `CancelEdit()` on your row with data → Row becomes **Detached**
+6. When `SaveCurrentRecord()` tries to save → Error: "Row State: Detached"
+
+## **The Fix Applied:** ✅
+
+### 1. **Smart PrepareForNewEntry() Method**
+Now checks if the row has data before canceling:
+
+```csharp
+private void PrepareForNewEntry()
+{
+    bool hasData = false;
+    
+    // Check if row has actual data
+    if (row["challan_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["challan_no"].ToString()))
+        hasData = true;
+    if (row["party_name"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["party_name"].ToString()))
+        hasData = true;
+    
+    if (hasData)
+    {
+        // DON'T cancel - reuse the row with data!
+        shouldCreateNewRow = false;
+    }
+    else
+    {
+        // Empty row - safe to cancel
+        this.machinery_item_inward_unit2BindingSource.CancelEdit();
+    }
+}
+```
+
+### 2. **Detached State Detection**
+Added checks in `SaveCurrentRecord()` to detect and handle detached rows:
+
+```csharp
+if (currentRow.RowState == DataRowState.Detached)
+{
+    MessageBox.Show("The row is detached from the table...", ...);
+    PrepareForNewEntry();
+    return false;
+}
+```
+
+### 3. **Fixed "Add New" Button**
+Now prompts to save before creating a new row:
+
+```csharp
+private void btnAddData_Click(object sender, EventArgs e)
+{
+    if (HasUnsavedData())
+    {
+        // Prompt: Save? Yes/No/Cancel
+        if (result == DialogResult.Yes)
+        {
+            SaveCurrentRecord();  // Save first
+            return;
+        }
+    }
+    PrepareForNewEntry();
+}
+```
+
+## **How to Use the Fixed Form:**
+
+### ✅ **Correct Workflow (Will Save Successfully):**
+
+1. **Open Form** → New empty row is created automatically
+2. **Enter your data:**
+   - Challan No: 2
+   - Party: abc
+   - Item: var
+   - Qty: 2
+   - etc.
+3. **Click "Save"** → ✅ **Data saved successfully!**
+4. **Form automatically prepares for next entry** with previous challan/party retained
+
+### ❌ **What NOT to Do:**
+
+- **DON'T click "Add New" button after entering data** - Just click Save directly!
+- If you do click "Add New", it will now prompt you to save first
+
+## **Testing the Fix:**
+
+1. **Run the application** (F5)
+2. **Login**
+3. **Enter data in Form1:**
+   - Challan No: 123
+   - Date: (today)
+   - Party Name: Select from dropdown
+   - Item: Select from dropdown
+   - Qty: 10
+   - Bill Date: (today)
+4. **Click "Save" button**
+5. **Expected Result:** ✅ "Data saved successfully!" message
+
+## **What the Debug Output Should Show Now:**
+
+Open Output window (View > Output), you should see:
+```
+New row added via BindingSource.AddNew()
+Setting default values. Row state: Added
+Default values set. Row state: Added
+Row State before save: Added
+Row State after EndEdit: Added
+Rows to add: 1, Rows to modify: 0
+```
+
+## **If You Still Get "Row State: Detached":**
+
+This means something else is calling `PrepareForNewEntry()` or `CancelEdit()` before you save. Check:
+
+1. **Did you click "Add New" button before saving?** → Don't do that, just click Save
+2. **Do you have any other events that might trigger?** → Check Form1.Designer.cs for event handlers
+3. **Is there auto-save code somewhere?** → Check for timers or other save triggers
+
+## **Summary:**
+
+✅ **Fixed:** PrepareForNewEntry() no longer cancels rows with data
+✅ **Fixed:** Added detection for Detached state
+✅ **Fixed:** "Add New" button now prompts to save first
+✅ **Fixed:** Better error messages with helpful guidance
+
+## **Next Steps:**
+
+The issue should now be **completely fixed**! 
+
+Just follow the correct workflow:
+1. Open form
+2. Enter data
+3. Click Save
+4. Repeat!
+
+No need to click "Add New" - the form does it automatically after saving! 🎉

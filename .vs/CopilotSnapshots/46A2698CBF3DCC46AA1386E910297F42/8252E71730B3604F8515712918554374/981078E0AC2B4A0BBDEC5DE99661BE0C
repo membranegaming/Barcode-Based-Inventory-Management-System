@@ -1,0 +1,552 @@
+﻿namespace store_parts
+{
+    partial class PartsUsageForm
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.Label label1;
+            System.Windows.Forms.Label label2;
+            this.mainDB = new store_parts.MainDB();
+            this.machinery_item_inward_unit2BindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.machinery_item_inward_unit2TableAdapter = new store_parts.MainDBTableAdapters.machinery_item_inward_unit2TableAdapter();
+            this.tableAdapterManager = new store_parts.MainDBTableAdapters.TableAdapterManager();
+            this.machineMasterTableAdapter = new store_parts.MainDBTableAdapters.MachineMasterTableAdapter();
+            this.personMasterTableAdapter = new store_parts.MainDBTableAdapters.PersonMasterTableAdapter();
+            this.machinery_item_inward_unit2DataGridView = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.gbUsageInfo = new System.Windows.Forms.GroupBox();
+            this.cmbMachineName = new System.Windows.Forms.ComboBox();
+            this.machineMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.cmbTakenBy = new System.Windows.Forms.ComboBox();
+            this.personMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.btnRecordUsage = new System.Windows.Forms.Button();
+            this.btnBulkUpdate = new System.Windows.Forms.Button();
+            this.btnClearFields = new System.Windows.Forms.Button();
+            this.gbFilter = new System.Windows.Forms.GroupBox();
+            this.rbUnused = new System.Windows.Forms.RadioButton();
+            this.rbUsed = new System.Windows.Forms.RadioButton();
+            this.rbAll = new System.Windows.Forms.RadioButton();
+            this.lblFilterStatus = new System.Windows.Forms.Label();
+            this.gbSearch = new System.Windows.Forms.GroupBox();
+            this.txtSearch = new System.Windows.Forms.TextBox();
+            this.btnSearch = new System.Windows.Forms.Button();
+            this.btnClearSearch = new System.Windows.Forms.Button();
+            this.btnClearUsage = new System.Windows.Forms.Button();
+            this.btnManageMachines = new System.Windows.Forms.Button();
+            this.btnManagePersons = new System.Windows.Forms.Button();
+            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
+            this.lblRecordCount = new System.Windows.Forms.Label();
+            label1 = new System.Windows.Forms.Label();
+            label2 = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2DataGridView)).BeginInit();
+            this.gbUsageInfo.SuspendLayout();
+            this.gbFilter.SuspendLayout();
+            this.gbSearch.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.machineMasterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.personMasterBindingSource)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(15, 30);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(92, 16);
+            label1.TabIndex = 0;
+            label1.Text = "Machine Name:";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(15, 60);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(69, 16);
+            label2.TabIndex = 2;
+            label2.Text = "Taken By:";
+            // 
+            // mainDB
+            // 
+            this.mainDB.DataSetName = "MainDB";
+            this.mainDB.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // machinery_item_inward_unit2BindingSource
+            // 
+            this.machinery_item_inward_unit2BindingSource.DataMember = "machinery_item_inward_unit2";
+            this.machinery_item_inward_unit2BindingSource.DataSource = this.mainDB;
+            // 
+            // machinery_item_inward_unit2TableAdapter
+            // 
+            this.machinery_item_inward_unit2TableAdapter.ClearBeforeFill = true;
+            // 
+            // tableAdapterManager
+            // 
+            this.tableAdapterManager.BackupDataSetBeforeUpdate = false;
+            this.tableAdapterManager.machinery_item_inward_unit2TableAdapter = this.machinery_item_inward_unit2TableAdapter;
+            this.tableAdapterManager.MachineMasterTableAdapter = this.machineMasterTableAdapter;
+            this.tableAdapterManager.PersonMasterTableAdapter = this.personMasterTableAdapter;
+            this.tableAdapterManager.UpdateOrder = store_parts.MainDBTableAdapters.TableAdapterManager.UpdateOrderOption.InsertUpdateDelete;
+            // 
+            // machineMasterTableAdapter
+            // 
+            this.machineMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // personMasterTableAdapter
+            // 
+            this.personMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // machinery_item_inward_unit2DataGridView
+            // 
+            this.machinery_item_inward_unit2DataGridView.AutoGenerateColumns = false;
+            this.machinery_item_inward_unit2DataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.machinery_item_inward_unit2DataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn1,
+            this.dataGridViewTextBoxColumn2,
+            this.dataGridViewTextBoxColumn3,
+            this.dataGridViewTextBoxColumn4,
+            this.dataGridViewTextBoxColumn5,
+            this.dataGridViewTextBoxColumn6,
+            this.dataGridViewTextBoxColumn7,
+            this.dataGridViewTextBoxColumn8,
+            this.dataGridViewTextBoxColumn9,
+            this.dataGridViewTextBoxColumn10,
+            this.dataGridViewTextBoxColumn11});
+            this.machinery_item_inward_unit2DataGridView.DataSource = this.machinery_item_inward_unit2BindingSource;
+            this.machinery_item_inward_unit2DataGridView.Location = new System.Drawing.Point(20, 270);
+            this.machinery_item_inward_unit2DataGridView.Name = "machinery_item_inward_unit2DataGridView";
+            this.machinery_item_inward_unit2DataGridView.RowHeadersWidth = 51;
+            this.machinery_item_inward_unit2DataGridView.RowTemplate.Height = 24;
+            this.machinery_item_inward_unit2DataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.machinery_item_inward_unit2DataGridView.Size = new System.Drawing.Size(1160, 350);
+            this.machinery_item_inward_unit2DataGridView.TabIndex = 1;
+            this.machinery_item_inward_unit2DataGridView.SelectionChanged += new System.EventHandler(this.machinery_item_inward_unit2DataGridView_SelectionChanged);
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.DataPropertyName = "id";
+            this.dataGridViewTextBoxColumn1.HeaderText = "ID";
+            this.dataGridViewTextBoxColumn1.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.dataGridViewTextBoxColumn1.Width = 50;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.DataPropertyName = "challan_no";
+            this.dataGridViewTextBoxColumn2.HeaderText = "Challan No";
+            this.dataGridViewTextBoxColumn2.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.Width = 100;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.DataPropertyName = "date";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Date";
+            this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.Width = 90;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.DataPropertyName = "party_name";
+            this.dataGridViewTextBoxColumn4.HeaderText = "Party";
+            this.dataGridViewTextBoxColumn4.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.Width = 120;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            this.dataGridViewTextBoxColumn5.DataPropertyName = "item";
+            this.dataGridViewTextBoxColumn5.HeaderText = "Item";
+            this.dataGridViewTextBoxColumn5.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            this.dataGridViewTextBoxColumn5.Width = 120;
+            // 
+            // dataGridViewTextBoxColumn6
+            // 
+            this.dataGridViewTextBoxColumn6.DataPropertyName = "qty";
+            this.dataGridViewTextBoxColumn6.HeaderText = "Qty";
+            this.dataGridViewTextBoxColumn6.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+            this.dataGridViewTextBoxColumn6.Width = 60;
+            // 
+            // dataGridViewTextBoxColumn7
+            // 
+            this.dataGridViewTextBoxColumn7.DataPropertyName = "reference_bill_no";
+            this.dataGridViewTextBoxColumn7.HeaderText = "Ref Bill";
+            this.dataGridViewTextBoxColumn7.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn7.Name = "dataGridViewTextBoxColumn7";
+            this.dataGridViewTextBoxColumn7.Width = 90;
+            // 
+            // dataGridViewTextBoxColumn8
+            // 
+            this.dataGridViewTextBoxColumn8.DataPropertyName = "bill_date";
+            this.dataGridViewTextBoxColumn8.HeaderText = "Bill Date";
+            this.dataGridViewTextBoxColumn8.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn8.Name = "dataGridViewTextBoxColumn8";
+            this.dataGridViewTextBoxColumn8.Width = 90;
+            // 
+            // dataGridViewTextBoxColumn9
+            // 
+            this.dataGridViewTextBoxColumn9.DataPropertyName = "used_in_machine";
+            this.dataGridViewTextBoxColumn9.HeaderText = "Used In Machine";
+            this.dataGridViewTextBoxColumn9.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
+            this.dataGridViewTextBoxColumn9.Width = 150;
+            // 
+            // dataGridViewTextBoxColumn10
+            // 
+            this.dataGridViewTextBoxColumn10.DataPropertyName = "taken_by";
+            this.dataGridViewTextBoxColumn10.HeaderText = "Taken By";
+            this.dataGridViewTextBoxColumn10.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn10.Name = "dataGridViewTextBoxColumn10";
+            this.dataGridViewTextBoxColumn10.Width = 120;
+            // 
+            // dataGridViewTextBoxColumn11
+            // 
+            this.dataGridViewTextBoxColumn11.DataPropertyName = "party_outward_challan_no";
+            this.dataGridViewTextBoxColumn11.HeaderText = "Party Challan";
+            this.dataGridViewTextBoxColumn11.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn11.Name = "dataGridViewTextBoxColumn11";
+            this.dataGridViewTextBoxColumn11.Width = 110;
+            // 
+            // gbUsageInfo
+            // 
+            this.gbUsageInfo.Controls.Add(label1);
+            this.gbUsageInfo.Controls.Add(this.cmbMachineName);
+            this.gbUsageInfo.Controls.Add(label2);
+            this.gbUsageInfo.Controls.Add(this.cmbTakenBy);
+            this.gbUsageInfo.Controls.Add(this.btnRecordUsage);
+            this.gbUsageInfo.Controls.Add(this.btnBulkUpdate);
+            this.gbUsageInfo.Controls.Add(this.btnClearFields);
+            this.gbUsageInfo.Location = new System.Drawing.Point(20, 20);
+            this.gbUsageInfo.Name = "gbUsageInfo";
+            this.gbUsageInfo.Size = new System.Drawing.Size(480, 130);
+            this.gbUsageInfo.TabIndex = 2;
+            this.gbUsageInfo.TabStop = false;
+            this.gbUsageInfo.Text = "Record Parts Usage";
+            // 
+            // machineMasterBindingSource
+            // 
+            this.machineMasterBindingSource.DataMember = "MachineMaster";
+            this.machineMasterBindingSource.DataSource = this.mainDB;
+            this.machineMasterBindingSource.Filter = "is_active = true";
+            // 
+            // cmbMachineName
+            // 
+            this.cmbMachineName.DataSource = this.machineMasterBindingSource;
+            this.cmbMachineName.DisplayMember = "machine_name";
+            this.cmbMachineName.FormattingEnabled = true;
+            this.cmbMachineName.Location = new System.Drawing.Point(115, 27);
+            this.cmbMachineName.Name = "cmbMachineName";
+            this.cmbMachineName.Size = new System.Drawing.Size(350, 24);
+            this.cmbMachineName.TabIndex = 1;
+            this.cmbMachineName.ValueMember = "machine_name";
+            // 
+            // personMasterBindingSource
+            // 
+            this.personMasterBindingSource.DataMember = "PersonMaster";
+            this.personMasterBindingSource.DataSource = this.mainDB;
+            this.personMasterBindingSource.Filter = "is_active = true";
+            // 
+            // cmbTakenBy
+            // 
+            this.cmbTakenBy.DataSource = this.personMasterBindingSource;
+            this.cmbTakenBy.DisplayMember = "person_name";
+            this.cmbTakenBy.FormattingEnabled = true;
+            this.cmbTakenBy.Location = new System.Drawing.Point(115, 57);
+            this.cmbTakenBy.Name = "cmbTakenBy";
+            this.cmbTakenBy.Size = new System.Drawing.Size(350, 24);
+            this.cmbTakenBy.TabIndex = 3;
+            this.cmbTakenBy.ValueMember = "person_name";
+            // 
+            // btnRecordUsage
+            // 
+            this.btnRecordUsage.Location = new System.Drawing.Point(15, 90);
+            this.btnRecordUsage.Name = "btnRecordUsage";
+            this.btnRecordUsage.Size = new System.Drawing.Size(130, 30);
+            this.btnRecordUsage.TabIndex = 4;
+            this.btnRecordUsage.Text = "Record Usage";
+            this.btnRecordUsage.UseVisualStyleBackColor = true;
+            this.btnRecordUsage.Click += new System.EventHandler(this.btnRecordUsage_Click);
+            // 
+            // btnBulkUpdate
+            // 
+            this.btnBulkUpdate.Location = new System.Drawing.Point(155, 90);
+            this.btnBulkUpdate.Name = "btnBulkUpdate";
+            this.btnBulkUpdate.Size = new System.Drawing.Size(150, 30);
+            this.btnBulkUpdate.TabIndex = 5;
+            this.btnBulkUpdate.Text = "Bulk Update Selected";
+            this.btnBulkUpdate.UseVisualStyleBackColor = true;
+            this.btnBulkUpdate.Click += new System.EventHandler(this.btnBulkUpdate_Click);
+            // 
+            // btnClearFields
+            // 
+            this.btnClearFields.Location = new System.Drawing.Point(315, 90);
+            this.btnClearFields.Name = "btnClearFields";
+            this.btnClearFields.Size = new System.Drawing.Size(150, 30);
+            this.btnClearFields.TabIndex = 6;
+            this.btnClearFields.Text = "Clear Fields";
+            this.btnClearFields.UseVisualStyleBackColor = true;
+            this.btnClearFields.Click += new System.EventHandler(this.btnClearFields_Click);
+            // 
+            // gbFilter
+            // 
+            this.gbFilter.Controls.Add(this.rbUnused);
+            this.gbFilter.Controls.Add(this.rbUsed);
+            this.gbFilter.Controls.Add(this.rbAll);
+            this.gbFilter.Controls.Add(this.lblFilterStatus);
+            this.gbFilter.Location = new System.Drawing.Point(520, 20);
+            this.gbFilter.Name = "gbFilter";
+            this.gbFilter.Size = new System.Drawing.Size(300, 130);
+            this.gbFilter.TabIndex = 3;
+            this.gbFilter.TabStop = false;
+            this.gbFilter.Text = "Filter View";
+            // 
+            // rbUnused
+            // 
+            this.rbUnused.AutoSize = true;
+            this.rbUnused.Checked = true;
+            this.rbUnused.Location = new System.Drawing.Point(20, 30);
+            this.rbUnused.Name = "rbUnused";
+            this.rbUnused.Size = new System.Drawing.Size(142, 20);
+            this.rbUnused.TabIndex = 0;
+            this.rbUnused.TabStop = true;
+            this.rbUnused.Text = "Unused Parts Only";
+            this.rbUnused.UseVisualStyleBackColor = true;
+            this.rbUnused.CheckedChanged += new System.EventHandler(this.rbUnused_CheckedChanged);
+            // 
+            // rbUsed
+            // 
+            this.rbUsed.AutoSize = true;
+            this.rbUsed.Location = new System.Drawing.Point(20, 55);
+            this.rbUsed.Name = "rbUsed";
+            this.rbUsed.Size = new System.Drawing.Size(127, 20);
+            this.rbUsed.TabIndex = 1;
+            this.rbUsed.Text = "Used Parts Only";
+            this.rbUsed.UseVisualStyleBackColor = true;
+            this.rbUsed.CheckedChanged += new System.EventHandler(this.rbUsed_CheckedChanged);
+            // 
+            // rbAll
+            // 
+            this.rbAll.AutoSize = true;
+            this.rbAll.Location = new System.Drawing.Point(20, 80);
+            this.rbAll.Name = "rbAll";
+            this.rbAll.Size = new System.Drawing.Size(79, 20);
+            this.rbAll.TabIndex = 2;
+            this.rbAll.Text = "All Parts";
+            this.rbAll.UseVisualStyleBackColor = true;
+            this.rbAll.CheckedChanged += new System.EventHandler(this.rbAll_CheckedChanged);
+            // 
+            // lblFilterStatus
+            // 
+            this.lblFilterStatus.AutoSize = true;
+            this.lblFilterStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblFilterStatus.ForeColor = System.Drawing.Color.Blue;
+            this.lblFilterStatus.Location = new System.Drawing.Point(17, 105);
+            this.lblFilterStatus.Name = "lblFilterStatus";
+            this.lblFilterStatus.Size = new System.Drawing.Size(193, 18);
+            this.lblFilterStatus.TabIndex = 3;
+            this.lblFilterStatus.Text = "Showing: Unused Parts Only";
+            // 
+            // gbSearch
+            // 
+            this.gbSearch.Controls.Add(this.txtSearch);
+            this.gbSearch.Controls.Add(this.btnSearch);
+            this.gbSearch.Controls.Add(this.btnClearSearch);
+            this.gbSearch.Location = new System.Drawing.Point(840, 20);
+            this.gbSearch.Name = "gbSearch";
+            this.gbSearch.Size = new System.Drawing.Size(340, 90);
+            this.gbSearch.TabIndex = 4;
+            this.gbSearch.TabStop = false;
+            this.gbSearch.Text = "Search";
+            // 
+            // txtSearch
+            // 
+            this.txtSearch.Location = new System.Drawing.Point(15, 30);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(310, 22);
+            this.txtSearch.TabIndex = 0;
+            // 
+            // btnSearch
+            // 
+            this.btnSearch.Location = new System.Drawing.Point(15, 55);
+            this.btnSearch.Name = "btnSearch";
+            this.btnSearch.Size = new System.Drawing.Size(150, 28);
+            this.btnSearch.TabIndex = 1;
+            this.btnSearch.Text = "Search";
+            this.btnSearch.UseVisualStyleBackColor = true;
+            this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
+            // 
+            // btnClearSearch
+            // 
+            this.btnClearSearch.Location = new System.Drawing.Point(175, 55);
+            this.btnClearSearch.Name = "btnClearSearch";
+            this.btnClearSearch.Size = new System.Drawing.Size(150, 28);
+            this.btnClearSearch.TabIndex = 2;
+            this.btnClearSearch.Text = "Clear Search";
+            this.btnClearSearch.UseVisualStyleBackColor = true;
+            this.btnClearSearch.Click += new System.EventHandler(this.btnClearSearch_Click);
+            // 
+            // btnClearUsage
+            // 
+            this.btnClearUsage.Location = new System.Drawing.Point(840, 120);
+            this.btnClearUsage.Name = "btnClearUsage";
+            this.btnClearUsage.Size = new System.Drawing.Size(160, 30);
+            this.btnClearUsage.TabIndex = 5;
+            this.btnClearUsage.Text = "Clear Usage Info";
+            this.btnClearUsage.UseVisualStyleBackColor = true;
+            this.btnClearUsage.Click += new System.EventHandler(this.btnClearUsage_Click);
+            // 
+            // btnManageMachines
+            // 
+            this.btnManageMachines.Location = new System.Drawing.Point(520, 170);
+            this.btnManageMachines.Name = "btnManageMachines";
+            this.btnManageMachines.Size = new System.Drawing.Size(160, 30);
+            this.btnManageMachines.TabIndex = 6;
+            this.btnManageMachines.Text = "Manage Machines";
+            this.btnManageMachines.UseVisualStyleBackColor = true;
+            this.btnManageMachines.Click += new System.EventHandler(this.btnManageMachines_Click);
+            // 
+            // btnManagePersons
+            // 
+            this.btnManagePersons.Location = new System.Drawing.Point(690, 170);
+            this.btnManagePersons.Name = "btnManagePersons";
+            this.btnManagePersons.Size = new System.Drawing.Size(160, 30);
+            this.btnManagePersons.TabIndex = 7;
+            this.btnManagePersons.Text = "Manage Persons";
+            this.btnManagePersons.UseVisualStyleBackColor = true;
+            this.btnManagePersons.Click += new System.EventHandler(this.btnManagePersons_Click);
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(20, 170);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(140, 35);
+            this.btnRefresh.TabIndex = 8;
+            this.btnRefresh.Text = "Refresh Data";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
+            // btnClose
+            // 
+            this.btnClose.Location = new System.Drawing.Point(1040, 170);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(140, 35);
+            this.btnClose.TabIndex = 9;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
+            // lblRecordCount
+            // 
+            this.lblRecordCount.AutoSize = true;
+            this.lblRecordCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
+            this.lblRecordCount.Location = new System.Drawing.Point(20, 630);
+            this.lblRecordCount.Name = "lblRecordCount";
+            this.lblRecordCount.Size = new System.Drawing.Size(131, 20);
+            this.lblRecordCount.TabIndex = 10;
+            this.lblRecordCount.Text = "Parts Entries: 0";
+            // 
+            // PartsUsageForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(1200, 660);
+            this.Controls.Add(this.lblRecordCount);
+            this.Controls.Add(this.btnClose);
+            this.Controls.Add(this.btnRefresh);
+            this.Controls.Add(this.btnManagePersons);
+            this.Controls.Add(this.btnManageMachines);
+            this.Controls.Add(this.btnClearUsage);
+            this.Controls.Add(this.gbSearch);
+            this.Controls.Add(this.gbFilter);
+            this.Controls.Add(this.gbUsageInfo);
+            this.Controls.Add(this.machinery_item_inward_unit2DataGridView);
+            this.Name = "PartsUsageForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Parts Usage - Record Machine Usage and Assignment";
+            this.Load += new System.EventHandler(this.PartsUsageForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2DataGridView)).EndInit();
+            this.gbUsageInfo.ResumeLayout(false);
+            this.gbUsageInfo.PerformLayout();
+            this.gbFilter.ResumeLayout(false);
+            this.gbFilter.PerformLayout();
+            this.gbSearch.ResumeLayout(false);
+            this.gbSearch.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.machineMasterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.personMasterBindingSource)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        private MainDB mainDB;
+        private System.Windows.Forms.BindingSource machinery_item_inward_unit2BindingSource;
+        private MainDBTableAdapters.machinery_item_inward_unit2TableAdapter machinery_item_inward_unit2TableAdapter;
+        private MainDBTableAdapters.TableAdapterManager tableAdapterManager;
+        private MainDBTableAdapters.MachineMasterTableAdapter machineMasterTableAdapter;
+        private MainDBTableAdapters.PersonMasterTableAdapter personMasterTableAdapter;
+        private System.Windows.Forms.DataGridView machinery_item_inward_unit2DataGridView;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
+        private System.Windows.Forms.GroupBox gbUsageInfo;
+        private System.Windows.Forms.ComboBox cmbMachineName;
+        private System.Windows.Forms.BindingSource machineMasterBindingSource;
+        private System.Windows.Forms.ComboBox cmbTakenBy;
+        private System.Windows.Forms.BindingSource personMasterBindingSource;
+        private System.Windows.Forms.Button btnRecordUsage;
+        private System.Windows.Forms.Button btnBulkUpdate;
+        private System.Windows.Forms.Button btnClearFields;
+        private System.Windows.Forms.GroupBox gbFilter;
+        private System.Windows.Forms.RadioButton rbUnused;
+        private System.Windows.Forms.RadioButton rbUsed;
+        private System.Windows.Forms.RadioButton rbAll;
+        private System.Windows.Forms.Label lblFilterStatus;
+        private System.Windows.Forms.GroupBox gbSearch;
+        private System.Windows.Forms.TextBox txtSearch;
+        private System.Windows.Forms.Button btnSearch;
+        private System.Windows.Forms.Button btnClearSearch;
+        private System.Windows.Forms.Button btnClearUsage;
+        private System.Windows.Forms.Button btnManageMachines;
+        private System.Windows.Forms.Button btnManagePersons;
+        private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Label lblRecordCount;
+    }
+}

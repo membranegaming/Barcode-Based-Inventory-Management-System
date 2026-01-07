@@ -1,0 +1,674 @@
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class PartsUsageForm : Form
+    {
+        private bool _isLoading = false;
+
+        public PartsUsageForm()
+        {
+            InitializeComponent();
+        }
+
+        private void PartsUsageForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                _isLoading = true;
+
+                // Ensure used_qty column exists in the DataTable schema BEFORE loading data
+                EnsureUsedQtyColumn();
+
+                // Load master data for dropdowns
+                LoadMasterData();
+                
+                LoadPartsData();
+                ShowUnusedParts();
+                UpdateRecordCount();
+
+                // Handle remaining quantity calculation
+                this.machinery_item_inward_unit2DataGridView.CellFormatting += DataGridView_CellFormatting;
+
+                _isLoading = false;
+            }
+            catch (Exception ex)
+            {
+                _isLoading = false;
+                ShowError("Error loading data", ex);
+            }
+        }
+
+        /// <summary>
+        /// Ensures the used_qty column exists in the DataTable schema
+        /// </summary>
+        private void EnsureUsedQtyColumn()
+        {
+            if (!this.mainDB.machinery_item_inward_unit2.Columns.Contains("used_qty"))
+            {
+                var col = new DataColumn("used_qty", typeof(int));
+                col.DefaultValue = 0;
+                col.AllowDBNull = true;
+                this.mainDB.machinery_item_inward_unit2.Columns.Add(col);
+            }
+        }
+
+        private void LoadPartsData()
+        {
+            try
+            {
+                // Ensure column exists before loading
+                EnsureUsedQtyColumn();
+
+                // Load data using direct SQL to include used_qty column
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    string sql = @"SELECT id, challan_no, date, party_name, item, qty, 
+                                   ISNULL(used_qty, 0) as used_qty, reference_bill_no, bill_date, 
+                                   used_in_machine, taken_by 
+                                   FROM machinery_item_inward_unit2
+                                   ORDER BY id DESC";
+                    
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        this.mainDB.machinery_item_inward_unit2.Clear();
+                        adapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                    }
+                }
+                
+                // Accept changes to mark all rows as unchanged
+                this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+            }
+            catch (Exception ex)
+            {
+                // Fallback to TableAdapter if direct SQL fails
+                System.Diagnostics.Debug.WriteLine("LoadPartsData fallback: " + ex.Message);
+                try
+                {
+                    this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                    
+                    // Set default values for used_qty if not present
+                    foreach (DataRow row in this.mainDB.machinery_item_inward_unit2.Rows)
+                    {
+                        if (row["used_qty"] == DBNull.Value)
+                        {
+                            row["used_qty"] = 0;
+                        }
+                    }
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                }
+                catch (Exception innerEx)
+                {
+                    System.Diagnostics.Debug.WriteLine("LoadPartsData fallback also failed: " + innerEx.Message);
+                }
+            }
+        }
+
+        private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            // Calculate and display remaining quantity
+            if (this.machinery_item_inward_unit2DataGridView.Columns[e.ColumnIndex].Name == "colRemainingQty")
+            {
+                if (e.RowIndex >= 0)
+                {
+                    DataGridViewRow row = this.machinery_item_inward_unit2DataGridView.Rows[e.RowIndex];
+                    
+                    int totalQty = 0;
+                    int usedQty = 0;
+                    
+                    var qtyCell = row.Cells["dataGridViewTextBoxColumn6"];
+                    var usedQtyCell = row.Cells["colUsedQty"];
+                    
+                    if (qtyCell.Value != null && qtyCell.Value != DBNull.Value)
+                    {
+                        int.TryParse(qtyCell.Value.ToString(), out totalQty);
+                    }
+                    
+                    if (usedQtyCell.Value != null && usedQtyCell.Value != DBNull.Value)
+                    {
+                        int.TryParse(usedQtyCell.Value.ToString(), out usedQty);
+                    }
+                    
+                    int remaining = totalQty - usedQty;
+                    e.Value = remaining;
+                    
+                    // Color code based on remaining quantity
+                    if (remaining <= 0)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Red;
+                        e.CellStyle.Font = new System.Drawing.Font(e.CellStyle.Font, System.Drawing.FontStyle.Bold);
+                    }
+                    else if (remaining < totalQty)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Orange;
+                    }
+                    else
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Green;
+                    }
+                }
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            try
+            {
+                // Load MachineMaster data for dropdown (only active machines)
+                this.machineMasterTableAdapter.Fill(this.mainDB.MachineMaster);
+                
+                // Load PersonMaster data for dropdown (only active persons)
+                this.personMasterTableAdapter.Fill(this.mainDB.PersonMaster);
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error loading master data", ex);
+            }
+        }
+
+        private void ShowUnusedParts()
+        {
+            // Show parts where remaining quantity > 0 (qty - used_qty > 0)
+            this.machinery_item_inward_unit2BindingSource.Filter = "qty > used_qty OR used_qty IS NULL OR used_qty = 0";
+            lblFilterStatus.Text = "Showing: Parts with Remaining Qty";
+            UpdateRecordCount();
+        }
+
+        private void ShowAllParts()
+        {
+            this.machinery_item_inward_unit2BindingSource.RemoveFilter();
+            lblFilterStatus.Text = "Showing: All Parts";
+            UpdateRecordCount();
+        }
+
+        private void ShowUsedParts()
+        {
+            // Show parts where some quantity has been used
+            this.machinery_item_inward_unit2BindingSource.Filter = "used_qty > 0";
+            lblFilterStatus.Text = "Showing: Parts with Usage (Used > 0)";
+            UpdateRecordCount();
+        }
+
+        /// <summary>
+        /// Gets the connection string from the TableAdapter
+        /// </summary>
+        private string GetConnectionString()
+        {
+            return global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+        }
+
+        /// <summary>
+        /// Updates parts usage directly using SQL command with quantity tracking
+        /// </summary>
+        private int UpdatePartsUsageDirectly(int id, string usedInMachine, string takenBy, int quantityToUse)
+        {
+            int result = 0;
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+            {
+                // Update used_qty by adding the quantity being used, along with machine and taken_by info
+                string sql = @"UPDATE machinery_item_inward_unit2 
+                              SET used_in_machine = @used_in_machine, 
+                                  taken_by = @taken_by,
+                                  used_qty = ISNULL(used_qty, 0) + @quantity_to_use
+                              WHERE id = @id;
+                              SELECT used_qty FROM machinery_item_inward_unit2 WHERE id = @id;";
+                
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@used_in_machine", usedInMachine);
+                    command.Parameters.AddWithValue("@taken_by", takenBy);
+                    command.Parameters.AddWithValue("@quantity_to_use", quantityToUse);
+                    command.Parameters.AddWithValue("@id", id);
+                    
+                    connection.Open();
+                    object newUsedQty = command.ExecuteScalar();
+                    
+                    if (newUsedQty != null && newUsedQty != DBNull.Value)
+                    {
+                        result = 1;
+                        // Update the local DataTable to keep in sync
+                        UpdateLocalRow(id, usedInMachine, takenBy, Convert.ToInt32(newUsedQty));
+                    }
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Updates the local DataTable row to keep it in sync with the database
+        /// </summary>
+        private void UpdateLocalRow(int id, string usedInMachine, string takenBy, int usedQty)
+        {
+            foreach (DataRow row in this.mainDB.machinery_item_inward_unit2.Rows)
+            {
+                if (Convert.ToInt32(row["id"]) == id)
+                {
+                    row["used_in_machine"] = usedInMachine;
+                    row["taken_by"] = takenBy;
+                    row["used_qty"] = usedQty;
+                    row.AcceptChanges();
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the remaining quantity for a part
+        /// </summary>
+        private int GetRemainingQuantity(int id)
+        {
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+            {
+                string sql = "SELECT qty - ISNULL(used_qty, 0) FROM machinery_item_inward_unit2 WHERE id = @id";
+                
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@id", id);
+                    
+                    connection.Open();
+                    object result = command.ExecuteScalar();
+                    return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+                }
+            }
+        }
+
+        private void btnRecordUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!ValidateUsageInput())
+                    return;
+
+                // Get the actual DataRow from the selected DataGridView row
+                DataGridViewRow selectedRow = this.machinery_item_inward_unit2DataGridView.SelectedRows[0];
+                DataRowView rowView = selectedRow.DataBoundItem as DataRowView;
+                
+                if (rowView == null)
+                {
+                    MessageBox.Show("Unable to get row data. Please try again.", 
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                DataRow currentRow = rowView.Row;
+                int id = Convert.ToInt32(currentRow["id"]);
+                int totalQty = Convert.ToInt32(currentRow["qty"]);
+                int usedQty = 0;
+                
+                if (currentRow.Table.Columns.Contains("used_qty") && currentRow["used_qty"] != DBNull.Value)
+                {
+                    usedQty = Convert.ToInt32(currentRow["used_qty"]);
+                }
+                
+                int remainingQty = totalQty - usedQty;
+                int quantityToUse = (int)this.numQuantity.Value;
+                
+                // Validate quantity
+                if (quantityToUse > remainingQty)
+                {
+                    MessageBox.Show(
+                        string.Format("Cannot use {0} units. Only {1} units remaining.", quantityToUse, remainingQty),
+                        "Insufficient Quantity", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                if (quantityToUse <= 0)
+                {
+                    MessageBox.Show("Please enter a valid quantity greater than 0.", 
+                        "Invalid Quantity", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                string machineName = this.cmbMachineName.Text.Trim();
+                string takenBy = this.cmbTakenBy.Text.Trim();
+
+                // Confirm the action
+                DialogResult result = MessageBox.Show(
+                    string.Format("Record usage of {0} unit(s) for this part?\n\nMachine: {1}\nTaken By: {2}", 
+                        quantityToUse, machineName, takenBy),
+                    "Confirm Usage",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                
+                if (result == DialogResult.No)
+                    return;
+
+                // Use direct SQL update with quantity
+                int recordsSaved = UpdatePartsUsageDirectly(id, machineName, takenBy, quantityToUse);
+
+                if (recordsSaved > 0)
+                {
+                    MessageBox.Show(
+                        string.Format("Successfully recorded usage of {0} unit(s)!\nRemaining: {1} unit(s)", 
+                            quantityToUse, remainingQty - quantityToUse), 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    ClearInputFields();
+                    RefreshData();
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved. Please try again.", 
+                        "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error recording parts usage", ex);
+            }
+        }
+
+        private bool ValidateUsageInput()
+        {
+            if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a parts entry to record usage.", 
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.cmbMachineName.Text))
+            {
+                MessageBox.Show("Please select the machine name where parts will be used.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.cmbMachineName.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.cmbTakenBy.Text))
+            {
+                MessageBox.Show("Please select who is taking the parts.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.cmbTakenBy.Focus();
+                return false;
+            }
+
+            if (this.numQuantity.Value <= 0)
+            {
+                MessageBox.Show("Please enter a valid quantity greater than 0.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.numQuantity.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ShowError(string message, Exception ex)
+        {
+            string errorMessage = message + ": " + ex.Message;
+            System.Diagnostics.Debug.WriteLine(errorMessage);
+            System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void rbUnused_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUnused.Checked)
+            {
+                ShowUnusedParts();
+            }
+        }
+
+        private void rbUsed_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUsed.Checked)
+            {
+                ShowUsedParts();
+            }
+        }
+
+        private void rbAll_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbAll.Checked)
+            {
+                ShowAllParts();
+            }
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            RefreshData();
+        }
+
+        private void RefreshData()
+        {
+            try
+            {
+                bool showUnused = rbUnused.Checked;
+                bool showUsed = rbUsed.Checked;
+                bool showAll = rbAll.Checked;
+
+                LoadPartsData();
+
+                if (showUnused)
+                    ShowUnusedParts();
+                else if (showUsed)
+                    ShowUsedParts();
+                else if (showAll)
+                    ShowAllParts();
+
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ClearInputFields()
+        {
+            this.cmbMachineName.SelectedIndex = -1;
+            this.cmbTakenBy.SelectedIndex = -1;
+            this.numQuantity.Value = 1;
+            this.cmbMachineName.Focus();
+        }
+
+        private void btnClearFields_Click(object sender, EventArgs e)
+        {
+            ClearInputFields();
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.machinery_item_inward_unit2BindingSource.Count;
+            lblRecordCount.Text = "Parts Entries: " + totalRecords.ToString();
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void machinery_item_inward_unit2DataGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count > 0)
+            {
+                try
+                {
+                    DataGridViewRow selectedRow = this.machinery_item_inward_unit2DataGridView.SelectedRows[0];
+                    DataRowView rowView = selectedRow.DataBoundItem as DataRowView;
+                    
+                    if (rowView != null)
+                    {
+                        DataRow currentRow = rowView.Row;
+                        
+                        // Calculate and display remaining quantity
+                        int totalQty = 0;
+                        int usedQty = 0;
+                        
+                        if (currentRow["qty"] != DBNull.Value)
+                        {
+                            totalQty = Convert.ToInt32(currentRow["qty"]);
+                        }
+                        
+                        if (currentRow.Table.Columns.Contains("used_qty") && currentRow["used_qty"] != DBNull.Value)
+                        {
+                            usedQty = Convert.ToInt32(currentRow["used_qty"]);
+                        }
+                        
+                        int remainingQty = totalQty - usedQty;
+                        
+                        // Update the available quantity label
+                        this.lblAvailableQty.Text = string.Format("Available: {0}", remainingQty);
+                        
+                        if (remainingQty <= 0)
+                        {
+                            this.lblAvailableQty.ForeColor = System.Drawing.Color.Red;
+                        }
+                        else if (remainingQty < totalQty)
+                        {
+                            this.lblAvailableQty.ForeColor = System.Drawing.Color.Orange;
+                        }
+                        else
+                        {
+                            this.lblAvailableQty.ForeColor = System.Drawing.Color.Green;
+                        }
+                        
+                        // Set the max value for numQuantity to remaining quantity
+                        if (remainingQty > 0)
+                        {
+                            this.numQuantity.Maximum = remainingQty;
+                            this.numQuantity.Value = Math.Min(this.numQuantity.Value, remainingQty);
+                        }
+                        else
+                        {
+                            this.numQuantity.Maximum = 1;
+                            this.numQuantity.Value = 1;
+                        }
+                        
+                        // Load existing machine and taken by info
+                        var machineCell = selectedRow.Cells["dataGridViewTextBoxColumn9"];
+                        var takenByCell = selectedRow.Cells["dataGridViewTextBoxColumn10"];
+
+                        if (!cmbMachineName.Focused && !cmbTakenBy.Focused)
+                        {
+                            if (machineCell.Value != null && machineCell.Value != DBNull.Value)
+                            {
+                                this.cmbMachineName.Text = machineCell.Value.ToString();
+                            }
+                            else
+                            {
+                                this.cmbMachineName.SelectedIndex = -1;
+                            }
+
+                            if (takenByCell.Value != null && takenByCell.Value != DBNull.Value)
+                            {
+                                this.cmbTakenBy.Text = takenByCell.Value.ToString();
+                            }
+                            else
+                            {
+                                this.cmbTakenBy.SelectedIndex = -1;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Selection changed error: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string searchText = txtSearch.Text.Trim();
+                
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    MessageBox.Show("Please enter a search term.", 
+                        "Search", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                string baseFilter = string.Format(
+                    "challan_no LIKE '%{0}%' OR " +
+                    "party_name LIKE '%{0}%' OR " +
+                    "item LIKE '%{0}%' OR " +
+                    "used_in_machine LIKE '%{0}%' OR " +
+                    "taken_by LIKE '%{0}%'",
+                    searchText.Replace("'", "''"));
+
+                // Also search by ID if the search text is a number
+                int searchId;
+                if (int.TryParse(searchText, out searchId))
+                {
+                    baseFilter = string.Format("id = {0} OR ", searchId) + baseFilter;
+                }
+
+                string currentFilter = "";
+                if (rbUnused.Checked)
+                    currentFilter = "(qty > used_qty OR used_qty IS NULL OR used_qty = 0)";
+                else if (rbUsed.Checked)
+                    currentFilter = "(used_qty > 0)";
+
+                if (!string.IsNullOrEmpty(currentFilter))
+                    this.machinery_item_inward_unit2BindingSource.Filter = currentFilter + " AND (" + baseFilter + ")";
+                else
+                    this.machinery_item_inward_unit2BindingSource.Filter = baseFilter;
+
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error searching", ex);
+            }
+        }
+
+        private void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Clear();
+            
+            if (rbUnused.Checked)
+                ShowUnusedParts();
+            else if (rbUsed.Checked)
+                ShowUsedParts();
+            else
+                ShowAllParts();
+        }
+
+        private void btnManageMachines_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (MachineMasterForm machineMasterForm = new MachineMasterForm())
+                {
+                    machineMasterForm.ShowDialog();
+                }
+                
+                // Refresh machine dropdown after closing the form
+                LoadMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Machine Master form", ex);
+            }
+        }
+
+        private void btnManagePersons_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PersonMasterForm personMasterForm = new PersonMasterForm())
+                {
+                    personMasterForm.ShowDialog();
+                }
+                
+                // Refresh person dropdown after closing the form
+                LoadMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Person Master form", ex);
+            }
+        }
+    }
+}

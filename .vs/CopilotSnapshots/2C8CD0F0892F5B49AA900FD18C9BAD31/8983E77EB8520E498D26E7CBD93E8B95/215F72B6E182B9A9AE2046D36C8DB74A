@@ -1,0 +1,389 @@
+﻿namespace store_parts
+{
+    partial class ItemMasterForm
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.Label idLabel;
+            System.Windows.Forms.Label item_nameLabel;
+            System.Windows.Forms.Label item_codeLabel;
+            System.Windows.Forms.Label descriptionLabel;
+            System.Windows.Forms.Label unitLabel;
+            System.Windows.Forms.Label is_activeLabel;
+            this.mainDB = new store_parts.MainDB();
+            this.itemMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.itemMasterTableAdapter = new store_parts.MainDBTableAdapters.ItemMasterTableAdapter();
+            this.tableAdapterManager = new store_parts.MainDBTableAdapters.TableAdapterManager();
+            this.itemMasterDataGridView = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewCheckBoxColumn1 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.idTextBox = new System.Windows.Forms.TextBox();
+            this.item_nameTextBox = new System.Windows.Forms.TextBox();
+            this.item_codeTextBox = new System.Windows.Forms.TextBox();
+            this.descriptionTextBox = new System.Windows.Forms.TextBox();
+            this.unitTextBox = new System.Windows.Forms.TextBox();
+            this.is_activeCheckBox = new System.Windows.Forms.CheckBox();
+            this.btnAdd = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnDelete = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
+            this.lblRecordCount = new System.Windows.Forms.Label();
+            idLabel = new System.Windows.Forms.Label();
+            item_nameLabel = new System.Windows.Forms.Label();
+            item_codeLabel = new System.Windows.Forms.Label();
+            descriptionLabel = new System.Windows.Forms.Label();
+            unitLabel = new System.Windows.Forms.Label();
+            is_activeLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterDataGridView)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // idLabel
+            // 
+            idLabel.AutoSize = true;
+            idLabel.Location = new System.Drawing.Point(30, 30);
+            idLabel.Name = "idLabel";
+            idLabel.Size = new System.Drawing.Size(21, 16);
+            idLabel.TabIndex = 1;
+            idLabel.Text = "ID:";
+            // 
+            // item_nameLabel
+            // 
+            item_nameLabel.AutoSize = true;
+            item_nameLabel.Location = new System.Drawing.Point(30, 60);
+            item_nameLabel.Name = "item_nameLabel";
+            item_nameLabel.Size = new System.Drawing.Size(82, 16);
+            item_nameLabel.TabIndex = 3;
+            item_nameLabel.Text = "Item Name:*";
+            // 
+            // item_codeLabel
+            // 
+            item_codeLabel.AutoSize = true;
+            item_codeLabel.Location = new System.Drawing.Point(30, 90);
+            item_codeLabel.Name = "item_codeLabel";
+            item_codeLabel.Size = new System.Drawing.Size(71, 16);
+            item_codeLabel.TabIndex = 5;
+            item_codeLabel.Text = "Item Code:";
+            // 
+            // descriptionLabel
+            // 
+            descriptionLabel.AutoSize = true;
+            descriptionLabel.Location = new System.Drawing.Point(30, 120);
+            descriptionLabel.Name = "descriptionLabel";
+            descriptionLabel.Size = new System.Drawing.Size(78, 16);
+            descriptionLabel.TabIndex = 7;
+            descriptionLabel.Text = "Description:";
+            // 
+            // unitLabel
+            // 
+            unitLabel.AutoSize = true;
+            unitLabel.Location = new System.Drawing.Point(30, 190);
+            unitLabel.Name = "unitLabel";
+            unitLabel.Size = new System.Drawing.Size(32, 16);
+            unitLabel.TabIndex = 9;
+            unitLabel.Text = "Unit:";
+            // 
+            // is_activeLabel
+            // 
+            is_activeLabel.AutoSize = true;
+            is_activeLabel.Location = new System.Drawing.Point(30, 220);
+            is_activeLabel.Name = "is_activeLabel";
+            is_activeLabel.Size = new System.Drawing.Size(49, 16);
+            is_activeLabel.TabIndex = 11;
+            is_activeLabel.Text = "Active:";
+            // 
+            // mainDB
+            // 
+            this.mainDB.DataSetName = "MainDB";
+            this.mainDB.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // itemMasterBindingSource
+            // 
+            this.itemMasterBindingSource.DataMember = "ItemMaster";
+            this.itemMasterBindingSource.DataSource = this.mainDB;
+            // 
+            // itemMasterTableAdapter
+            // 
+            this.itemMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // tableAdapterManager
+            // 
+            this.tableAdapterManager.BackupDataSetBeforeUpdate = false;
+            this.tableAdapterManager.ItemMasterTableAdapter = this.itemMasterTableAdapter;
+            this.tableAdapterManager.UpdateOrder = store_parts.MainDBTableAdapters.TableAdapterManager.UpdateOrderOption.InsertUpdateDelete;
+            // 
+            // itemMasterDataGridView
+            // 
+            this.itemMasterDataGridView.AutoGenerateColumns = false;
+            this.itemMasterDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.itemMasterDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn1,
+            this.dataGridViewTextBoxColumn2,
+            this.dataGridViewTextBoxColumn3,
+            this.dataGridViewTextBoxColumn4,
+            this.dataGridViewTextBoxColumn5,
+            this.dataGridViewCheckBoxColumn1});
+            this.itemMasterDataGridView.DataSource = this.itemMasterBindingSource;
+            this.itemMasterDataGridView.Location = new System.Drawing.Point(30, 300);
+            this.itemMasterDataGridView.Name = "itemMasterDataGridView";
+            this.itemMasterDataGridView.RowHeadersWidth = 51;
+            this.itemMasterDataGridView.RowTemplate.Height = 24;
+            this.itemMasterDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.itemMasterDataGridView.Size = new System.Drawing.Size(740, 250);
+            this.itemMasterDataGridView.TabIndex = 13;
+            this.itemMasterDataGridView.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.itemMasterDataGridView_CellDoubleClick);
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.DataPropertyName = "id";
+            this.dataGridViewTextBoxColumn1.HeaderText = "ID";
+            this.dataGridViewTextBoxColumn1.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.dataGridViewTextBoxColumn1.Width = 50;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.DataPropertyName = "item_name";
+            this.dataGridViewTextBoxColumn2.HeaderText = "Item Name";
+            this.dataGridViewTextBoxColumn2.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.Width = 150;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.DataPropertyName = "item_code";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Item Code";
+            this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.Width = 100;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.DataPropertyName = "description";
+            this.dataGridViewTextBoxColumn4.HeaderText = "Description";
+            this.dataGridViewTextBoxColumn4.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.Width = 200;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            this.dataGridViewTextBoxColumn5.DataPropertyName = "unit";
+            this.dataGridViewTextBoxColumn5.HeaderText = "Unit";
+            this.dataGridViewTextBoxColumn5.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            this.dataGridViewTextBoxColumn5.Width = 80;
+            // 
+            // dataGridViewCheckBoxColumn1
+            // 
+            this.dataGridViewCheckBoxColumn1.DataPropertyName = "is_active";
+            this.dataGridViewCheckBoxColumn1.HeaderText = "Active";
+            this.dataGridViewCheckBoxColumn1.MinimumWidth = 6;
+            this.dataGridViewCheckBoxColumn1.Name = "dataGridViewCheckBoxColumn1";
+            this.dataGridViewCheckBoxColumn1.Width = 60;
+            // 
+            // idTextBox
+            // 
+            this.idTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.itemMasterBindingSource, "id", true));
+            this.idTextBox.Location = new System.Drawing.Point(160, 27);
+            this.idTextBox.Name = "idTextBox";
+            this.idTextBox.ReadOnly = true;
+            this.idTextBox.BackColor = System.Drawing.SystemColors.Control;
+            this.idTextBox.TabStop = false;
+            this.idTextBox.Size = new System.Drawing.Size(200, 22);
+            this.idTextBox.TabIndex = 2;
+            // 
+            // item_nameTextBox
+            // 
+            this.item_nameTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.itemMasterBindingSource, "item_name", true));
+            this.item_nameTextBox.Location = new System.Drawing.Point(160, 57);
+            this.item_nameTextBox.Name = "item_nameTextBox";
+            this.item_nameTextBox.Size = new System.Drawing.Size(300, 22);
+            this.item_nameTextBox.TabIndex = 4;
+            // 
+            // item_codeTextBox
+            // 
+            this.item_codeTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.itemMasterBindingSource, "item_code", true));
+            this.item_codeTextBox.Location = new System.Drawing.Point(160, 87);
+            this.item_codeTextBox.Name = "item_codeTextBox";
+            this.item_codeTextBox.Size = new System.Drawing.Size(200, 22);
+            this.item_codeTextBox.TabIndex = 6;
+            // 
+            // descriptionTextBox
+            // 
+            this.descriptionTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.itemMasterBindingSource, "description", true));
+            this.descriptionTextBox.Location = new System.Drawing.Point(160, 117);
+            this.descriptionTextBox.Multiline = true;
+            this.descriptionTextBox.Name = "descriptionTextBox";
+            this.descriptionTextBox.Size = new System.Drawing.Size(400, 60);
+            this.descriptionTextBox.TabIndex = 8;
+            // 
+            // unitTextBox
+            // 
+            this.unitTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.itemMasterBindingSource, "unit", true));
+            this.unitTextBox.Location = new System.Drawing.Point(160, 187);
+            this.unitTextBox.Name = "unitTextBox";
+            this.unitTextBox.Size = new System.Drawing.Size(150, 22);
+            this.unitTextBox.TabIndex = 10;
+            // 
+            // is_activeCheckBox
+            // 
+            this.is_activeCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("CheckState", this.itemMasterBindingSource, "is_active", true));
+            this.is_activeCheckBox.Location = new System.Drawing.Point(160, 218);
+            this.is_activeCheckBox.Name = "is_activeCheckBox";
+            this.is_activeCheckBox.Size = new System.Drawing.Size(104, 24);
+            this.is_activeCheckBox.TabIndex = 12;
+            this.is_activeCheckBox.Text = "Active";
+            this.is_activeCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // btnAdd
+            // 
+            this.btnAdd.Location = new System.Drawing.Point(30, 260);
+            this.btnAdd.Name = "btnAdd";
+            this.btnAdd.Size = new System.Drawing.Size(100, 30);
+            this.btnAdd.TabIndex = 14;
+            this.btnAdd.Text = "Add New";
+            this.btnAdd.UseVisualStyleBackColor = true;
+            this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
+            // 
+            // btnSave
+            // 
+            this.btnSave.Location = new System.Drawing.Point(140, 260);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(100, 30);
+            this.btnSave.TabIndex = 15;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.Location = new System.Drawing.Point(250, 260);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(100, 30);
+            this.btnDelete.TabIndex = 16;
+            this.btnDelete.Text = "Delete";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.Location = new System.Drawing.Point(360, 260);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(100, 30);
+            this.btnClear.TabIndex = 17;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(560, 260);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(100, 30);
+            this.btnRefresh.TabIndex = 18;
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
+            // btnClose
+            // 
+            this.btnClose.Location = new System.Drawing.Point(670, 260);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(100, 30);
+            this.btnClose.TabIndex = 19;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
+            // lblRecordCount
+            // 
+            this.lblRecordCount.AutoSize = true;
+            this.lblRecordCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblRecordCount.Location = new System.Drawing.Point(30, 560);
+            this.lblRecordCount.Name = "lblRecordCount";
+            this.lblRecordCount.Size = new System.Drawing.Size(105, 18);
+            this.lblRecordCount.TabIndex = 20;
+            this.lblRecordCount.Text = "Total Items: 0";
+            // 
+            // ItemMasterForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(800, 590);
+            this.Controls.Add(this.lblRecordCount);
+            this.Controls.Add(this.btnClose);
+            this.Controls.Add(this.btnRefresh);
+            this.Controls.Add(this.btnClear);
+            this.Controls.Add(this.btnDelete);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnAdd);
+            this.Controls.Add(this.itemMasterDataGridView);
+            this.Controls.Add(idLabel);
+            this.Controls.Add(this.idTextBox);
+            this.Controls.Add(item_nameLabel);
+            this.Controls.Add(this.item_nameTextBox);
+            this.Controls.Add(item_codeLabel);
+            this.Controls.Add(this.item_codeTextBox);
+            this.Controls.Add(descriptionLabel);
+            this.Controls.Add(this.descriptionTextBox);
+            this.Controls.Add(unitLabel);
+            this.Controls.Add(this.unitTextBox);
+            this.Controls.Add(is_activeLabel);
+            this.Controls.Add(this.is_activeCheckBox);
+            this.Name = "ItemMasterForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Item Master - Manage Items";
+            this.Load += new System.EventHandler(this.ItemMasterForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterDataGridView)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+        }
+
+        private MainDB mainDB;
+        private System.Windows.Forms.BindingSource itemMasterBindingSource;
+        private MainDBTableAdapters.ItemMasterTableAdapter itemMasterTableAdapter;
+        private MainDBTableAdapters.TableAdapterManager tableAdapterManager;
+        private System.Windows.Forms.DataGridView itemMasterDataGridView;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn1;
+        private System.Windows.Forms.TextBox idTextBox;
+        private System.Windows.Forms.TextBox item_nameTextBox;
+        private System.Windows.Forms.TextBox item_codeTextBox;
+        private System.Windows.Forms.TextBox descriptionTextBox;
+        private System.Windows.Forms.TextBox unitTextBox;
+        private System.Windows.Forms.CheckBox is_activeCheckBox;
+        private System.Windows.Forms.Button btnAdd;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Label lblRecordCount;
+    }
+}

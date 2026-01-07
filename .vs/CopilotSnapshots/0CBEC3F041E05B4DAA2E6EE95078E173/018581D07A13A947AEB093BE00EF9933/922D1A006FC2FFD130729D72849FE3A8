@@ -1,0 +1,371 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing.Printing;
+using System.Text;
+
+namespace store_parts
+{
+    /// <summary>
+    /// Barcode printer class for TSC TTP-24 Pro and compatible label printers.
+    /// Uses TSPL (TSC Printer Language) commands for printing barcodes.
+    /// </summary>
+    public class BarcodePrinter
+    {
+        #region Properties
+
+        /// <summary>
+        /// Name of the printer to use
+        /// </summary>
+        public string PrinterName { get; set; }
+
+        /// <summary>
+        /// Label width in mm
+        /// </summary>
+        public int LabelWidth { get; set; } = 50;
+
+        /// <summary>
+        /// Label height in mm
+        /// </summary>
+        public int LabelHeight { get; set; } = 30;
+
+        /// <summary>
+        /// Gap between labels in mm
+        /// </summary>
+        public int LabelGap { get; set; } = 3;
+
+        /// <summary>
+        /// Print speed (1-5 for TTP-24 Pro)
+        /// </summary>
+        public int PrintSpeed { get; set; } = 4;
+
+        /// <summary>
+        /// Print darkness/density (0-15)
+        /// </summary>
+        public int PrintDensity { get; set; } = 8;
+
+        /// <summary>
+        /// Dots per mm (8 dots/mm for 203 DPI printers like TTP-24 Pro)
+        /// </summary>
+        public int DotsPerMm { get; set; } = 8;
+
+        /// <summary>
+        /// Barcode type (CODE128, CODE39, EAN13, etc.)
+        /// </summary>
+        public string BarcodeType { get; set; } = "128";
+
+        /// <summary>
+        /// Barcode height in mm
+        /// </summary>
+        public int BarcodeHeight { get; set; } = 15;
+
+        /// <summary>
+        /// Show human readable text under barcode
+        /// </summary>
+        public bool ShowHumanReadable { get; set; } = true;
+
+        /// <summary>
+        /// Number of copies to print
+        /// </summary>
+        public int Copies { get; set; } = 1;
+
+        #endregion
+
+        #region Constructor
+
+        public BarcodePrinter()
+        {
+            // Try to get default printer or TSC printer
+            PrinterName = GetDefaultPrinter();
+        }
+
+        public BarcodePrinter(string printerName)
+        {
+            PrinterName = printerName;
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// Get list of available printers on the system
+        /// </summary>
+        public static List<string> GetAvailablePrinters()
+        {
+            List<string> printers = new List<string>();
+            foreach (string printer in PrinterSettings.InstalledPrinters)
+            {
+                printers.Add(printer);
+            }
+            return printers;
+        }
+
+        /// <summary>
+        /// Get the default printer name
+        /// </summary>
+        public static string GetDefaultPrinter()
+        {
+            PrinterSettings settings = new PrinterSettings();
+            return settings.PrinterName;
+        }
+
+        /// <summary>
+        /// Check if a TSC printer is available
+        /// </summary>
+        public static string FindTSCPrinter()
+        {
+            foreach (string printer in PrinterSettings.InstalledPrinters)
+            {
+                if (printer.ToUpper().Contains("TSC") || printer.ToUpper().Contains("TTP"))
+                {
+                    return printer;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Print a simple barcode label with item name and barcode
+        /// </summary>
+        /// <param name="barcodeData">The data to encode in the barcode</param>
+        /// <param name="itemName">Optional item name to print above barcode</param>
+        /// <returns>True if print was successful</returns>
+        public bool PrintBarcode(string barcodeData, string itemName = null)
+        {
+            if (string.IsNullOrEmpty(PrinterName))
+            {
+                throw new InvalidOperationException("No printer selected");
+            }
+
+            if (string.IsNullOrEmpty(barcodeData))
+            {
+                throw new ArgumentNullException(nameof(barcodeData), "Barcode data cannot be empty");
+            }
+
+            string tsplCommand = GenerateTSPLCommand(barcodeData, itemName);
+            return RawPrinterHelper.SendStringToPrinter(PrinterName, tsplCommand);
+        }
+
+        /// <summary>
+        /// Print multiple barcode labels
+        /// </summary>
+        /// <param name="barcodeData">The data to encode in the barcode</param>
+        /// <param name="itemName">Optional item name to print above barcode</param>
+        /// <param name="quantity">Number of labels to print</param>
+        /// <returns>True if print was successful</returns>
+        public bool PrintBarcodes(string barcodeData, string itemName, int quantity)
+        {
+            int originalCopies = Copies;
+            Copies = quantity;
+            bool result = PrintBarcode(barcodeData, itemName);
+            Copies = originalCopies;
+            return result;
+        }
+
+        /// <summary>
+        /// Print a test label to verify printer settings
+        /// </summary>
+        public bool PrintTestLabel()
+        {
+            return PrintBarcode("TEST12345", "TEST LABEL");
+        }
+
+        /// <summary>
+        /// Generate TSPL command string for printing
+        /// </summary>
+        private string GenerateTSPLCommand(string barcodeData, string itemName)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            // Initialize printer
+            sb.AppendLine("CLS");  // Clear image buffer
+
+            // Set label size (width, height in mm)
+            sb.AppendLine($"SIZE {LabelWidth} mm, {LabelHeight} mm");
+
+            // Set gap between labels
+            sb.AppendLine($"GAP {LabelGap} mm, 0 mm");
+
+            // Set print speed
+            sb.AppendLine($"SPEED {PrintSpeed}");
+
+            // Set print density
+            sb.AppendLine($"DENSITY {PrintDensity}");
+
+            // Set direction and origin
+            sb.AppendLine("DIRECTION 1,0");
+            sb.AppendLine("REFERENCE 0,0");
+
+            // Clear buffer
+            sb.AppendLine("CLS");
+
+            // Calculate positions in dots
+            int centerX = (LabelWidth * DotsPerMm) / 2;
+            int currentY = 10; // Start 10 dots from top
+
+            // Print item name only if provided
+            if (!string.IsNullOrEmpty(itemName))
+            {
+                // Truncate if too long
+                string displayName = itemName.Length > 25 ? itemName.Substring(0, 25) : itemName;
+                
+                // Center the text
+                int textX = Math.Max(10, centerX - (displayName.Length * 6)); // Approximate character width
+                
+                // TEXT command: X, Y, font, rotation, x-multiplication, y-multiplication, "content"
+                sb.AppendLine($"TEXT {textX},{currentY},\"2\",0,1,1,\"{EscapeString(displayName)}\"");
+                currentY += 40; // Move down for barcode
+            }
+
+            // Calculate barcode position (centered)
+            int barcodeX = Math.Max(10, (LabelWidth * DotsPerMm - 200) / 2);
+            int barcodeHeightDots = BarcodeHeight * DotsPerMm;
+
+            // Human readable text option - only show if itemName is provided AND ShowHumanReadable is true
+            // When printing barcode only (no itemName), don't show human readable text
+            int humanReadable = (!string.IsNullOrEmpty(itemName) && ShowHumanReadable) ? 2 : 0; // 0=no, 1=above, 2=below, 3=both
+
+            // BARCODE command: X, Y, type, height, human readable, rotation, narrow, wide, "data"
+            // Type: 128 = Code 128, 39 = Code 39, EAN13, etc.
+            sb.AppendLine($"BARCODE {barcodeX},{currentY},\"{BarcodeType}\",{barcodeHeightDots},{humanReadable},0,2,4,\"{EscapeString(barcodeData)}\"");
+
+            // Print command (copies, number of label sets)
+            sb.AppendLine($"PRINT {Copies},1");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Escape special characters for TSPL string
+        /// </summary>
+        private string EscapeString(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+
+            // Replace quotes and special characters
+            return input
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "")
+                .Replace("\n", " ");
+        }
+
+        /// <summary>
+        /// Generate a barcode for an item using ID and name
+        /// </summary>
+        public static string GenerateItemBarcode(int itemId, string itemName)
+        {
+            // Create a barcode that combines ID and a hash of the name
+            // Format: ID-HASH (e.g., "00001-A5F2")
+            string idPart = itemId.ToString().PadLeft(5, '0');
+            string hashPart = GetShortHash(itemName);
+            return $"{idPart}-{hashPart}";
+        }
+
+        /// <summary>
+        /// Generate a short hash from a string
+        /// </summary>
+        private static string GetShortHash(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "0000";
+
+            int hash = input.GetHashCode();
+            return Math.Abs(hash).ToString("X4").Substring(0, 4);
+        }
+
+        /// <summary>
+        /// Load printer configuration from application settings
+        /// </summary>
+        public static BarcodePrinter LoadFromSettings()
+        {
+            var p = new BarcodePrinter();
+            try
+            {
+                var s = Properties.Settings.Default;
+                if (!string.IsNullOrEmpty(s.BarcodePrinterName)) p.PrinterName = s.BarcodePrinterName;
+                p.LabelWidth = s.BarcodeLabelWidth > 0 ? s.BarcodeLabelWidth : p.LabelWidth;
+                p.LabelHeight = s.BarcodeLabelHeight > 0 ? s.BarcodeLabelHeight : p.LabelHeight;
+                p.LabelGap = s.BarcodeLabelGap > 0 ? s.BarcodeLabelGap : p.LabelGap;
+                p.PrintSpeed = s.BarcodePrintSpeed > 0 ? s.BarcodePrintSpeed : p.PrintSpeed;
+                p.PrintDensity = s.BarcodePrintDensity > 0 ? s.BarcodePrintDensity : p.PrintDensity;
+                p.BarcodeHeight = s.BarcodeBarcodeHeight > 0 ? s.BarcodeBarcodeHeight : p.BarcodeHeight;
+                p.Copies = s.BarcodeCopies > 0 ? s.BarcodeCopies : p.Copies;
+                p.ShowHumanReadable = s.BarcodeShowHumanReadable;
+                if (!string.IsNullOrEmpty(s.BarcodeType)) p.BarcodeType = s.BarcodeType;
+            }
+            catch
+            {
+                // ignore, use defaults
+            }
+            return p;
+        }
+
+        #endregion
+
+        #region Barcode Types
+
+        /// <summary>
+        /// Supported barcode types for TSC printers
+        /// </summary>
+        public static class BarcodeTypes
+        {
+            public const string Code128 = "128";
+            public const string Code128M = "128M";
+            public const string EAN128 = "EAN128";
+            public const string Code39 = "39";
+            public const string Code39C = "39C";  // Code 39 with checksum
+            public const string Code93 = "93";
+            public const string EAN13 = "EAN13";
+            public const string EAN13_2 = "EAN13+2";
+            public const string EAN13_5 = "EAN13+5";
+            public const string EAN8 = "EAN8";
+            public const string EAN8_2 = "EAN8+2";
+            public const string EAN8_5 = "EAN8+5";
+            public const string UPCA = "UPCA";
+            public const string UPCA_2 = "UPCA+2";
+            public const string UPCA_5 = "UPCA+5";
+            public const string UPCE = "UPCE";
+            public const string ITF14 = "ITF14";
+            public const string Interleaved25 = "25";
+            public const string Interleaved25C = "25C"; // With checksum
+            public const string Codabar = "CODA";
+            public const string MSI = "MSI";
+            public const string Plessey = "PLESSEY";
+            public const string PostNet = "POST";
+            public const string QRCode = "QRCODE";
+            public const string DataMatrix = "DMATRIX";
+            public const string PDF417 = "PDF417";
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Label template for common label sizes
+    /// </summary>
+    public class LabelTemplate
+    {
+        public string Name { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public int Gap { get; set; }
+
+        public static List<LabelTemplate> CommonTemplates = new List<LabelTemplate>
+        {
+            new LabelTemplate { Name = "Small (40x20mm)", Width = 40, Height = 20, Gap = 3 },
+            new LabelTemplate { Name = "Medium (50x30mm)", Width = 50, Height = 30, Gap = 3 },
+            new LabelTemplate { Name = "Large (60x40mm)", Width = 60, Height = 40, Gap = 3 },
+            new LabelTemplate { Name = "Wide (80x30mm)", Width = 80, Height = 30, Gap = 3 },
+            new LabelTemplate { Name = "Square (40x40mm)", Width = 40, Height = 40, Gap = 3 },
+            new LabelTemplate { Name = "Jewelry (30x10mm)", Width = 30, Height = 10, Gap = 2 },
+            new LabelTemplate { Name = "Price Tag (35x25mm)", Width = 35, Height = 25, Gap = 3 }
+        };
+
+        public override string ToString()
+        {
+            return Name;
+        }
+    }
+}

@@ -1,0 +1,639 @@
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                // Ensure used_qty column exists in the DataTable schema
+                EnsureUsedQtyColumn();
+                
+                LoadMasterData();
+                RefreshDataGridView();
+                ClearForm();
+                
+                // Handle remaining quantity calculation
+                this.machinery_item_inward_unit2DataGridView.CellFormatting += DataGridView_CellFormatting;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Ensures the used_qty column exists in the DataTable schema
+        /// </summary>
+        private void EnsureUsedQtyColumn()
+        {
+            if (!this.mainDB.machinery_item_inward_unit2.Columns.Contains("used_qty"))
+            {
+                var col = new DataColumn("used_qty", typeof(int));
+                col.DefaultValue = 0;
+                col.AllowDBNull = true;
+                this.mainDB.machinery_item_inward_unit2.Columns.Add(col);
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            this.partyMasterTableAdapter.Fill(this.mainDB.PartyMaster);
+            this.itemMasterTableAdapter.Fill(this.mainDB.ItemMaster);
+        }
+
+        private void RefreshMasterData()
+        {
+            string selectedParty = this.party_nameComboBox.Text;
+            string selectedItem = this.itemComboBox.Text;
+            
+            LoadMasterData();
+            
+            // Restore selections
+            if (!string.IsNullOrEmpty(selectedParty))
+            {
+                int idx = this.party_nameComboBox.FindStringExact(selectedParty);
+                if (idx >= 0) this.party_nameComboBox.SelectedIndex = idx;
+            }
+            if (!string.IsNullOrEmpty(selectedItem))
+            {
+                int idx = this.itemComboBox.FindStringExact(selectedItem);
+                if (idx >= 0) this.itemComboBox.SelectedIndex = idx;
+            }
+        }
+
+        private void RefreshDataGridView()
+        {
+            try
+            {
+                // Ensure column exists before loading
+                EnsureUsedQtyColumn();
+                
+                // Load data using direct SQL to include used_qty column
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    string sql = @"SELECT id, challan_no, date, party_name, item, qty, 
+                                   ISNULL(used_qty, 0) as used_qty, reference_bill_no, bill_date, 
+                                   used_in_machine, taken_by 
+                                   FROM machinery_item_inward_unit2
+                                   ORDER BY id DESC";
+                    
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        this.mainDB.machinery_item_inward_unit2.Clear();
+                        adapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                    }
+                }
+                
+                // Accept changes to mark all rows as unchanged
+                this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                // Fallback to TableAdapter if direct SQL fails
+                System.Diagnostics.Debug.WriteLine("RefreshDataGridView fallback: " + ex.Message);
+                try
+                {
+                    this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                    
+                    // Set default values for used_qty if not present
+                    foreach (DataRow row in this.mainDB.machinery_item_inward_unit2.Rows)
+                    {
+                        if (row.Table.Columns.Contains("used_qty") && row["used_qty"] == DBNull.Value)
+                        {
+                            row["used_qty"] = 0;
+                        }
+                    }
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                    UpdateRecordCount();
+                }
+                catch (Exception innerEx)
+                {
+                    MessageBox.Show("Error loading data: " + innerEx.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            // Calculate and display remaining quantity
+            if (this.machinery_item_inward_unit2DataGridView.Columns[e.ColumnIndex].Name == "colRemainingQty")
+            {
+                if (e.RowIndex >= 0)
+                {
+                    DataGridViewRow row = this.machinery_item_inward_unit2DataGridView.Rows[e.RowIndex];
+                    
+                    int totalQty = 0;
+                    int usedQty = 0;
+                    
+                    var qtyCell = row.Cells["dataGridViewTextBoxColumn6"];
+                    var usedQtyCell = row.Cells["colUsedQty"];
+                    
+                    if (qtyCell != null && qtyCell.Value != null && qtyCell.Value != DBNull.Value)
+                    {
+                        int.TryParse(qtyCell.Value.ToString(), out totalQty);
+                    }
+                    
+                    if (usedQtyCell != null && usedQtyCell.Value != null && usedQtyCell.Value != DBNull.Value)
+                    {
+                        int.TryParse(usedQtyCell.Value.ToString(), out usedQty);
+                    }
+                    
+                    int remaining = totalQty - usedQty;
+                    e.Value = remaining;
+                    
+                    // Color code based on remaining quantity
+                    if (remaining <= 0)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Red;
+                        e.CellStyle.Font = new System.Drawing.Font(e.CellStyle.Font, System.Drawing.FontStyle.Bold);
+                    }
+                    else if (remaining < totalQty)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Orange;
+                    }
+                    else
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Green;
+                    }
+                }
+            }
+            
+            // Color code used qty column
+            if (this.machinery_item_inward_unit2DataGridView.Columns[e.ColumnIndex].Name == "colUsedQty")
+            {
+                if (e.RowIndex >= 0 && e.Value != null && e.Value != DBNull.Value)
+                {
+                    int usedQty = 0;
+                    int.TryParse(e.Value.ToString(), out usedQty);
+                    
+                    if (usedQty > 0)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Blue;
+                        e.CellStyle.Font = new System.Drawing.Font(e.CellStyle.Font, System.Drawing.FontStyle.Bold);
+                    }
+                }
+            }
+        }
+
+        private void UpdateRecordCount()
+        {
+            int count = this.mainDB.machinery_item_inward_unit2.Rows.Count;
+            
+            // Calculate total qty, used qty, and remaining qty
+            int totalQty = 0;
+            int totalUsed = 0;
+            
+            foreach (DataRow row in this.mainDB.machinery_item_inward_unit2.Rows)
+            {
+                if (row["qty"] != DBNull.Value)
+                {
+                    totalQty += Convert.ToInt32(row["qty"]);
+                }
+                if (row.Table.Columns.Contains("used_qty") && row["used_qty"] != DBNull.Value)
+                {
+                    totalUsed += Convert.ToInt32(row["used_qty"]);
+                }
+            }
+            
+            int totalRemaining = totalQty - totalUsed;
+            
+            lblRecordCount.Text = string.Format("Records: {0} | Total Qty: {1} | Used: {2} | Remaining: {3}", 
+                count, totalQty, totalUsed, totalRemaining);
+        }
+
+        private void ClearForm()
+        {
+            this.idTextBox.Text = "Auto";
+            this.challan_noTextBox.Text = string.Empty;
+            this.dateDateTimePicker.Value = DateTime.Today;
+            this.bill_dateDateTimePicker.Value = DateTime.Today;
+            this.qtyTextBox.Text = string.Empty;
+            this.reference_bill_noTextBox.Text = string.Empty;
+            
+            if (this.party_nameComboBox.Items.Count > 0)
+                this.party_nameComboBox.SelectedIndex = 0;
+            if (this.itemComboBox.Items.Count > 0)
+                this.itemComboBox.SelectedIndex = 0;
+            
+            this.challan_noTextBox.Focus();
+        }
+
+        private void btnAddData_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            SaveRecord();
+        }
+
+        /// <summary>
+        /// Gets the connection string
+        /// </summary>
+        private string GetConnectionString()
+        {
+            return global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+        }
+
+        private void SaveRecord()
+        {
+            try
+            {
+                // Validate required fields
+                if (string.IsNullOrWhiteSpace(this.challan_noTextBox.Text))
+                {
+                    MessageBox.Show("Please enter a challan number.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.challan_noTextBox.Focus();
+                    return;
+                }
+
+                if (this.party_nameComboBox.SelectedIndex < 0 || string.IsNullOrWhiteSpace(this.party_nameComboBox.Text))
+                {
+                    MessageBox.Show("Please select a party name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.party_nameComboBox.Focus();
+                    return;
+                }
+
+                if (this.itemComboBox.SelectedIndex < 0 || string.IsNullOrWhiteSpace(this.itemComboBox.Text))
+                {
+                    MessageBox.Show("Please select an item.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.itemComboBox.Focus();
+                    return;
+                }
+
+                // Parse qty (default to 0 if empty)
+                int qty = 0;
+                if (!string.IsNullOrWhiteSpace(this.qtyTextBox.Text))
+                {
+                    if (!int.TryParse(this.qtyTextBox.Text, out qty))
+                    {
+                        MessageBox.Show("Please enter a valid quantity.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        this.qtyTextBox.Focus();
+                        return;
+                    }
+                }
+
+                if (qty <= 0)
+                {
+                    MessageBox.Show("Please enter a quantity greater than 0.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.qtyTextBox.Focus();
+                    return;
+                }
+
+                // Use direct SQL to insert record with used_qty initialized to 0
+                int newId = InsertRecordDirectly(
+                    this.challan_noTextBox.Text.Trim(),
+                    this.dateDateTimePicker.Value.Date,
+                    this.party_nameComboBox.Text,
+                    this.itemComboBox.Text,
+                    qty,
+                    this.reference_bill_noTextBox.Text.Trim(),
+                    this.bill_dateDateTimePicker.Value.Date
+                );
+                
+                if (newId > 0)
+                {
+                    MessageBox.Show("Record saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Print barcodes for the new entry with print preview
+                    PrintBarcodeWithPreview(newId, qty);
+
+                    // Store values to retain for next entry
+                    string savedChallanNo = this.challan_noTextBox.Text;
+                    string savedPartyName = this.party_nameComboBox.Text;
+                    
+                    RefreshDataGridView();
+                    ClearForm();
+                    
+                    // Restore some values for quick entry of multiple items
+                    this.challan_noTextBox.Text = savedChallanNo;
+                    int partyIdx = this.party_nameComboBox.FindStringExact(savedPartyName);
+                    if (partyIdx >= 0) this.party_nameComboBox.SelectedIndex = partyIdx;
+                    
+                    this.itemComboBox.Focus();
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved to the database.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving record: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                System.Diagnostics.Debug.WriteLine("Save Error: " + ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Shows print preview before printing barcode labels
+        /// </summary>
+        /// <param name="id">The ID of the newly created record (barcode data)</param>
+        /// <param name="quantity">Number of barcode labels to print</param>
+        private void PrintBarcodeWithPreview(int id, int quantity)
+        {
+            try
+            {
+                // Load printer settings
+                var printer = BarcodePrinter.LoadFromSettings();
+
+                if (printer == null || string.IsNullOrEmpty(printer.PrinterName))
+                {
+                    // Ask user if they want to configure printer
+                    DialogResult configResult = MessageBox.Show(
+                        "Barcode printer is not configured.\n\n" +
+                        "Would you like to configure the printer now?",
+                        "Printer Not Configured",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (configResult == DialogResult.Yes)
+                    {
+                        using (PrinterSettingsForm printerSettingsForm = new PrinterSettingsForm())
+                        {
+                            if (printerSettingsForm.ShowDialog() == DialogResult.OK)
+                            {
+                                // Reload settings after configuration
+                                printer = BarcodePrinter.LoadFromSettings();
+                                if (printer == null || string.IsNullOrEmpty(printer.PrinterName))
+                                {
+                                    return; // Still not configured
+                                }
+                            }
+                            else
+                            {
+                                return; // User cancelled configuration
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return; // User doesn't want to configure
+                    }
+                }
+
+                // Show print preview dialog
+                using (BarcodePrintPreviewForm previewForm = new BarcodePrintPreviewForm(id.ToString(), quantity))
+                {
+                    if (previewForm.ShowDialog() == DialogResult.OK && previewForm.PrintConfirmed)
+                    {
+                        // User confirmed printing - print asynchronously
+                        PrintBarcodeAsync(id, quantity, printer);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("PrintBarcodeWithPreview error: " + ex.Message);
+                MessageBox.Show("Error showing print preview: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Prints barcode labels asynchronously
+        /// </summary>
+        private void PrintBarcodeAsync(int id, int quantity, BarcodePrinter printer)
+        {
+            string barcodeId = id.ToString();
+            string printerName = printer.PrinterName;
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    bool success = printer.PrintBarcode(barcodeId, quantity);
+
+                    if (success)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Printed {quantity} barcode(s) for ID: {id}");
+                        this.BeginInvoke((Action)(() =>
+                        {
+                            MessageBox.Show(
+                                string.Format("Successfully printed {0} barcode label(s) for ID: {1}", quantity, id),
+                                "Print Success",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                        }));
+                    }
+                    else
+                    {
+                        this.BeginInvoke((Action)(() =>
+                        {
+                            MessageBox.Show(
+                                $"Failed to print barcode labels.\n\n" +
+                                $"Please check:\n" +
+                                $"• Printer '{printerName}' is on\n" +
+                                $"• Printer is connected\n" +
+                                $"• Labels are loaded",
+                                "Print Failed",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+                        }));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Print error: " + ex.Message);
+                    this.BeginInvoke((Action)(() =>
+                    {
+                        MessageBox.Show(
+                            $"Error printing barcode: {ex.Message}",
+                            "Print Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }));
+                }
+            });
+        }
+
+        /// <summary>
+        /// Inserts a new record directly using SQL with used_qty properly initialized to 0
+        /// Returns the new record id (>0) or 0 on failure
+        /// </summary>
+        private int InsertRecordDirectly(string challanNo, DateTime date, string partyName, string item,
+            int qty, string referenceBillNo, DateTime billDate)
+        {
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+            {
+                string sql = @"INSERT INTO machinery_item_inward_unit2 
+                              (challan_no, date, party_name, item, qty, used_qty, reference_bill_no, bill_date, used_in_machine, taken_by)
+                              VALUES 
+                              (@challan_no, @date, @party_name, @item, @qty, 0, @reference_bill_no, @bill_date, '', '');
+                              SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@challan_no", challanNo);
+                    command.Parameters.AddWithValue("@date", date);
+                    command.Parameters.AddWithValue("@party_name", partyName);
+                    command.Parameters.AddWithValue("@item", item);
+                    command.Parameters.AddWithValue("@qty", qty);
+                    command.Parameters.AddWithValue("@reference_bill_no", string.IsNullOrEmpty(referenceBillNo) ? (object)DBNull.Value : referenceBillNo);
+                    command.Parameters.AddWithValue("@bill_date", billDate);
+
+                    connection.Open();
+                    object scalar = command.ExecuteScalar();
+                    if (scalar != null && scalar != DBNull.Value)
+                    {
+                        try
+                        {
+                            return Convert.ToInt32(scalar);
+                        }
+                        catch
+                        {
+                            return 0;
+                        }
+                    }
+                    return 0;
+                }
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                RefreshMasterData();
+                RefreshDataGridView();
+                MessageBox.Show("Data refreshed successfully!", "Refresh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnManageParties_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartyMasterForm partyMasterForm = new PartyMasterForm())
+                {
+                    partyMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening Party Master form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnManageItems_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ItemMasterForm itemMasterForm = new ItemMasterForm())
+                {
+                    itemMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening Item Master form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnShowTable_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ShowTableForm showTableForm = new ShowTableForm())
+                {
+                    showTableForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening table view: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnPartsUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartsUsageForm partsUsageForm = new PartsUsageForm())
+                {
+                    partsUsageForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening parts usage form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnPrinterSettings_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PrinterSettingsForm printerSettingsForm = new PrinterSettingsForm())
+                {
+                    if (printerSettingsForm.ShowDialog() == DialogResult.OK)
+                    {
+                        MessageBox.Show("Printer settings saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening printer settings: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnDashboard_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (DashboardForm dashboardForm = new DashboardForm())
+                {
+                    // Ensure form is properly initialized before showing
+                    dashboardForm.Load += (s, args) => { }; // Trigger Load event
+                    dashboardForm.StartPosition = FormStartPosition.CenterParent;
+                    dashboardForm.Show(this);
+                }
+                RefreshDataGridView();
+            }
+            catch (ArgumentException argEx)
+            {
+                System.Diagnostics.Debug.WriteLine("Dashboard argument error: " + argEx.ToString());
+                MessageBox.Show("Error opening dashboard. The dashboard form has a layout issue.\n\n" + 
+                    "Technical details: " + argEx.Message, 
+                    "Dashboard Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Dashboard error: " + ex.ToString());
+                MessageBox.Show("Error opening dashboard: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void challan_noTextBox_TextChanged(object sender, EventArgs e)
+        {
+            // Empty handler kept for compatibility
+        }
+    }
+}

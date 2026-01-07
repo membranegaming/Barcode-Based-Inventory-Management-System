@@ -1,0 +1,19 @@
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Release\store parts.exe.config
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Release\store parts.exe
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Release\store parts.pdb
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Release\Newtonsoft.Json.dll
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Release\Newtonsoft.Json.xml
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store parts.csproj.AssemblyReference.cache
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.AdminEditForm.resources
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.Form1.resources
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.ItemMasterForm.resources
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.LoginForm.resources
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.PartyMasterForm.resources
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.Properties.Resources.resources
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store parts.csproj.GenerateResource.cache
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store parts.csproj.CoreCompileInputs.cache
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store pa.5F20DEFC.Up2Date
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store parts.exe
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store parts.pdb
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store parts.exe.config
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\obj\Release\store_parts.PartsUsageForm.resources

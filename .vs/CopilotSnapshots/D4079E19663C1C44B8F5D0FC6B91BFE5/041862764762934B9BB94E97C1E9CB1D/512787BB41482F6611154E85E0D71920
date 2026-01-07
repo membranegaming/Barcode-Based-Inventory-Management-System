@@ -1,0 +1,558 @@
+﻿namespace store_parts
+{
+    partial class Form1
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.Label idLabel;
+            System.Windows.Forms.Label challan_noLabel;
+            System.Windows.Forms.Label dateLabel;
+            System.Windows.Forms.Label party_nameLabel;
+            System.Windows.Forms.Label itemLabel;
+            System.Windows.Forms.Label qtyLabel;
+            System.Windows.Forms.Label reference_bill_noLabel;
+            System.Windows.Forms.Label bill_dateLabel;
+            this.mainDB = new store_parts.MainDB();
+            this.machinery_item_inward_unit2BindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.machinery_item_inward_unit2TableAdapter = new store_parts.MainDBTableAdapters.machinery_item_inward_unit2TableAdapter();
+            this.tableAdapterManager = new store_parts.MainDBTableAdapters.TableAdapterManager();
+            this.itemMasterTableAdapter = new store_parts.MainDBTableAdapters.ItemMasterTableAdapter();
+            this.partyMasterTableAdapter = new store_parts.MainDBTableAdapters.PartyMasterTableAdapter();
+            this.idTextBox = new System.Windows.Forms.TextBox();
+            this.challan_noTextBox = new System.Windows.Forms.TextBox();
+            this.dateDateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.party_nameComboBox = new System.Windows.Forms.ComboBox();
+            this.partyMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.itemComboBox = new System.Windows.Forms.ComboBox();
+            this.itemMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.qtyTextBox = new System.Windows.Forms.TextBox();
+            this.reference_bill_noTextBox = new System.Windows.Forms.TextBox();
+            this.bill_dateDateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.btnAddData = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnManageParties = new System.Windows.Forms.Button();
+            this.btnManageItems = new System.Windows.Forms.Button();
+            this.btnShowTable = new System.Windows.Forms.Button();
+            this.btnPartsUsage = new System.Windows.Forms.Button();
+            this.machinery_item_inward_unit2DataGridView = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.lblRecordCount = new System.Windows.Forms.Label();
+            idLabel = new System.Windows.Forms.Label();
+            challan_noLabel = new System.Windows.Forms.Label();
+            dateLabel = new System.Windows.Forms.Label();
+            party_nameLabel = new System.Windows.Forms.Label();
+            itemLabel = new System.Windows.Forms.Label();
+            qtyLabel = new System.Windows.Forms.Label();
+            reference_bill_noLabel = new System.Windows.Forms.Label();
+            bill_dateLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.partyMasterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2DataGridView)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // idLabel
+            // 
+            idLabel.AutoSize = true;
+            idLabel.Location = new System.Drawing.Point(81, 46);
+            idLabel.Name = "idLabel";
+            idLabel.Size = new System.Drawing.Size(21, 16);
+            idLabel.TabIndex = 1;
+            idLabel.Text = "id:";
+            // 
+            // challan_noLabel
+            // 
+            challan_noLabel.AutoSize = true;
+            challan_noLabel.Location = new System.Drawing.Point(81, 74);
+            challan_noLabel.Name = "challan_noLabel";
+            challan_noLabel.Size = new System.Drawing.Size(71, 16);
+            challan_noLabel.TabIndex = 3;
+            challan_noLabel.Text = "challan no:";
+            // 
+            // dateLabel
+            // 
+            dateLabel.AutoSize = true;
+            dateLabel.Location = new System.Drawing.Point(81, 103);
+            dateLabel.Name = "dateLabel";
+            dateLabel.Size = new System.Drawing.Size(37, 16);
+            dateLabel.TabIndex = 5;
+            dateLabel.Text = "date:";
+            // 
+            // party_nameLabel
+            // 
+            party_nameLabel.AutoSize = true;
+            party_nameLabel.Location = new System.Drawing.Point(81, 130);
+            party_nameLabel.Name = "party_nameLabel";
+            party_nameLabel.Size = new System.Drawing.Size(77, 16);
+            party_nameLabel.TabIndex = 7;
+            party_nameLabel.Text = "party name:";
+            // 
+            // itemLabel
+            // 
+            itemLabel.AutoSize = true;
+            itemLabel.Location = new System.Drawing.Point(81, 158);
+            itemLabel.Name = "itemLabel";
+            itemLabel.Size = new System.Drawing.Size(35, 16);
+            itemLabel.TabIndex = 9;
+            itemLabel.Text = "item:";
+            // 
+            // qtyLabel
+            // 
+            qtyLabel.AutoSize = true;
+            qtyLabel.Location = new System.Drawing.Point(81, 186);
+            qtyLabel.Name = "qtyLabel";
+            qtyLabel.Size = new System.Drawing.Size(28, 16);
+            qtyLabel.TabIndex = 11;
+            qtyLabel.Text = "qty:";
+            // 
+            // reference_bill_noLabel
+            // 
+            reference_bill_noLabel.AutoSize = true;
+            reference_bill_noLabel.Location = new System.Drawing.Point(81, 214);
+            reference_bill_noLabel.Name = "reference_bill_noLabel";
+            reference_bill_noLabel.Size = new System.Drawing.Size(105, 16);
+            reference_bill_noLabel.TabIndex = 13;
+            reference_bill_noLabel.Text = "reference bill no:";
+            // 
+            // bill_dateLabel
+            // 
+            bill_dateLabel.AutoSize = true;
+            bill_dateLabel.Location = new System.Drawing.Point(81, 243);
+            bill_dateLabel.Name = "bill_dateLabel";
+            bill_dateLabel.Size = new System.Drawing.Size(57, 16);
+            bill_dateLabel.TabIndex = 15;
+            bill_dateLabel.Text = "bill date:";
+            // 
+            // mainDB
+            // 
+            this.mainDB.DataSetName = "MainDB";
+            this.mainDB.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // machinery_item_inward_unit2BindingSource
+            // 
+            this.machinery_item_inward_unit2BindingSource.DataMember = "machinery_item_inward_unit2";
+            this.machinery_item_inward_unit2BindingSource.DataSource = this.mainDB;
+            // 
+            // machinery_item_inward_unit2TableAdapter
+            // 
+            this.machinery_item_inward_unit2TableAdapter.ClearBeforeFill = true;
+            // 
+            // tableAdapterManager
+            // 
+            this.tableAdapterManager.BackupDataSetBeforeUpdate = false;
+            this.tableAdapterManager.ItemMasterTableAdapter = this.itemMasterTableAdapter;
+            this.tableAdapterManager.MachineMasterTableAdapter = null;
+            this.tableAdapterManager.machinery_item_inward_unit2TableAdapter = this.machinery_item_inward_unit2TableAdapter;
+            this.tableAdapterManager.PartyMasterTableAdapter = this.partyMasterTableAdapter;
+            this.tableAdapterManager.PersonMasterTableAdapter = null;
+            this.tableAdapterManager.UpdateOrder = store_parts.MainDBTableAdapters.TableAdapterManager.UpdateOrderOption.InsertUpdateDelete;
+            // 
+            // itemMasterTableAdapter
+            // 
+            this.itemMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // partyMasterTableAdapter
+            // 
+            this.partyMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // idTextBox - NO DATA BINDING
+            // 
+            this.idTextBox.BackColor = System.Drawing.SystemColors.Control;
+            this.idTextBox.Location = new System.Drawing.Point(241, 43);
+            this.idTextBox.Name = "idTextBox";
+            this.idTextBox.ReadOnly = true;
+            this.idTextBox.Size = new System.Drawing.Size(200, 22);
+            this.idTextBox.TabIndex = 2;
+            this.idTextBox.TabStop = false;
+            // 
+            // challan_noTextBox - NO DATA BINDING
+            // 
+            this.challan_noTextBox.Location = new System.Drawing.Point(241, 71);
+            this.challan_noTextBox.Name = "challan_noTextBox";
+            this.challan_noTextBox.Size = new System.Drawing.Size(200, 22);
+            this.challan_noTextBox.TabIndex = 4;
+            // 
+            // dateDateTimePicker - NO DATA BINDING
+            // 
+            this.dateDateTimePicker.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.dateDateTimePicker.Location = new System.Drawing.Point(241, 99);
+            this.dateDateTimePicker.Name = "dateDateTimePicker";
+            this.dateDateTimePicker.Size = new System.Drawing.Size(200, 22);
+            this.dateDateTimePicker.TabIndex = 6;
+            // 
+            // party_nameComboBox - NO DATA BINDING to main table
+            // 
+            this.party_nameComboBox.DataSource = this.partyMasterBindingSource;
+            this.party_nameComboBox.DisplayMember = "party_name";
+            this.party_nameComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.party_nameComboBox.FormattingEnabled = true;
+            this.party_nameComboBox.Location = new System.Drawing.Point(241, 127);
+            this.party_nameComboBox.Name = "party_nameComboBox";
+            this.party_nameComboBox.Size = new System.Drawing.Size(200, 24);
+            this.party_nameComboBox.TabIndex = 8;
+            this.party_nameComboBox.ValueMember = "party_name";
+            // 
+            // partyMasterBindingSource
+            // 
+            this.partyMasterBindingSource.DataMember = "PartyMaster";
+            this.partyMasterBindingSource.DataSource = this.mainDB;
+            this.partyMasterBindingSource.Filter = "is_active = true";
+            // 
+            // itemComboBox - NO DATA BINDING to main table
+            // 
+            this.itemComboBox.DataSource = this.itemMasterBindingSource;
+            this.itemComboBox.DisplayMember = "item_name";
+            this.itemComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.itemComboBox.FormattingEnabled = true;
+            this.itemComboBox.Location = new System.Drawing.Point(241, 155);
+            this.itemComboBox.Name = "itemComboBox";
+            this.itemComboBox.Size = new System.Drawing.Size(200, 24);
+            this.itemComboBox.TabIndex = 10;
+            this.itemComboBox.ValueMember = "item_name";
+            // 
+            // itemMasterBindingSource
+            // 
+            this.itemMasterBindingSource.DataMember = "ItemMaster";
+            this.itemMasterBindingSource.DataSource = this.mainDB;
+            this.itemMasterBindingSource.Filter = "is_active = true";
+            // 
+            // qtyTextBox - NO DATA BINDING
+            // 
+            this.qtyTextBox.Location = new System.Drawing.Point(241, 183);
+            this.qtyTextBox.Name = "qtyTextBox";
+            this.qtyTextBox.Size = new System.Drawing.Size(200, 22);
+            this.qtyTextBox.TabIndex = 12;
+            // 
+            // reference_bill_noTextBox - NO DATA BINDING
+            // 
+            this.reference_bill_noTextBox.Location = new System.Drawing.Point(241, 211);
+            this.reference_bill_noTextBox.Name = "reference_bill_noTextBox";
+            this.reference_bill_noTextBox.Size = new System.Drawing.Size(200, 22);
+            this.reference_bill_noTextBox.TabIndex = 14;
+            // 
+            // bill_dateDateTimePicker - NO DATA BINDING
+            // 
+            this.bill_dateDateTimePicker.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.bill_dateDateTimePicker.Location = new System.Drawing.Point(241, 239);
+            this.bill_dateDateTimePicker.Name = "bill_dateDateTimePicker";
+            this.bill_dateDateTimePicker.Size = new System.Drawing.Size(200, 22);
+            this.bill_dateDateTimePicker.TabIndex = 16;
+            // 
+            // btnAddData
+            // 
+            this.btnAddData.Location = new System.Drawing.Point(480, 63);
+            this.btnAddData.Name = "btnAddData";
+            this.btnAddData.Size = new System.Drawing.Size(90, 30);
+            this.btnAddData.TabIndex = 20;
+            this.btnAddData.Text = "Add New";
+            this.btnAddData.UseVisualStyleBackColor = true;
+            this.btnAddData.Click += new System.EventHandler(this.btnAddData_Click);
+            // 
+            // btnSave
+            // 
+            this.btnSave.Location = new System.Drawing.Point(576, 63);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(90, 30);
+            this.btnSave.TabIndex = 21;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.Location = new System.Drawing.Point(480, 99);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(186, 30);
+            this.btnClear.TabIndex = 25;
+            this.btnClear.Text = "Clear Form";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnManageParties
+            // 
+            this.btnManageParties.Location = new System.Drawing.Point(480, 135);
+            this.btnManageParties.Name = "btnManageParties";
+            this.btnManageParties.Size = new System.Drawing.Size(186, 30);
+            this.btnManageParties.TabIndex = 22;
+            this.btnManageParties.Text = "Manage Parties";
+            this.btnManageParties.UseVisualStyleBackColor = true;
+            this.btnManageParties.Click += new System.EventHandler(this.btnManageParties_Click);
+            // 
+            // btnManageItems
+            // 
+            this.btnManageItems.Location = new System.Drawing.Point(480, 171);
+            this.btnManageItems.Name = "btnManageItems";
+            this.btnManageItems.Size = new System.Drawing.Size(186, 30);
+            this.btnManageItems.TabIndex = 23;
+            this.btnManageItems.Text = "Manage Items";
+            this.btnManageItems.UseVisualStyleBackColor = true;
+            this.btnManageItems.Click += new System.EventHandler(this.btnManageItems_Click);
+            // 
+            // btnShowTable
+            // 
+            this.btnShowTable.Location = new System.Drawing.Point(480, 207);
+            this.btnShowTable.Name = "btnShowTable";
+            this.btnShowTable.Size = new System.Drawing.Size(90, 30);
+            this.btnShowTable.TabIndex = 24;
+            this.btnShowTable.Text = "Show All Data";
+            this.btnShowTable.UseVisualStyleBackColor = true;
+            this.btnShowTable.Click += new System.EventHandler(this.btnShowTable_Click);
+            // 
+            // btnPartsUsage
+            // 
+            this.btnPartsUsage.Location = new System.Drawing.Point(576, 207);
+            this.btnPartsUsage.Name = "btnPartsUsage";
+            this.btnPartsUsage.Size = new System.Drawing.Size(90, 30);
+            this.btnPartsUsage.TabIndex = 28;
+            this.btnPartsUsage.Text = "Parts Usage";
+            this.btnPartsUsage.UseVisualStyleBackColor = true;
+            this.btnPartsUsage.Click += new System.EventHandler(this.btnPartsUsage_Click);
+            // 
+            // machinery_item_inward_unit2DataGridView
+            // 
+            this.machinery_item_inward_unit2DataGridView.AllowUserToAddRows = false;
+            this.machinery_item_inward_unit2DataGridView.AllowUserToDeleteRows = false;
+            this.machinery_item_inward_unit2DataGridView.AutoGenerateColumns = false;
+            this.machinery_item_inward_unit2DataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.machinery_item_inward_unit2DataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn1,
+            this.dataGridViewTextBoxColumn2,
+            this.dataGridViewTextBoxColumn3,
+            this.dataGridViewTextBoxColumn4,
+            this.dataGridViewTextBoxColumn5,
+            this.dataGridViewTextBoxColumn6,
+            this.dataGridViewTextBoxColumn7,
+            this.dataGridViewTextBoxColumn8,
+            this.dataGridViewTextBoxColumn9,
+            this.dataGridViewTextBoxColumn10});
+            this.machinery_item_inward_unit2DataGridView.DataSource = this.machinery_item_inward_unit2BindingSource;
+            this.machinery_item_inward_unit2DataGridView.Location = new System.Drawing.Point(12, 297);
+            this.machinery_item_inward_unit2DataGridView.Name = "machinery_item_inward_unit2DataGridView";
+            this.machinery_item_inward_unit2DataGridView.ReadOnly = true;
+            this.machinery_item_inward_unit2DataGridView.RowHeadersWidth = 51;
+            this.machinery_item_inward_unit2DataGridView.RowTemplate.Height = 24;
+            this.machinery_item_inward_unit2DataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.machinery_item_inward_unit2DataGridView.Size = new System.Drawing.Size(1160, 300);
+            this.machinery_item_inward_unit2DataGridView.TabIndex = 26;
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.DataPropertyName = "id";
+            this.dataGridViewTextBoxColumn1.HeaderText = "ID";
+            this.dataGridViewTextBoxColumn1.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.dataGridViewTextBoxColumn1.Width = 50;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.DataPropertyName = "challan_no";
+            this.dataGridViewTextBoxColumn2.HeaderText = "Challan No";
+            this.dataGridViewTextBoxColumn2.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            this.dataGridViewTextBoxColumn2.Width = 125;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.DataPropertyName = "date";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Date";
+            this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.ReadOnly = true;
+            this.dataGridViewTextBoxColumn3.Width = 90;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.DataPropertyName = "party_name";
+            this.dataGridViewTextBoxColumn4.HeaderText = "Party";
+            this.dataGridViewTextBoxColumn4.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.ReadOnly = true;
+            this.dataGridViewTextBoxColumn4.Width = 120;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            this.dataGridViewTextBoxColumn5.DataPropertyName = "item";
+            this.dataGridViewTextBoxColumn5.HeaderText = "Item";
+            this.dataGridViewTextBoxColumn5.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            this.dataGridViewTextBoxColumn5.ReadOnly = true;
+            this.dataGridViewTextBoxColumn5.Width = 120;
+            // 
+            // dataGridViewTextBoxColumn6
+            // 
+            this.dataGridViewTextBoxColumn6.DataPropertyName = "qty";
+            this.dataGridViewTextBoxColumn6.HeaderText = "Qty";
+            this.dataGridViewTextBoxColumn6.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+            this.dataGridViewTextBoxColumn6.ReadOnly = true;
+            this.dataGridViewTextBoxColumn6.Width = 60;
+            // 
+            // dataGridViewTextBoxColumn7
+            // 
+            this.dataGridViewTextBoxColumn7.DataPropertyName = "reference_bill_no";
+            this.dataGridViewTextBoxColumn7.HeaderText = "Ref Bill";
+            this.dataGridViewTextBoxColumn7.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn7.Name = "dataGridViewTextBoxColumn7";
+            this.dataGridViewTextBoxColumn7.ReadOnly = true;
+            this.dataGridViewTextBoxColumn7.Width = 90;
+            // 
+            // dataGridViewTextBoxColumn8
+            // 
+            this.dataGridViewTextBoxColumn8.DataPropertyName = "bill_date";
+            this.dataGridViewTextBoxColumn8.HeaderText = "Bill Date";
+            this.dataGridViewTextBoxColumn8.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn8.Name = "dataGridViewTextBoxColumn8";
+            this.dataGridViewTextBoxColumn8.ReadOnly = true;
+            this.dataGridViewTextBoxColumn8.Width = 90;
+            // 
+            // dataGridViewTextBoxColumn9
+            // 
+            this.dataGridViewTextBoxColumn9.DataPropertyName = "used_in_machine";
+            this.dataGridViewTextBoxColumn9.HeaderText = "Used In Machine";
+            this.dataGridViewTextBoxColumn9.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
+            this.dataGridViewTextBoxColumn9.ReadOnly = true;
+            this.dataGridViewTextBoxColumn9.Width = 150;
+            // 
+            // dataGridViewTextBoxColumn10
+            // 
+            this.dataGridViewTextBoxColumn10.DataPropertyName = "taken_by";
+            this.dataGridViewTextBoxColumn10.HeaderText = "Taken By";
+            this.dataGridViewTextBoxColumn10.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn10.Name = "dataGridViewTextBoxColumn10";
+            this.dataGridViewTextBoxColumn10.ReadOnly = true;
+            this.dataGridViewTextBoxColumn10.Width = 120;
+            // 
+            // lblRecordCount
+            // 
+            this.lblRecordCount.AutoSize = true;
+            this.lblRecordCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblRecordCount.Location = new System.Drawing.Point(20, 600);
+            this.lblRecordCount.Name = "lblRecordCount";
+            this.lblRecordCount.Size = new System.Drawing.Size(134, 18);
+            this.lblRecordCount.TabIndex = 27;
+            this.lblRecordCount.Text = "Total Records: 0";
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.ClientSize = new System.Drawing.Size(1200, 630);
+            this.Controls.Add(this.lblRecordCount);
+            this.Controls.Add(this.machinery_item_inward_unit2DataGridView);
+            this.Controls.Add(idLabel);
+            this.Controls.Add(this.idTextBox);
+            this.Controls.Add(challan_noLabel);
+            this.Controls.Add(this.challan_noTextBox);
+            this.Controls.Add(dateLabel);
+            this.Controls.Add(this.dateDateTimePicker);
+            this.Controls.Add(party_nameLabel);
+            this.Controls.Add(this.party_nameComboBox);
+            this.Controls.Add(itemLabel);
+            this.Controls.Add(this.itemComboBox);
+            this.Controls.Add(qtyLabel);
+            this.Controls.Add(this.qtyTextBox);
+            this.Controls.Add(reference_bill_noLabel);
+            this.Controls.Add(this.reference_bill_noTextBox);
+            this.Controls.Add(bill_dateLabel);
+            this.Controls.Add(this.bill_dateDateTimePicker);
+            this.Controls.Add(this.btnAddData);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnClear);
+            this.Controls.Add(this.btnManageParties);
+            this.Controls.Add(this.btnManageItems);
+            this.Controls.Add(this.btnShowTable);
+            this.Controls.Add(this.btnPartsUsage);
+            this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Machinery Parts Inward Entry";
+            this.Load += new System.EventHandler(this.Form1_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.partyMasterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2DataGridView)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        #endregion
+
+        private MainDB mainDB;
+        private System.Windows.Forms.BindingSource machinery_item_inward_unit2BindingSource;
+        private MainDBTableAdapters.machinery_item_inward_unit2TableAdapter machinery_item_inward_unit2TableAdapter;
+        private MainDBTableAdapters.TableAdapterManager tableAdapterManager;
+        private MainDBTableAdapters.PartyMasterTableAdapter partyMasterTableAdapter;
+        private MainDBTableAdapters.ItemMasterTableAdapter itemMasterTableAdapter;
+        private System.Windows.Forms.BindingSource partyMasterBindingSource;
+        private System.Windows.Forms.BindingSource itemMasterBindingSource;
+        private System.Windows.Forms.TextBox idTextBox;
+        private System.Windows.Forms.TextBox challan_noTextBox;
+        private System.Windows.Forms.DateTimePicker dateDateTimePicker;
+        private System.Windows.Forms.ComboBox party_nameComboBox;
+        private System.Windows.Forms.ComboBox itemComboBox;
+        private System.Windows.Forms.TextBox qtyTextBox;
+        private System.Windows.Forms.TextBox reference_bill_noTextBox;
+        private System.Windows.Forms.DateTimePicker bill_dateDateTimePicker;
+        private System.Windows.Forms.Button btnAddData;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnManageParties;
+        private System.Windows.Forms.Button btnManageItems;
+        private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.Button btnShowTable;
+        private System.Windows.Forms.Button btnPartsUsage;
+        private System.Windows.Forms.DataGridView machinery_item_inward_unit2DataGridView;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
+        private System.Windows.Forms.Label lblRecordCount;
+    }
+}
+

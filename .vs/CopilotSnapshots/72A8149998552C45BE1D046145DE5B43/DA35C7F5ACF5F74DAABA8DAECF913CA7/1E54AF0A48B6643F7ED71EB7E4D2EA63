@@ -1,0 +1,224 @@
+﻿namespace store_parts
+{
+    partial class Form1
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.Label idLabel;
+            System.Windows.Forms.Label challan_noLabel;
+            System.Windows.Forms.Label dateLabel;
+            System.Windows.Forms.Label party_nameLabel;
+            System.Windows.Forms.Label itemLabel;
+            System.Windows.Forms.Label qtyLabel;
+            System.Windows.Forms.Label reference_bill_noLabel;
+            System.Windows.Forms.Label bill_dateLabel;
+            System.Windows.Forms.Label party_outward_challan_noLabel;
+            this.mainDB = new store_parts.MainDB();
+            this.machinery_item_inward_unit2BindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.machinery_item_inward_unit2TableAdapter = new store_parts.MainDBTableAdapters.machinery_item_inward_unit2TableAdapter();
+            this.tableAdapterManager = new store_parts.MainDBTableAdapters.TableAdapterManager();
+            this.idTextBox = new System.Windows.Forms.TextBox();
+            this.challan_noTextBox = new System.Windows.Forms.TextBox();
+            this.dateDateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.party_nameTextBox = new System.Windows.Forms.TextBox();
+            this.itemTextBox = new System.Windows.Forms.TextBox();
+            this.qtyTextBox = new System.Windows.Forms.TextBox();
+            this.reference_bill_noTextBox = new System.Windows.Forms.TextBox();
+            this.bill_dateDateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.party_outward_challan_noTextBox = new System.Windows.Forms.TextBox();
+            this.machinery_item_inward_unit2BindingSource2 = new System.Windows.Forms.BindingSource(this.components);
+            this.btnAddData = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnManageParties = new System.Windows.Forms.Button();
+            this.btnManageItems = new System.Windows.Forms.Button();
+            this.btnShowTable = new System.Windows.Forms.Button();
+            idLabel = new System.Windows.Forms.Label();
+            challan_noLabel = new System.Windows.Forms.Label();
+            dateLabel = new System.Windows.Forms.Label();
+            party_nameLabel = new System.Windows.Forms.Label();
+            itemLabel = new System.Windows.Forms.Label();
+            qtyLabel = new System.Windows.Forms.Label();
+            reference_bill_noLabel = new System.Windows.Forms.Label();
+            bill_dateLabel = new System.Windows.Forms.Label();
+            party_outward_challan_noLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource2)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // idLabel
+            // 
+            idLabel.AutoSize = true;
+            idLabel.Location = new System.Drawing.Point(81, 46);
+            idLabel.Name = "idLabel";
+            idLabel.Size = new System.Drawing.Size(21, 16);
+            idLabel.TabIndex = 1;
+            idLabel.Text = "id:";
+            // 
+            // challan_noLabel
+            // 
+            challan_noLabel.AutoSize = true;
+            challan_noLabel.Location = new System.Drawing.Point(81, 74);
+            challan_noLabel.Name = "challan_noLabel";
+            challan_noLabel.Size = new System.Drawing.Size(71, 16);
+            challan_noLabel.TabIndex = 3;
+            challan_noLabel.Text = "challan no:";
+            // 
+            // dateLabel
+            // 
+            dateLabel.AutoSize = true;
+            dateLabel.Location = new System.Drawing.Point(81, 103);
+            dateLabel.Name = "dateLabel";
+            dateLabel.Size = new System.Drawing.Size(37, 16);
+            dateLabel.TabIndex = 5;
+            dateLabel.Text = "date:";
+            // 
+            // party_nameLabel
+            // 
+            party_nameLabel.AutoSize = true;
+            party_nameLabel.Location = new System.Drawing.Point(81, 130);
+            party_nameLabel.Name = "party_nameLabel";
+            party_nameLabel.Size = new System.Drawing.Size(77, 16);
+            party_nameLabel.TabIndex = 7;
+            party_nameLabel.Text = "party name:";
+            // 
+            // itemLabel
+            // 
+            itemLabel.AutoSize = true;
+            itemLabel.Location = new System.Drawing.Point(81, 158);
+            itemLabel.Name = "itemLabel";
+            itemLabel.Size = new System.Drawing.Size(35, 16);
+            itemLabel.TabIndex = 9;
+            itemLabel.Text = "item:";
+            // 
+            // qtyLabel
+            // 
+            qtyLabel.AutoSize = true;
+            qtyLabel.Location = new System.Drawing.Point(81, 186);
+            qtyLabel.Name = "qtyLabel";
+            qtyLabel.Size = new System.Drawing.Size(28, 16);
+            qtyLabel.TabIndex = 11;
+            qtyLabel.Text = "qty:";
+            // 
+            // reference_bill_noLabel
+            // 
+            reference_bill_noLabel.AutoSize = true;
+            reference_bill_noLabel.Location = new System.Drawing.Point(81, 214);
+            reference_bill_noLabel.Name = "reference_bill_noLabel";
+            reference_bill_noLabel.Size = new System.Drawing.Size(105, 16);
+            reference_bill_noLabel.TabIndex = 13;
+            reference_bill_noLabel.Text = "reference bill no:";
+            // 
+            // bill_dateLabel
+            // 
+            bill_dateLabel.AutoSize = true;
+            bill_dateLabel.Location = new System.Drawing.Point(81, 243);
+            bill_dateLabel.Name = "bill_dateLabel";
+            bill_dateLabel.Size = new System.Drawing.Size(57, 16);
+            bill_dateLabel.TabIndex = 15;
+            bill_dateLabel.Text = "bill date:";
+            // 
+            // party_outward_challan_noLabel
+            // 
+            party_outward_challan_noLabel.AutoSize = true;
+            party_outward_challan_noLabel.Location = new System.Drawing.Point(81, 270);
+            party_outward_challan_noLabel.Name = "party_outward_challan_noLabel";
+            party_outward_challan_noLabel.Size = new System.Drawing.Size(154, 16);
+            party_outward_challan_noLabel.TabIndex = 17;
+            party_outward_challan_noLabel.Text = "party outward challan no:";
+            // 
+            // mainDB
+            // 
+            this.mainDB.DataSetName = "MainDB";
+            this.mainDB.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // machinery_item_inward_unit2BindingSource
+            // 
+            this.machinery_item_inward_unit2BindingSource.DataMember = "machinery_item_inward_unit2";
+            this.machinery_item_inward_unit2BindingSource.DataSource = this.mainDB;
+            // 
+            // machinery_item_inward_unit2TableAdapter
+            // 
+            this.machinery_item_inward_unit2TableAdapter.ClearBeforeFill = true;
+            // 
+            // tableAdapterManager
+            // 
+            this.tableAdapterManager.BackupDataSetBeforeUpdate = false;
+            this.tableAdapterManager.machinery_item_inward_unit2TableAdapter = this.machinery_item_inward_unit2TableAdapter;
+            this.tableAdapterManager.UpdateOrder = store_parts.MainDBTableAdapters.TableAdapterManager.UpdateOrderOption.InsertUpdateDelete;
+            // 
+            // idTextBox
+            // 
+            this.idTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machinery_item_inward_unit2BindingSource, "id", true));
+            this.idTextBox.Location = new System.Drawing.Point(241, 43);
+            this.idTextBox.Name = "idTextBox";
+            this.idTextBox.ReadOnly = true;
+            this.idTextBox.BackColor = System.Drawing.SystemColors.Control;
+            this.idTextBox.TabStop = false;
+            this.idTextBox.Size = new System.Drawing.Size(200, 22);
+            this.idTextBox.TabIndex = 2;
+            // 
+            // challan_noTextBox
+            // 
+            this.challan_noTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machinery_item_inward_unit2BindingSource, "challan_no", true));
+            this.challan_noTextBox.Location = new System.Drawing.Point(241, 71);
+            this.challan_noTextBox.Name = "challan_noTextBox";
+            this.challan_noTextBox.Size = new System.Drawing.Size(200, 22);
+            this.challan_noTextBox.TabIndex = 4;
+            // 
+            // dateDateTimePicker
+            // 
+            this.dateDateTimePicker.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.machinery_item_inward_unit2BindingSource, "date", true));
+            this.dateDateTimePicker.Location = new System.Drawing.Point(241, 99);
+            this.dateDateTimePicker.Name = "dateDateTimePicker";
+            this.dateDateTimePicker.Size = new System.Drawing.Size(200, 22);
+            this.dateDateTimePicker.TabIndex = 6;
+            // 
+            // party_nameTextBox
+            // 
+            this.party_nameTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machinery_item_inward_unit2BindingSource, "party_name", true));
+            this.party_nameTextBox.Location = new System.Drawing.Point(241, 127);
+            this.party_nameTextBox.Name = "party_nameTextBox";
+            this.party_nameTextBox.Size = new System.Drawing.Size(200, 22);
+            this.party_nameTextBox.TabIndex = 8;
+            // 
+            // itemTextBox
+            // 
+            this.itemTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machinery_item_inward_unit2BindingSource, "item", true));
+            this.itemTextBox.Location = new System.Drawing.Point(241, 155);
+            this.itemTextBox.Name = "itemTextBox";
+            this.itemTextBox.Size = new System.Drawing.Size(200, 22);
+            this.itemTextBox.TabIndex = 10;
+            // 
+            // qtyTextBox
+            // 
+            this.qtyTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machinery_item_inward_unit2BindingSource, "qty", true));
+            this.qtyTextBox.Location = new System.Drawing.Point(241, 183);
+            this.q
+

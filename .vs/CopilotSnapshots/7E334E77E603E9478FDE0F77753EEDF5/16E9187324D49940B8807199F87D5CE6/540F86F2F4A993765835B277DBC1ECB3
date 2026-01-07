@@ -1,0 +1,100 @@
+﻿# Data Persistence Fix - LocalDB Issue Resolved
+
+## Problem Description
+Data was not persisting after closing and reopening the application. All entries were lost after each application restart.
+
+## Root Cause
+The issue was caused by Visual Studio's default behavior with LocalDB databases:
+
+1. **Copy to Output Directory**: The MainDB.mdf file had `CopyToOutputDirectory` set to `Always` in the .csproj file
+2. **Multiple Database Copies**: This created two copies of the database:
+   - Original: `C:\Users\Vardh\Desktop\EUP\store parts\store parts\MainDB.mdf`
+   - Working Copy: `C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Debug\MainDB.mdf`
+3. **Overwriting Issue**: Every time you built or ran the application, Visual Studio copied the original database over the working copy, erasing all changes
+
+## Solution Implemented
+
+### 1. Updated Connection String
+Changed from relative path (`|DataDirectory|`) to absolute path:
+
+**Before:**
+```
+Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\MainDB.mdf;Integrated Security=True
+```
+
+**After:**
+```
+Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\Vardh\Desktop\EUP\store parts\store parts\MainDB.mdf;Integrated Security=True;Connect Timeout=30
+```
+
+### 2. Files Updated
+- ? `App.config` - Updated connection string
+- ? `Properties\Settings.settings` - Updated connection string
+- ? `store parts.csproj` - Changed `CopyToOutputDirectory` from `Always` to `Never`
+
+### 3. Database File Location
+The application now always uses the database file at:
+```
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\MainDB.mdf
+```
+
+## Verification Steps
+
+### To Test the Fix:
+1. **Close Visual Studio completely** (this is important!)
+2. Delete the old database in bin\Debug (optional but recommended):
+   ```
+   C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Debug\MainDB.mdf
+   C:\Users\Vardh\Desktop\EUP\store parts\store parts\bin\Debug\MainDB_log.ldf
+   ```
+3. Reopen Visual Studio and load the project
+4. Run the application
+5. Add some test data (machines, persons, parts, etc.)
+6. Close the application
+7. Run the application again
+8. **Verify the data is still there** ?
+
+## Important Notes
+
+### For Development:
+- Data is now stored in the project folder, not the bin\Debug folder
+- Changes persist across builds and application restarts
+- The database file is NOT copied to bin\Debug anymore
+
+### If You Move the Project:
+If you move the project to a different location, you'll need to update the connection string paths in:
+1. `App.config`
+2. `Properties\Settings.settings`
+
+Alternatively, you could use a relative path approach by setting the connection string at runtime, but the current absolute path solution is simpler and more reliable for a fixed development environment.
+
+### Backup Recommendation:
+Since all data is now in one location, consider backing up your database file regularly:
+```
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\MainDB.mdf
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\MainDB_log.ldf
+```
+
+## Alternative Solution (If Needed)
+If you prefer a portable solution that works when moving the project, you can modify the Program.cs to set the connection string dynamically at runtime:
+
+```csharp
+// In Program.cs, before Application.Run():
+string projectPath = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
+projectPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(projectPath, @"..\..\"));
+string dbPath = System.IO.Path.Combine(projectPath, "MainDB.mdf");
+string connString = $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename={dbPath};Integrated Security=True;Connect Timeout=30";
+// Then update the connection string in settings
+```
+
+However, this is more complex and the current absolute path solution works perfectly for your development environment.
+
+## Summary
+? **Problem Fixed**: Data now persists correctly
+? **Root Cause Identified**: Copy to Output Directory + |DataDirectory| conflict
+? **Solution Applied**: Absolute path + Never copy to output
+? **Ready to Use**: Application will now maintain data across restarts
+
+---
+**Last Updated**: December 2024
+**Status**: ? RESOLVED

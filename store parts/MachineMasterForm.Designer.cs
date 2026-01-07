@@ -1,0 +1,363 @@
+namespace store_parts
+{
+    partial class MachineMasterForm
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.Label idLabel;
+            System.Windows.Forms.Label machine_nameLabel;
+            System.Windows.Forms.Label machine_codeLabel;
+            System.Windows.Forms.Label locationLabel;
+            System.Windows.Forms.Label descriptionLabel;
+            this.mainDB = new store_parts.MainDB();
+            this.machineMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.machineMasterTableAdapter = new store_parts.MainDBTableAdapters.MachineMasterTableAdapter();
+            this.tableAdapterManager = new store_parts.MainDBTableAdapters.TableAdapterManager();
+            this.machineMasterDataGridView = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewCheckBoxColumn1 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.idTextBox = new System.Windows.Forms.TextBox();
+            this.machine_nameTextBox = new System.Windows.Forms.TextBox();
+            this.machine_codeTextBox = new System.Windows.Forms.TextBox();
+            this.locationTextBox = new System.Windows.Forms.TextBox();
+            this.descriptionTextBox = new System.Windows.Forms.TextBox();
+            this.btnAdd = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnDelete = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
+            this.lblRecordCount = new System.Windows.Forms.Label();
+            idLabel = new System.Windows.Forms.Label();
+            machine_nameLabel = new System.Windows.Forms.Label();
+            machine_codeLabel = new System.Windows.Forms.Label();
+            locationLabel = new System.Windows.Forms.Label();
+            descriptionLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machineMasterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machineMasterDataGridView)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // idLabel
+            // 
+            idLabel.AutoSize = true;
+            idLabel.Location = new System.Drawing.Point(30, 30);
+            idLabel.Name = "idLabel";
+            idLabel.Size = new System.Drawing.Size(21, 16);
+            idLabel.TabIndex = 1;
+            idLabel.Text = "ID:";
+            // 
+            // machine_nameLabel
+            // 
+            machine_nameLabel.AutoSize = true;
+            machine_nameLabel.Location = new System.Drawing.Point(30, 60);
+            machine_nameLabel.Name = "machine_nameLabel";
+            machine_nameLabel.Size = new System.Drawing.Size(110, 16);
+            machine_nameLabel.TabIndex = 3;
+            machine_nameLabel.Text = "Machine Name:*";
+            // 
+            // machine_codeLabel
+            // 
+            machine_codeLabel.AutoSize = true;
+            machine_codeLabel.Location = new System.Drawing.Point(30, 90);
+            machine_codeLabel.Name = "machine_codeLabel";
+            machine_codeLabel.Size = new System.Drawing.Size(96, 16);
+            machine_codeLabel.TabIndex = 5;
+            machine_codeLabel.Text = "Machine Code:";
+            // 
+            // locationLabel
+            // 
+            locationLabel.AutoSize = true;
+            locationLabel.Location = new System.Drawing.Point(30, 120);
+            locationLabel.Name = "locationLabel";
+            locationLabel.Size = new System.Drawing.Size(61, 16);
+            locationLabel.TabIndex = 7;
+            locationLabel.Text = "Location:";
+            // 
+            // descriptionLabel
+            // 
+            descriptionLabel.AutoSize = true;
+            descriptionLabel.Location = new System.Drawing.Point(30, 150);
+            descriptionLabel.Name = "descriptionLabel";
+            descriptionLabel.Size = new System.Drawing.Size(78, 16);
+            descriptionLabel.TabIndex = 9;
+            descriptionLabel.Text = "Description:";
+            // 
+            // mainDB
+            // 
+            this.mainDB.DataSetName = "MainDB";
+            this.mainDB.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // machineMasterBindingSource
+            // 
+            this.machineMasterBindingSource.DataMember = "MachineMaster";
+            this.machineMasterBindingSource.DataSource = this.mainDB;
+            // 
+            // machineMasterTableAdapter
+            // 
+            this.machineMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // tableAdapterManager
+            // 
+            this.tableAdapterManager.BackupDataSetBeforeUpdate = false;
+            this.tableAdapterManager.MachineMasterTableAdapter = this.machineMasterTableAdapter;
+            this.tableAdapterManager.UpdateOrder = store_parts.MainDBTableAdapters.TableAdapterManager.UpdateOrderOption.InsertUpdateDelete;
+            // 
+            // machineMasterDataGridView
+            // 
+            this.machineMasterDataGridView.AutoGenerateColumns = false;
+            this.machineMasterDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.machineMasterDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn1,
+            this.dataGridViewTextBoxColumn2,
+            this.dataGridViewTextBoxColumn3,
+            this.dataGridViewTextBoxColumn4,
+            this.dataGridViewTextBoxColumn5,
+            this.dataGridViewCheckBoxColumn1});
+            this.machineMasterDataGridView.DataSource = this.machineMasterBindingSource;
+            this.machineMasterDataGridView.Location = new System.Drawing.Point(30, 240);
+            this.machineMasterDataGridView.Name = "machineMasterDataGridView";
+            this.machineMasterDataGridView.RowHeadersWidth = 51;
+            this.machineMasterDataGridView.RowTemplate.Height = 24;
+            this.machineMasterDataGridView.Size = new System.Drawing.Size(740, 250);
+            this.machineMasterDataGridView.TabIndex = 13;
+            this.machineMasterDataGridView.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.machineMasterDataGridView_CellDoubleClick);
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.DataPropertyName = "id";
+            this.dataGridViewTextBoxColumn1.HeaderText = "ID";
+            this.dataGridViewTextBoxColumn1.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.dataGridViewTextBoxColumn1.Width = 50;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.DataPropertyName = "machine_name";
+            this.dataGridViewTextBoxColumn2.HeaderText = "Machine Name";
+            this.dataGridViewTextBoxColumn2.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.Width = 150;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.DataPropertyName = "machine_code";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Machine Code";
+            this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.Width = 120;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.DataPropertyName = "location";
+            this.dataGridViewTextBoxColumn4.HeaderText = "Location";
+            this.dataGridViewTextBoxColumn4.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.Width = 150;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            this.dataGridViewTextBoxColumn5.DataPropertyName = "description";
+            this.dataGridViewTextBoxColumn5.HeaderText = "Description";
+            this.dataGridViewTextBoxColumn5.MinimumWidth = 6;
+            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            this.dataGridViewTextBoxColumn5.Width = 180;
+            // 
+            // dataGridViewCheckBoxColumn1
+            // 
+            this.dataGridViewCheckBoxColumn1.DataPropertyName = "is_active";
+            this.dataGridViewCheckBoxColumn1.HeaderText = "Active";
+            this.dataGridViewCheckBoxColumn1.MinimumWidth = 6;
+            this.dataGridViewCheckBoxColumn1.Name = "dataGridViewCheckBoxColumn1";
+            this.dataGridViewCheckBoxColumn1.Width = 70;
+            // 
+            // idTextBox
+            // 
+            this.idTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machineMasterBindingSource, "id", true));
+            this.idTextBox.Location = new System.Drawing.Point(140, 27);
+            this.idTextBox.Name = "idTextBox";
+            this.idTextBox.ReadOnly = true;
+            this.idTextBox.BackColor = System.Drawing.SystemColors.Control;
+            this.idTextBox.Size = new System.Drawing.Size(200, 22);
+            this.idTextBox.TabIndex = 2;
+            // 
+            // machine_nameTextBox
+            // 
+            this.machine_nameTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machineMasterBindingSource, "machine_name", true));
+            this.machine_nameTextBox.Location = new System.Drawing.Point(140, 57);
+            this.machine_nameTextBox.Name = "machine_nameTextBox";
+            this.machine_nameTextBox.Size = new System.Drawing.Size(350, 22);
+            this.machine_nameTextBox.TabIndex = 4;
+            // 
+            // machine_codeTextBox
+            // 
+            this.machine_codeTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machineMasterBindingSource, "machine_code", true));
+            this.machine_codeTextBox.Location = new System.Drawing.Point(140, 87);
+            this.machine_codeTextBox.Name = "machine_codeTextBox";
+            this.machine_codeTextBox.Size = new System.Drawing.Size(350, 22);
+            this.machine_codeTextBox.TabIndex = 6;
+            // 
+            // locationTextBox
+            // 
+            this.locationTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machineMasterBindingSource, "location", true));
+            this.locationTextBox.Location = new System.Drawing.Point(140, 117);
+            this.locationTextBox.Name = "locationTextBox";
+            this.locationTextBox.Size = new System.Drawing.Size(350, 22);
+            this.locationTextBox.TabIndex = 8;
+            // 
+            // descriptionTextBox
+            // 
+            this.descriptionTextBox.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.machineMasterBindingSource, "description", true));
+            this.descriptionTextBox.Location = new System.Drawing.Point(140, 147);
+            this.descriptionTextBox.Multiline = true;
+            this.descriptionTextBox.Name = "descriptionTextBox";
+            this.descriptionTextBox.Size = new System.Drawing.Size(350, 60);
+            this.descriptionTextBox.TabIndex = 10;
+            // 
+            // btnAdd
+            // 
+            this.btnAdd.Location = new System.Drawing.Point(510, 30);
+            this.btnAdd.Name = "btnAdd";
+            this.btnAdd.Size = new System.Drawing.Size(120, 30);
+            this.btnAdd.TabIndex = 14;
+            this.btnAdd.Text = "Add New";
+            this.btnAdd.UseVisualStyleBackColor = true;
+            this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
+            // 
+            // btnSave
+            // 
+            this.btnSave.Location = new System.Drawing.Point(650, 30);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(120, 30);
+            this.btnSave.TabIndex = 15;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.Location = new System.Drawing.Point(510, 70);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(120, 30);
+            this.btnDelete.TabIndex = 16;
+            this.btnDelete.Text = "Delete";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.Location = new System.Drawing.Point(650, 70);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(120, 30);
+            this.btnClear.TabIndex = 17;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(510, 110);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(120, 30);
+            this.btnRefresh.TabIndex = 18;
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
+            // btnClose
+            // 
+            this.btnClose.Location = new System.Drawing.Point(650, 110);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(120, 30);
+            this.btnClose.TabIndex = 19;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
+            // lblRecordCount
+            // 
+            this.lblRecordCount.AutoSize = true;
+            this.lblRecordCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.lblRecordCount.Location = new System.Drawing.Point(30, 500);
+            this.lblRecordCount.Name = "lblRecordCount";
+            this.lblRecordCount.Size = new System.Drawing.Size(135, 18);
+            this.lblRecordCount.TabIndex = 20;
+            this.lblRecordCount.Text = "Total Machines: 0";
+            // 
+            // MachineMasterForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(800, 530);
+            this.Controls.Add(this.lblRecordCount);
+            this.Controls.Add(this.btnClose);
+            this.Controls.Add(this.btnRefresh);
+            this.Controls.Add(this.btnClear);
+            this.Controls.Add(this.btnDelete);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnAdd);
+            this.Controls.Add(this.machineMasterDataGridView);
+            this.Controls.Add(idLabel);
+            this.Controls.Add(this.idTextBox);
+            this.Controls.Add(machine_nameLabel);
+            this.Controls.Add(this.machine_nameTextBox);
+            this.Controls.Add(machine_codeLabel);
+            this.Controls.Add(this.machine_codeTextBox);
+            this.Controls.Add(locationLabel);
+            this.Controls.Add(this.locationTextBox);
+            this.Controls.Add(descriptionLabel);
+            this.Controls.Add(this.descriptionTextBox);
+            this.Name = "MachineMasterForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Machine Master - Manage Machines";
+            this.Load += new System.EventHandler(this.MachineMasterForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machineMasterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machineMasterDataGridView)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        private MainDB mainDB;
+        private System.Windows.Forms.BindingSource machineMasterBindingSource;
+        private MainDBTableAdapters.MachineMasterTableAdapter machineMasterTableAdapter;
+        private MainDBTableAdapters.TableAdapterManager tableAdapterManager;
+        private System.Windows.Forms.DataGridView machineMasterDataGridView;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn1;
+        private System.Windows.Forms.TextBox idTextBox;
+        private System.Windows.Forms.TextBox machine_nameTextBox;
+        private System.Windows.Forms.TextBox machine_codeTextBox;
+        private System.Windows.Forms.TextBox locationTextBox;
+        private System.Windows.Forms.TextBox descriptionTextBox;
+        private System.Windows.Forms.Button btnAdd;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Label lblRecordCount;
+    }
+}

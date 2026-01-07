@@ -1,0 +1,154 @@
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class LoginForm : Form
+    {
+        public LoginForm()
+        {
+            InitializeComponent();
+        }
+
+        private async void btnLogin_Click(object sender, EventArgs e)
+        {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(txtUsername.Text))
+            {
+                MessageBox.Show("Please enter your username.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtUsername.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtPassword.Text))
+            {
+                MessageBox.Show("Please enter your password.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtPassword.Focus();
+                return;
+            }
+
+            // Disable controls during login
+            SetControlsEnabled(false);
+            lblStatus.Text = "Authenticating...";
+            lblStatus.Visible = true;
+
+            try
+            {
+                // Simulate async operation for smooth UI
+                await Task.Delay(300);
+                
+                bool success = ValidateCredentials(txtUsername.Text, txtPassword.Text);
+
+                if (success)
+                {
+                    lblStatus.Text = "Login successful!";
+                    lblStatus.ForeColor = System.Drawing.Color.Green;
+                    
+                    // Wait a moment to show success message
+                    await Task.Delay(500);
+                    
+                    // Hide login form and show main form
+                    this.Hide();
+                    Form1 mainForm = new Form1();
+                    mainForm.FormClosed += (s, args) => this.Close();
+                    mainForm.Show();
+                }
+                else
+                {
+                    lblStatus.Text = "Invalid username or password";
+                    lblStatus.ForeColor = System.Drawing.Color.Red;
+                    txtPassword.Clear();
+                    txtPassword.Focus();
+                    SetControlsEnabled(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = "Login failed";
+                lblStatus.ForeColor = System.Drawing.Color.Red;
+                MessageBox.Show("An error occurred during login.\n\nError: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                SetControlsEnabled(true);
+            }
+        }
+
+        private bool ValidateCredentials(string username, string password)
+        {
+            // Hardcoded credentials
+            // Username: admin, Password: Abhay@123
+            // Username: user, Password: password
+            
+            if (username == "admin" && password == "Abhay@123")
+            {
+                return true;
+            }
+            
+            if (username == "user" && password == "password")
+            {
+                return true;
+            }
+            
+            return false;
+        }
+
+        private void SetControlsEnabled(bool enabled)
+        {
+            txtUsername.Enabled = enabled;
+            txtPassword.Enabled = enabled;
+            btnLogin.Enabled = enabled;
+            btnCancel.Enabled = enabled;
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you want to exit?", 
+                "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
+        }
+
+        private void txtPassword_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Allow Enter key to submit
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = true;
+                btnLogin_Click(sender, e);
+            }
+        }
+
+        private void txtUsername_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Allow Enter key to move to password
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = true;
+                txtPassword.Focus();
+            }
+        }
+
+        private void LoginForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Cleanup if needed
+        }
+
+        private void chkShowPassword_CheckedChanged(object sender, EventArgs e)
+        {
+            txtPassword.UseSystemPasswordChar = !chkShowPassword.Checked;
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void lblSubtitle_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
+}

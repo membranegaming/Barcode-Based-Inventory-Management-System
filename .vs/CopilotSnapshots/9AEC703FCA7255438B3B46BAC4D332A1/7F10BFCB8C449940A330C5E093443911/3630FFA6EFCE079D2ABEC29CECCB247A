@@ -1,0 +1,1139 @@
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class PartsUsageForm : Form
+    {
+        private bool _isLoading = false;
+        private string _barcodeBuffer = "";
+        private DateTime _lastKeyPress = DateTime.MinValue;
+        private const int BARCODE_TIMEOUT_MS = 100; // Max time between keystrokes for barcode scanner
+        
+        // DataTable for usage history
+        private DataTable _usageHistoryData;
+
+        public PartsUsageForm()
+        {
+            InitializeComponent();
+            
+            // Enable KeyPreview to capture all key events at form level
+            this.KeyPreview = true;
+        }
+
+        private void PartsUsageForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                _isLoading = true;
+
+                // Ensure PartsUsageHistory table exists
+                EnsureUsageHistoryTableExists();
+
+                // Ensure used_qty column exists in the DataTable schema BEFORE loading data
+                EnsureUsedQtyColumn();
+
+                // Load master data for dropdowns
+                LoadMasterData();
+                
+                LoadPartsData();
+                ShowUnusedParts();
+                UpdateRecordCount();
+
+                // Handle remaining quantity calculation
+                this.machinery_item_inward_unit2DataGridView.CellFormatting += DataGridView_CellFormatting;
+                
+                // Subscribe to KeyPress event for barcode scanner capture
+                this.KeyPress += PartsUsageForm_KeyPress;
+
+                _isLoading = false;
+            }
+            catch (Exception ex)
+            {
+                _isLoading = false;
+                ShowError("Error loading data", ex);
+            }
+        }
+
+        /// <summary>
+        /// Ensures the PartsUsageHistory table exists in the database
+        /// </summary>
+        private void EnsureUsageHistoryTableExists()
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    
+                    // Check if table exists
+                    string checkSql = "SELECT COUNT(*) FROM sys.tables WHERE name = 'PartsUsageHistory'";
+                    using (SqlCommand checkCmd = new SqlCommand(checkSql, connection))
+                    {
+                        int count = (int)checkCmd.ExecuteScalar();
+                        if (count == 0)
+                        {
+                            // Create the table
+                            string createSql = @"
+                                CREATE TABLE PartsUsageHistory (
+                                    id INT IDENTITY(1,1) PRIMARY KEY,
+                                    inward_item_id INT NOT NULL,
+                                    quantity_used INT NOT NULL DEFAULT 1,
+                                    used_in_machine NVARCHAR(100) NOT NULL,
+                                    taken_by NVARCHAR(100) NOT NULL,
+                                    usage_date DATETIME NOT NULL DEFAULT GETDATE(),
+                                    remarks NVARCHAR(500) NULL,
+                                    created_date DATETIME NOT NULL DEFAULT GETDATE()
+                                );
+                                CREATE INDEX IX_PartsUsageHistory_InwardItemId ON PartsUsageHistory(inward_item_id);
+                                CREATE INDEX IX_PartsUsageHistory_UsageDate ON PartsUsageHistory(usage_date);";
+                            
+                            using (SqlCommand createCmd = new SqlCommand(createSql, connection))
+                            {
+                                createCmd.ExecuteNonQuery();
+                                System.Diagnostics.Debug.WriteLine("PartsUsageHistory table created.");
+                            }
+                            
+                            // Migrate existing data
+                            MigrateExistingUsageData(connection);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("EnsureUsageHistoryTableExists error: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Migrates existing usage data from the main table to the history table
+        /// </summary>
+        private void MigrateExistingUsageData(SqlConnection connection)
+        {
+            try
+            {
+                string migrateSql = @"
+                    INSERT INTO PartsUsageHistory (inward_item_id, quantity_used, used_in_machine, taken_by, usage_date, remarks)
+                    SELECT 
+                        id,
+                        used_qty,
+                        ISNULL(NULLIF(used_in_machine, ''), 'Unknown Machine'),
+                        ISNULL(NULLIF(taken_by, ''), 'Unknown Person'),
+                        ISNULL(date, GETDATE()),
+                        'Migrated from legacy data'
+                    FROM machinery_item_inward_unit2
+                    WHERE ISNULL(used_qty, 0) > 0
+                    AND NOT EXISTS (SELECT 1 FROM PartsUsageHistory WHERE inward_item_id = machinery_item_inward_unit2.id)";
+                
+                using (SqlCommand cmd = new SqlCommand(migrateSql, connection))
+                {
+                    int migratedCount = cmd.ExecuteNonQuery();
+                    if (migratedCount > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Migrated {migratedCount} existing usage records.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("MigrateExistingUsageData error: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Captures keyboard input at form level to detect barcode scanner input.
+        /// Barcode scanners typically send characters rapidly followed by Enter.
+        /// </summary>
+        private void PartsUsageForm_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Skip if a text input control is focused (let user type normally in those)
+            if (txtSearch.Focused || cmbMachineName.Focused || cmbTakenBy.Focused || txtRemarks.Focused)
+            {
+                return;
+            }
+
+            // Check time since last keypress
+            DateTime now = DateTime.Now;
+            double msSinceLastKey = (now - _lastKeyPress).TotalMilliseconds;
+
+            // If too much time has passed, reset the buffer (manual typing vs scanner)
+            if (msSinceLastKey > BARCODE_TIMEOUT_MS && _barcodeBuffer.Length > 0)
+            {
+                _barcodeBuffer = "";
+            }
+
+            _lastKeyPress = now;
+
+            // Enter key - process the barcode
+            if (e.KeyChar == (char)Keys.Return || e.KeyChar == (char)Keys.Enter)
+            {
+                if (!string.IsNullOrEmpty(_barcodeBuffer))
+                {
+                    ProcessScannedBarcode(_barcodeBuffer);
+                    _barcodeBuffer = "";
+                    e.Handled = true;
+                }
+                return;
+            }
+
+            // Tab key - also commonly used by some scanners as suffix
+            if (e.KeyChar == (char)Keys.Tab)
+            {
+                if (!string.IsNullOrEmpty(_barcodeBuffer))
+                {
+                    ProcessScannedBarcode(_barcodeBuffer);
+                    _barcodeBuffer = "";
+                    e.Handled = true;
+                }
+                return;
+            }
+
+            // Accumulate printable characters
+            if (!char.IsControl(e.KeyChar))
+            {
+                _barcodeBuffer += e.KeyChar;
+                e.Handled = true; // Prevent character from going to other controls
+            }
+        }
+
+        /// <summary>
+        /// Process the scanned barcode - search and select the matching record
+        /// </summary>
+        private void ProcessScannedBarcode(string barcode)
+        {
+            try
+            {
+                // Trim any whitespace
+                barcode = barcode.Trim();
+
+                if (string.IsNullOrEmpty(barcode))
+                    return;
+
+                // Update search box to show what was scanned
+                txtSearch.Text = barcode;
+
+                // Try to parse as ID (numeric)
+                int scannedId;
+                bool isNumeric = int.TryParse(barcode, out scannedId);
+
+                // Search in the data
+                bool found = false;
+
+                // First try exact ID match
+                if (isNumeric)
+                {
+                    for (int i = 0; i < machinery_item_inward_unit2DataGridView.Rows.Count; i++)
+                    {
+                        var row = machinery_item_inward_unit2DataGridView.Rows[i];
+                        if (row.Cells["dataGridViewTextBoxColumn1"].Value != null)
+                        {
+                            int rowId;
+                            if (int.TryParse(row.Cells["dataGridViewTextBoxColumn1"].Value.ToString(), out rowId))
+                            {
+                                if (rowId == scannedId)
+                                {
+                                    // Clear current selection and select this row
+                                    machinery_item_inward_unit2DataGridView.ClearSelection();
+                                    machinery_item_inward_unit2DataGridView.Rows[i].Selected = true;
+                                    machinery_item_inward_unit2DataGridView.CurrentCell = row.Cells[0];
+                                    
+                                    // Scroll to make the row visible
+                                    machinery_item_inward_unit2DataGridView.FirstDisplayedScrollingRowIndex = 
+                                        Math.Max(0, i - 2);
+                                    
+                                    found = true;
+                                    
+                                    // Show confirmation
+                                    lblFilterStatus.Text = $"Found ID: {scannedId}";
+                                    lblFilterStatus.ForeColor = System.Drawing.Color.Green;
+                                    
+                                    // Load usage history for this item
+                                    LoadUsageHistoryForItem(scannedId);
+                                    
+                                    // Focus on machine name dropdown for quick usage entry
+                                    cmbMachineName.Focus();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // If not found by ID, try applying filter
+                if (!found)
+                {
+                    // Apply filter to show matching records
+                    string filterText = barcode.Replace("'", "''");
+                    string filter;
+
+                    if (isNumeric)
+                    {
+                        filter = $"id = {scannedId}";
+                    }
+                    else
+                    {
+                        filter = $"challan_no LIKE '%{filterText}%' OR " +
+                                 $"item LIKE '%{filterText}%' OR " +
+                                 $"party_name LIKE '%{filterText}%'";
+                    }
+
+                    // Combine with current view filter
+                    string viewFilter = "";
+                    if (rbUnused.Checked)
+                        viewFilter = "(qty > used_qty OR used_qty IS NULL OR used_qty = 0)";
+                    else if (rbUsed.Checked)
+                        viewFilter = "(used_qty > 0)";
+
+                    if (!string.IsNullOrEmpty(viewFilter))
+                        machinery_item_inward_unit2BindingSource.Filter = viewFilter + " AND (" + filter + ")";
+                    else
+                        machinery_item_inward_unit2BindingSource.Filter = filter;
+
+                    UpdateRecordCount();
+
+                    // Select first row if any results
+                    if (machinery_item_inward_unit2DataGridView.Rows.Count > 0)
+                    {
+                        machinery_item_inward_unit2DataGridView.ClearSelection();
+                        machinery_item_inward_unit2DataGridView.Rows[0].Selected = true;
+                        machinery_item_inward_unit2DataGridView.CurrentCell = 
+                            machinery_item_inward_unit2DataGridView.Rows[0].Cells[0];
+                        
+                        found = true;
+                        lblFilterStatus.Text = $"Found: {machinery_item_inward_unit2BindingSource.Count} record(s)";
+                        lblFilterStatus.ForeColor = System.Drawing.Color.Green;
+                        
+                        // Focus on machine name dropdown
+                        cmbMachineName.Focus();
+                    }
+                    else
+                    {
+                        lblFilterStatus.Text = $"Not found: {barcode}";
+                        lblFilterStatus.ForeColor = System.Drawing.Color.Red;
+                        
+                        // Play error sound
+                        System.Media.SystemSounds.Exclamation.Play();
+                    }
+                }
+
+                if (!found)
+                {
+                    MessageBox.Show($"No record found with ID or barcode: {barcode}", 
+                        "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("ProcessScannedBarcode error: " + ex.Message);
+                MessageBox.Show("Error processing barcode: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Ensures the used_qty column exists in the DataTable schema
+        /// </summary>
+        private void EnsureUsedQtyColumn()
+        {
+            if (!this.mainDB.machinery_item_inward_unit2.Columns.Contains("used_qty"))
+            {
+                var col = new DataColumn("used_qty", typeof(int));
+                col.DefaultValue = 0;
+                col.AllowDBNull = true;
+                this.mainDB.machinery_item_inward_unit2.Columns.Add(col);
+            }
+        }
+
+        private void LoadPartsData()
+        {
+            try
+            {
+                // Ensure column exists before loading
+                EnsureUsedQtyColumn();
+
+                // Load data using direct SQL to include used_qty calculated from history
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    string sql = @"SELECT 
+                                    p.id, 
+                                    p.challan_no, 
+                                    p.date, 
+                                    p.party_name, 
+                                    p.item, 
+                                    p.qty, 
+                                    ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as used_qty,
+                                    p.reference_bill_no, 
+                                    p.bill_date
+                                   FROM machinery_item_inward_unit2 p
+                                   ORDER BY p.id DESC";
+                    
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        this.mainDB.machinery_item_inward_unit2.Clear();
+                        adapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                    }
+                }
+                
+                // Accept changes to mark all rows as unchanged
+                this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+            }
+            catch (Exception ex)
+            {
+                // Fallback to TableAdapter if direct SQL fails
+                System.Diagnostics.Debug.WriteLine("LoadPartsData fallback: " + ex.Message);
+                try
+                {
+                    this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                    
+                    // Set default values for used_qty if not present
+                    foreach (DataRow row in this.mainDB.machinery_item_inward_unit2.Rows)
+                    {
+                        if (row["used_qty"] == DBNull.Value)
+                        {
+                            row["used_qty"] = 0;
+                        }
+                    }
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                }
+                catch (Exception innerEx)
+                {
+                    System.Diagnostics.Debug.WriteLine("LoadPartsData fallback also failed: " + innerEx.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Loads usage history for a specific item
+        /// </summary>
+        private void LoadUsageHistoryForItem(int itemId)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    string sql = @"SELECT 
+                                    h.id as [History ID],
+                                    h.quantity_used as [Qty Used],
+                                    h.used_in_machine as [Machine],
+                                    h.taken_by as [Taken By],
+                                    h.usage_date as [Usage Date],
+                                    h.remarks as [Remarks]
+                                   FROM PartsUsageHistory h
+                                   WHERE h.inward_item_id = @itemId
+                                   ORDER BY h.usage_date DESC";
+                    
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        adapter.SelectCommand.Parameters.AddWithValue("@itemId", itemId);
+                        _usageHistoryData = new DataTable();
+                        adapter.Fill(_usageHistoryData);
+                    }
+                }
+                
+                // Update the history grid
+                if (dgvUsageHistory != null)
+                {
+                    dgvUsageHistory.DataSource = _usageHistoryData;
+                    
+                    // Format columns
+                    if (dgvUsageHistory.Columns.Contains("Usage Date"))
+                    {
+                        dgvUsageHistory.Columns["Usage Date"].DefaultCellStyle.Format = "dd-MMM-yyyy hh:mm tt";
+                    }
+                    
+                    // Update history label
+                    lblHistoryCount.Text = $"Usage History: {_usageHistoryData.Rows.Count} record(s)";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("LoadUsageHistoryForItem error: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Loads all usage history
+        /// </summary>
+        private void LoadAllUsageHistory()
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    string sql = @"SELECT 
+                                    h.id as [History ID],
+                                    p.id as [Part ID],
+                                    p.challan_no as [Challan No],
+                                    p.item as [Item],
+                                    h.quantity_used as [Qty Used],
+                                    h.used_in_machine as [Machine],
+                                    h.taken_by as [Taken By],
+                                    h.usage_date as [Usage Date],
+                                    h.remarks as [Remarks]
+                                   FROM PartsUsageHistory h
+                                   INNER JOIN machinery_item_inward_unit2 p ON h.inward_item_id = p.id
+                                   ORDER BY h.usage_date DESC";
+                    
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(sql, connection))
+                    {
+                        _usageHistoryData = new DataTable();
+                        adapter.Fill(_usageHistoryData);
+                    }
+                }
+                
+                // Update the history grid
+                if (dgvUsageHistory != null)
+                {
+                    dgvUsageHistory.DataSource = _usageHistoryData;
+                    
+                    // Format columns
+                    if (dgvUsageHistory.Columns.Contains("Usage Date"))
+                    {
+                        dgvUsageHistory.Columns["Usage Date"].DefaultCellStyle.Format = "dd-MMM-yyyy hh:mm tt";
+                    }
+                    
+                    // Update history label
+                    lblHistoryCount.Text = $"Usage History: {_usageHistoryData.Rows.Count} record(s)";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("LoadAllUsageHistory error: " + ex.Message);
+            }
+        }
+
+        private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            // Calculate and display remaining quantity
+            if (this.machinery_item_inward_unit2DataGridView.Columns[e.ColumnIndex].Name == "colRemainingQty")
+            {
+                if (e.RowIndex >= 0)
+                {
+                    DataGridViewRow row = this.machinery_item_inward_unit2DataGridView.Rows[e.RowIndex];
+                    
+                    int totalQty = 0;
+                    int usedQty = 0;
+                    
+                    var qtyCell = row.Cells["dataGridViewTextBoxColumn6"];
+                    var usedQtyCell = row.Cells["colUsedQty"];
+                    
+                    if (qtyCell.Value != null && qtyCell.Value != DBNull.Value)
+                    {
+                        int.TryParse(qtyCell.Value.ToString(), out totalQty);
+                    }
+                    
+                    if (usedQtyCell.Value != null && usedQtyCell.Value != DBNull.Value)
+                    {
+                        int.TryParse(usedQtyCell.Value.ToString(), out usedQty);
+                    }
+                    
+                    int remaining = totalQty - usedQty;
+                    e.Value = remaining;
+                    
+                    // Color code based on remaining quantity
+                    if (remaining <= 0)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Red;
+                        e.CellStyle.Font = new System.Drawing.Font(e.CellStyle.Font, System.Drawing.FontStyle.Bold);
+                    }
+                    else if (remaining < totalQty)
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Orange;
+                    }
+                    else
+                    {
+                        e.CellStyle.ForeColor = System.Drawing.Color.Green;
+                    }
+                }
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            try
+            {
+                // Load MachineMaster data for dropdown (only active machines)
+                this.machineMasterTableAdapter.Fill(this.mainDB.MachineMaster);
+                
+                // Load PersonMaster data for dropdown (only active persons)
+                this.personMasterTableAdapter.Fill(this.mainDB.PersonMaster);
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error loading master data", ex);
+            }
+        }
+
+        private void ShowUnusedParts()
+        {
+            // Show parts where remaining quantity > 0 (qty - used_qty > 0)
+            this.machinery_item_inward_unit2BindingSource.Filter = "qty > used_qty OR used_qty IS NULL OR used_qty = 0";
+            lblFilterStatus.Text = "Showing: Parts with Remaining Qty";
+            UpdateRecordCount();
+            LoadAllUsageHistory();
+        }
+
+        private void ShowAllParts()
+        {
+            this.machinery_item_inward_unit2BindingSource.RemoveFilter();
+            lblFilterStatus.Text = "Showing: All Parts";
+            UpdateRecordCount();
+            LoadAllUsageHistory();
+        }
+
+        private void ShowUsedParts()
+        {
+            // Show parts where some quantity has been used
+            this.machinery_item_inward_unit2BindingSource.Filter = "used_qty > 0";
+            lblFilterStatus.Text = "Showing: Parts with Usage (Used > 0)";
+            UpdateRecordCount();
+            LoadAllUsageHistory();
+        }
+
+        /// <summary>
+        /// Gets the connection string from the TableAdapter
+        /// </summary>
+        private string GetConnectionString()
+        {
+            return global::store_parts.Properties.Settings.Default.MainDBConnectionString;
+        }
+
+        /// <summary>
+        /// Records parts usage in the history table
+        /// </summary>
+        private int RecordUsageInHistory(int inwardItemId, int quantityUsed, string usedInMachine, string takenBy, DateTime usageDate, string remarks)
+        {
+            int result = 0;
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+            {
+                connection.Open();
+                
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Insert into PartsUsageHistory
+                        string insertSql = @"INSERT INTO PartsUsageHistory 
+                                            (inward_item_id, quantity_used, used_in_machine, taken_by, usage_date, remarks)
+                                            VALUES 
+                                            (@inward_item_id, @quantity_used, @used_in_machine, @taken_by, @usage_date, @remarks);
+                                            SELECT CAST(SCOPE_IDENTITY() AS int);";
+                        
+                        int newHistoryId = 0;
+                        using (SqlCommand insertCmd = new SqlCommand(insertSql, connection, transaction))
+                        {
+                            insertCmd.Parameters.AddWithValue("@inward_item_id", inwardItemId);
+                            insertCmd.Parameters.AddWithValue("@quantity_used", quantityUsed);
+                            insertCmd.Parameters.AddWithValue("@used_in_machine", usedInMachine);
+                            insertCmd.Parameters.AddWithValue("@taken_by", takenBy);
+                            insertCmd.Parameters.AddWithValue("@usage_date", usageDate);
+                            insertCmd.Parameters.AddWithValue("@remarks", string.IsNullOrEmpty(remarks) ? (object)DBNull.Value : remarks);
+                            
+                            object insertResult = insertCmd.ExecuteScalar();
+                            if (insertResult != null && insertResult != DBNull.Value)
+                            {
+                                newHistoryId = Convert.ToInt32(insertResult);
+                            }
+                        }
+                        
+                        if (newHistoryId > 0)
+                        {
+                            // Update the main table's used_qty for backward compatibility
+                            // Note: used_in_machine and taken_by columns are no longer in main table
+                            // They are stored in PartsUsageHistory only
+                            string updateSql = @"UPDATE machinery_item_inward_unit2 
+                                                SET used_qty = ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = @id), 0)
+                                                WHERE id = @id";
+                            
+                            using (SqlCommand updateCmd = new SqlCommand(updateSql, connection, transaction))
+                            {
+                                updateCmd.Parameters.AddWithValue("@id", inwardItemId);
+                                updateCmd.ExecuteNonQuery();
+                            }
+                            
+                            transaction.Commit();
+                            result = newHistoryId;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the remaining quantity for a part by calculating from history
+        /// </summary>
+        private int GetRemainingQuantity(int id)
+        {
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+            {
+                string sql = @"SELECT p.qty - ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) 
+                              FROM machinery_item_inward_unit2 p WHERE p.id = @id";
+                
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@id", id);
+                    
+                    connection.Open();
+                    object result = command.ExecuteScalar();
+                    return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+                }
+            }
+        }
+
+        private void btnRecordUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!ValidateUsageInput())
+                    return;
+
+                // Get the actual DataRow from the selected DataGridView row
+                DataGridViewRow selectedRow = this.machinery_item_inward_unit2DataGridView.SelectedRows[0];
+                DataRowView rowView = selectedRow.DataBoundItem as DataRowView;
+                
+                if (rowView == null)
+                {
+                    MessageBox.Show("Unable to get row data. Please try again.", 
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                DataRow currentRow = rowView.Row;
+                int id = Convert.ToInt32(currentRow["id"]);
+                int totalQty = Convert.ToInt32(currentRow["qty"]);
+                
+                // Get remaining quantity from database (most accurate)
+                int remainingQty = GetRemainingQuantity(id);
+                int quantityToUse = (int)this.numQuantity.Value;
+                
+                // Validate quantity
+                if (quantityToUse > remainingQty)
+                {
+                    MessageBox.Show(
+                        string.Format("Cannot use {0} units. Only {1} units remaining.", quantityToUse, remainingQty),
+                        "Insufficient Quantity", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                if (quantityToUse <= 0)
+                {
+                    MessageBox.Show("Please enter a valid quantity greater than 0.", 
+                        "Invalid Quantity", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                string machineName = this.cmbMachineName.Text.Trim();
+                string takenBy = this.cmbTakenBy.Text.Trim();
+                DateTime usageDate = this.dtpUsageDate.Value;
+                string remarks = this.txtRemarks.Text.Trim();
+
+                // Confirm the action
+                DialogResult result = MessageBox.Show(
+                    string.Format("Record usage of {0} unit(s) for this part?\n\n" +
+                        "Machine: {1}\n" +
+                        "Taken By: {2}\n" +
+                        "Date: {3:dd-MMM-yyyy hh:mm tt}\n" +
+                        "Remarks: {4}", 
+                        quantityToUse, machineName, takenBy, usageDate, 
+                        string.IsNullOrEmpty(remarks) ? "(none)" : remarks),
+                    "Confirm Usage",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                
+                if (result == DialogResult.No)
+                    return;
+
+                // Record usage in history table
+                int newHistoryId = RecordUsageInHistory(id, quantityToUse, machineName, takenBy, usageDate, remarks);
+
+                if (newHistoryId > 0)
+                {
+                    MessageBox.Show(
+                        string.Format("Successfully recorded usage of {0} unit(s)!\n" +
+                            "Remaining: {1} unit(s)\n" +
+                            "History Record ID: {2}", 
+                            quantityToUse, remainingQty - quantityToUse, newHistoryId), 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    ClearInputFields();
+                    RefreshData();
+                    
+                    // Reload history for this item
+                    LoadUsageHistoryForItem(id);
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved. Please try again.", 
+                        "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error recording parts usage", ex);
+            }
+        }
+
+        private bool ValidateUsageInput()
+        {
+            if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a parts entry to record usage.", 
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.cmbMachineName.Text))
+            {
+                MessageBox.Show("Please select the machine name where parts will be used.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.cmbMachineName.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.cmbTakenBy.Text))
+            {
+                MessageBox.Show("Please select who is taking the parts.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.cmbTakenBy.Focus();
+                return false;
+            }
+
+            if (this.numQuantity.Value <= 0)
+            {
+                MessageBox.Show("Please enter a valid quantity greater than 0.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.numQuantity.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ShowError(string message, Exception ex)
+        {
+            string errorMessage = message + ": " + ex.Message;
+            System.Diagnostics.Debug.WriteLine(errorMessage);
+            System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void rbUnused_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUnused.Checked)
+            {
+                ShowUnusedParts();
+            }
+        }
+
+        private void rbUsed_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUsed.Checked)
+            {
+                ShowUsedParts();
+            }
+        }
+
+        private void rbAll_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbAll.Checked)
+            {
+                ShowAllParts();
+            }
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            RefreshData();
+        }
+
+        private void RefreshData()
+        {
+            try
+            {
+                bool showUnused = rbUnused.Checked;
+                bool showUsed = rbUsed.Checked;
+                bool showAll = rbAll.Checked;
+
+                LoadPartsData();
+
+                if (showUnused)
+                    ShowUnusedParts();
+                else if (showUsed)
+                    ShowUsedParts();
+                else if (showAll)
+                    ShowAllParts();
+
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ClearInputFields()
+        {
+            this.cmbMachineName.SelectedIndex = -1;
+            this.cmbTakenBy.SelectedIndex = -1;
+            this.numQuantity.Value = 1;
+            this.dtpUsageDate.Value = DateTime.Now;
+            this.txtRemarks.Text = "";
+            this.cmbMachineName.Focus();
+        }
+
+        private void btnClearFields_Click(object sender, EventArgs e)
+        {
+            ClearInputFields();
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.machinery_item_inward_unit2BindingSource.Count;
+            lblRecordCount.Text = "Parts Entries: " + totalRecords.ToString();
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void machinery_item_inward_unit2DataGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count > 0)
+            {
+                try
+                {
+                    DataGridViewRow selectedRow = this.machinery_item_inward_unit2DataGridView.SelectedRows[0];
+                    DataRowView rowView = selectedRow.DataBoundItem as DataRowView;
+                    
+                    if (rowView != null)
+                    {
+                        DataRow currentRow = rowView.Row;
+                        int id = Convert.ToInt32(currentRow["id"]);
+                        
+                        // Calculate and display remaining quantity
+                        int totalQty = 0;
+                        int usedQty = 0;
+                        
+                        if (currentRow["qty"] != DBNull.Value)
+                        {
+                            totalQty = Convert.ToInt32(currentRow["qty"]);
+                        }
+                        
+                        if (currentRow.Table.Columns.Contains("used_qty") && currentRow["used_qty"] != DBNull.Value)
+                        {
+                            usedQty = Convert.ToInt32(currentRow["used_qty"]);
+                        }
+                        
+                        int remainingQty = totalQty - usedQty;
+                        
+                        // Update the available quantity label
+                        this.lblAvailableQty.Text = string.Format("Available: {0}", remainingQty);
+                        
+                        if (remainingQty <= 0)
+                        {
+                            this.lblAvailableQty.ForeColor = System.Drawing.Color.Red;
+                        }
+                        else if (remainingQty < totalQty)
+                        {
+                            this.lblAvailableQty.ForeColor = System.Drawing.Color.Orange;
+                        }
+                        else
+                        {
+                            this.lblAvailableQty.ForeColor = System.Drawing.Color.Green;
+                        }
+                        
+                        // Set the max value for numQuantity to remaining quantity
+                        if (remainingQty > 0)
+                        {
+                            this.numQuantity.Maximum = remainingQty;
+                            this.numQuantity.Value = Math.Min(this.numQuantity.Value, remainingQty);
+                        }
+                        else
+                        {
+                            this.numQuantity.Maximum = 1;
+                            this.numQuantity.Value = 1;
+                        }
+                        
+                        // Load usage history for this item
+                        LoadUsageHistoryForItem(id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Selection changed error: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string searchText = txtSearch.Text.Trim();
+                
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    MessageBox.Show("Please enter a search term.", 
+                        "Search", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                string baseFilter = string.Format(
+                    "challan_no LIKE '%{0}%' OR " +
+                    "party_name LIKE '%{0}%' OR " +
+                    "item LIKE '%{0}%' OR " +
+                    "used_in_machine LIKE '%{0}%' OR " +
+                    "taken_by LIKE '%{0}%'",
+                    searchText.Replace("'", "''"));
+
+                // Also search by ID if the search text is a number
+                int searchId;
+                if (int.TryParse(searchText, out searchId))
+                {
+                    baseFilter = string.Format("id = {0} OR ", searchId) + baseFilter;
+                }
+
+                string currentFilter = "";
+                if (rbUnused.Checked)
+                    currentFilter = "(qty > used_qty OR used_qty IS NULL OR used_qty = 0)";
+                else if (rbUsed.Checked)
+                    currentFilter = "(used_qty > 0)";
+
+                if (!string.IsNullOrEmpty(currentFilter))
+                    this.machinery_item_inward_unit2BindingSource.Filter = currentFilter + " AND (" + baseFilter + ")";
+                else
+                    this.machinery_item_inward_unit2BindingSource.Filter = baseFilter;
+
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error searching", ex);
+            }
+        }
+
+        private void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Clear();
+            
+            if (rbUnused.Checked)
+                ShowUnusedParts();
+            else if (rbUsed.Checked)
+                ShowUsedParts();
+            else
+                ShowAllParts();
+        }
+
+        private void btnManageMachines_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (MachineMasterForm machineMasterForm = new MachineMasterForm())
+                {
+                    machineMasterForm.ShowDialog();
+                }
+                
+                // Refresh machine dropdown after closing the form
+                LoadMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Machine Master form", ex);
+            }
+        }
+
+        private void btnManagePersons_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PersonMasterForm personMasterForm = new PersonMasterForm())
+                {
+                    personMasterForm.ShowDialog();
+                }
+                
+                // Refresh person dropdown after closing the form
+                LoadMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Person Master form", ex);
+            }
+        }
+
+        private void btnExportHistory_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_usageHistoryData == null || _usageHistoryData.Rows.Count == 0)
+                {
+                    MessageBox.Show("No usage history data to export.", 
+                        "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                    FilterIndex = 1,
+                    FileName = $"PartsUsageHistory_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+                    // Headers
+                    for (int i = 0; i < _usageHistoryData.Columns.Count; i++)
+                    {
+                        sb.Append("\"" + _usageHistoryData.Columns[i].ColumnName.Replace("\"", "\"\"") + "\"");
+                        if (i < _usageHistoryData.Columns.Count - 1) sb.Append(",");
+                    }
+                    sb.AppendLine();
+
+                    // Data
+                    foreach (DataRow row in _usageHistoryData.Rows)
+                    {
+                        for (int i = 0; i < _usageHistoryData.Columns.Count; i++)
+                        {
+                            string value = row[i]?.ToString() ?? "";
+                            sb.Append("\"" + value.Replace("\"", "\"\"") + "\"");
+                            if (i < _usageHistoryData.Columns.Count - 1) sb.Append(",");
+                        }
+                        sb.AppendLine();
+                    }
+
+                    System.IO.File.WriteAllText(saveDialog.FileName, sb.ToString(), System.Text.Encoding.UTF8);
+
+                    MessageBox.Show($"Usage history exported successfully to:\n{saveDialog.FileName}", 
+                        "Export Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error exporting usage history", ex);
+            }
+        }
+
+        private void lblRecordCount_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
+}

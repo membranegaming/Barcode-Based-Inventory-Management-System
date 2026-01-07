@@ -1,0 +1,396 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    /// <summary>
+    /// Form for configuring barcode printer settings
+    /// </summary>
+    public partial class PrinterSettingsForm : Form
+    {
+        private BarcodePrinter _printer;
+
+        /// <summary>
+        /// Gets the configured printer instance
+        /// </summary>
+        public BarcodePrinter ConfiguredPrinter => _printer;
+
+        /// <summary>
+        /// Gets the selected printer name
+        /// </summary>
+        public string SelectedPrinterName => cmbPrinters.SelectedItem?.ToString();
+
+        public PrinterSettingsForm()
+        {
+            InitializeComponent();
+            _printer = new BarcodePrinter();
+        }
+
+        public PrinterSettingsForm(BarcodePrinter existingPrinter) : this()
+        {
+            if (existingPrinter != null)
+            {
+                _printer = existingPrinter;
+            }
+        }
+
+        private void PrinterSettingsForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                LoadPrinters();
+                LoadLabelTemplates();
+                LoadBarcodeTypes();
+                LoadCurrentSettings();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading printer settings: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadPrinters()
+        {
+            cmbPrinters.Items.Clear();
+            List<string> printers = BarcodePrinter.GetAvailablePrinters();
+
+            foreach (string printer in printers)
+            {
+                cmbPrinters.Items.Add(printer);
+            }
+
+            // Try to select TSC printer first, then current printer, then default
+            string tscPrinter = BarcodePrinter.FindTSCPrinter();
+            if (!string.IsNullOrEmpty(tscPrinter))
+            {
+                int idx = cmbPrinters.FindStringExact(tscPrinter);
+                if (idx >= 0) cmbPrinters.SelectedIndex = idx;
+            }
+            else if (!string.IsNullOrEmpty(_printer.PrinterName))
+            {
+                int idx = cmbPrinters.FindStringExact(_printer.PrinterName);
+                if (idx >= 0) cmbPrinters.SelectedIndex = idx;
+            }
+            else if (cmbPrinters.Items.Count > 0)
+            {
+                cmbPrinters.SelectedIndex = 0;
+            }
+
+            // Update TSC indicator
+            UpdateTSCIndicator();
+        }
+
+        private void LoadLabelTemplates()
+        {
+            cmbLabelTemplate.Items.Clear();
+            cmbLabelTemplate.Items.Add("Custom");
+
+            foreach (var template in LabelTemplate.CommonTemplates)
+            {
+                cmbLabelTemplate.Items.Add(template);
+            }
+
+            cmbLabelTemplate.SelectedIndex = 0;
+        }
+
+        private void LoadBarcodeTypes()
+        {
+            cmbBarcodeType.Items.Clear();
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("Code 128 (Recommended)", BarcodePrinter.BarcodeTypes.Code128));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("Code 39", BarcodePrinter.BarcodeTypes.Code39));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("Code 93", BarcodePrinter.BarcodeTypes.Code93));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("EAN-13", BarcodePrinter.BarcodeTypes.EAN13));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("EAN-8", BarcodePrinter.BarcodeTypes.EAN8));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("UPC-A", BarcodePrinter.BarcodeTypes.UPCA));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("Interleaved 2 of 5", BarcodePrinter.BarcodeTypes.Interleaved25));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("Codabar", BarcodePrinter.BarcodeTypes.Codabar));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("QR Code", BarcodePrinter.BarcodeTypes.QRCode));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("Data Matrix", BarcodePrinter.BarcodeTypes.DataMatrix));
+            cmbBarcodeType.Items.Add(new BarcodeTypeItem("PDF417", BarcodePrinter.BarcodeTypes.PDF417));
+
+            cmbBarcodeType.SelectedIndex = 0;
+        }
+
+        private void LoadCurrentSettings()
+        {
+            // Load current printer settings
+            try
+            {
+                var s = Properties.Settings.Default;
+                if (!string.IsNullOrEmpty(s.BarcodePrinterName))
+                {
+                    int idx = cmbPrinters.FindStringExact(s.BarcodePrinterName);
+                    if (idx >= 0) cmbPrinters.SelectedIndex = idx;
+                }
+
+                numLabelWidth.Value = s.BarcodeLabelWidth > 0 ? s.BarcodeLabelWidth : numLabelWidth.Value;
+                numLabelHeight.Value = s.BarcodeLabelHeight > 0 ? s.BarcodeLabelHeight : numLabelHeight.Value;
+                numLabelGap.Value = s.BarcodeLabelGap > 0 ? s.BarcodeLabelGap : numLabelGap.Value;
+                numPrintSpeed.Value = s.BarcodePrintSpeed > 0 ? s.BarcodePrintSpeed : numPrintSpeed.Value;
+                numPrintDensity.Value = s.BarcodePrintDensity > 0 ? s.BarcodePrintDensity : numPrintDensity.Value;
+                numBarcodeHeight.Value = s.BarcodeBarcodeHeight > 0 ? s.BarcodeBarcodeHeight : numBarcodeHeight.Value;
+                numCopies.Value = s.BarcodeCopies > 0 ? s.BarcodeCopies : numCopies.Value;
+                chkShowHumanReadable.Checked = s.BarcodeShowHumanReadable;
+
+                // Select barcode type
+                for (int i = 0; i < cmbBarcodeType.Items.Count; i++)
+                {
+                    if (cmbBarcodeType.Items[i] is BarcodeTypeItem item && item.Code == s.BarcodeType)
+                    {
+                        cmbBarcodeType.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        private void UpdateTSCIndicator()
+        {
+            string selectedPrinter = cmbPrinters.SelectedItem?.ToString() ?? "";
+            bool isTSC = selectedPrinter.ToUpper().Contains("TSC") || selectedPrinter.ToUpper().Contains("TTP");
+
+            lblPrinterType.Text = isTSC ? "? TSC Printer Detected" : "Generic Printer";
+            lblPrinterType.ForeColor = isTSC ? System.Drawing.Color.Green : System.Drawing.Color.Gray;
+        }
+
+        private void cmbPrinters_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateTSCIndicator();
+        }
+
+        private void cmbLabelTemplate_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbLabelTemplate.SelectedItem is LabelTemplate template)
+            {
+                numLabelWidth.Value = template.Width;
+                numLabelHeight.Value = template.Height;
+                numLabelGap.Value = template.Gap;
+
+                // Disable custom editing when template is selected
+                numLabelWidth.Enabled = false;
+                numLabelHeight.Enabled = false;
+                numLabelGap.Enabled = false;
+            }
+            else
+            {
+                // Enable custom editing
+                numLabelWidth.Enabled = true;
+                numLabelHeight.Enabled = true;
+                numLabelGap.Enabled = true;
+            }
+        }
+
+        private void btnTestPrint_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ApplySettings();
+
+                if (string.IsNullOrEmpty(_printer.PrinterName))
+                {
+                    MessageBox.Show("Please select a printer.", "Warning",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Cursor = Cursors.WaitCursor;
+                bool success = _printer.PrintTestLabel();
+                Cursor = Cursors.Default;
+
+                if (success)
+                {
+                    MessageBox.Show("Test label sent to printer successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Failed to send test label to printer. Please check:\n" +
+                        "• Printer is turned on and connected\n" +
+                        "• Printer has labels loaded\n" +
+                        "• Correct printer is selected",
+                        "Print Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                Cursor = Cursors.Default;
+                MessageBox.Show("Error printing test label: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ApplySettings();
+                SaveSettings();
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving settings: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        }
+
+        private void ApplySettings()
+        {
+            _printer.PrinterName = cmbPrinters.SelectedItem?.ToString();
+            _printer.LabelWidth = (int)numLabelWidth.Value;
+            _printer.LabelHeight = (int)numLabelHeight.Value;
+            _printer.LabelGap = (int)numLabelGap.Value;
+            _printer.PrintSpeed = (int)numPrintSpeed.Value;
+            _printer.PrintDensity = (int)numPrintDensity.Value;
+            _printer.BarcodeHeight = (int)numBarcodeHeight.Value;
+            _printer.Copies = (int)numCopies.Value;
+            _printer.ShowHumanReadable = chkShowHumanReadable.Checked;
+
+            if (cmbBarcodeType.SelectedItem is BarcodeTypeItem barcodeItem)
+            {
+                _printer.BarcodeType = barcodeItem.Code;
+            }
+        }
+
+        private void SaveSettings()
+        {
+            // Save settings to application settings
+            Properties.Settings.Default.BarcodePrinterName = _printer.PrinterName ?? "";
+            Properties.Settings.Default.BarcodeLabelWidth = _printer.LabelWidth;
+            Properties.Settings.Default.BarcodeLabelHeight = _printer.LabelHeight;
+            Properties.Settings.Default.BarcodeLabelGap = _printer.LabelGap;
+            Properties.Settings.Default.BarcodePrintSpeed = _printer.PrintSpeed;
+            Properties.Settings.Default.BarcodePrintDensity = _printer.PrintDensity;
+            Properties.Settings.Default.BarcodeBarcodeHeight = _printer.BarcodeHeight;
+            Properties.Settings.Default.BarcodeCopies = _printer.Copies;
+            Properties.Settings.Default.BarcodeShowHumanReadable = _printer.ShowHumanReadable;
+            Properties.Settings.Default.BarcodeType = _printer.BarcodeType;
+            Properties.Settings.Default.Save();
+        }
+
+        /// <summary>
+        /// Load a printer with saved settings
+        /// </summary>
+        public static BarcodePrinter LoadSavedPrinter()
+        {
+            var printer = new BarcodePrinter();
+
+            try
+            {
+                var settings = Properties.Settings.Default;
+
+                if (!string.IsNullOrEmpty(settings.BarcodePrinterName))
+                {
+                    printer.PrinterName = settings.BarcodePrinterName;
+                }
+
+                printer.LabelWidth = settings.BarcodeLabelWidth > 0 ? settings.BarcodeLabelWidth : 50;
+                printer.LabelHeight = settings.BarcodeLabelHeight > 0 ? settings.BarcodeLabelHeight : 30;
+                printer.LabelGap = settings.BarcodeLabelGap > 0 ? settings.BarcodeLabelGap : 3;
+                printer.PrintSpeed = settings.BarcodePrintSpeed > 0 ? settings.BarcodePrintSpeed : 4;
+                printer.PrintDensity = settings.BarcodePrintDensity > 0 ? settings.BarcodePrintDensity : 8;
+                printer.BarcodeHeight = settings.BarcodeBarcodeHeight > 0 ? settings.BarcodeBarcodeHeight : 15;
+                printer.Copies = settings.BarcodeCopies > 0 ? settings.BarcodeCopies : 1;
+                printer.ShowHumanReadable = settings.BarcodeShowHumanReadable;
+
+                if (!string.IsNullOrEmpty(settings.BarcodeType))
+                {
+                    printer.BarcodeType = settings.BarcodeType;
+                }
+            }
+            catch
+            {
+                // Use defaults if settings can't be loaded
+            }
+
+            return printer;
+        }
+
+        private void btnRefreshPrinters_Click(object sender, EventArgs e)
+        {
+            LoadPrinters();
+        }
+
+        // Add event handlers referenced by designer
+        private void numLabelGap_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.LabelGap = (int)numLabelGap.Value; } catch { }
+        }
+
+        private void numLabelHeight_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.LabelHeight = (int)numLabelHeight.Value; } catch { }
+        }
+
+        private void numLabelWidth_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.LabelWidth = (int)numLabelWidth.Value; } catch { }
+        }
+
+        private void numCopies_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.Copies = (int)numCopies.Value; } catch { }
+        }
+
+        private void numPrintDensity_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.PrintDensity = (int)numPrintDensity.Value; } catch { }
+        }
+
+        private void numPrintSpeed_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.PrintSpeed = (int)numPrintSpeed.Value; } catch { }
+        }
+
+        private void chkShowHumanReadable_CheckedChanged(object sender, EventArgs e)
+        {
+            try { _printer.ShowHumanReadable = chkShowHumanReadable.Checked; } catch { }
+        }
+
+        private void numBarcodeHeight_ValueChanged(object sender, EventArgs e)
+        {
+            try { _printer.BarcodeHeight = (int)numBarcodeHeight.Value; } catch { }
+        }
+
+        private void cmbBarcodeType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbBarcodeType.SelectedItem is BarcodeTypeItem item)
+            {
+                _printer.BarcodeType = item.Code;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper class for barcode type dropdown items
+    /// </summary>
+    internal class BarcodeTypeItem
+    {
+        public string DisplayName { get; set; }
+        public string Code { get; set; }
+
+        public BarcodeTypeItem(string displayName, string code)
+        {
+            DisplayName = displayName;
+            Code = code;
+        }
+
+        public override string ToString()
+        {
+            return DisplayName;
+        }
+    }
+}

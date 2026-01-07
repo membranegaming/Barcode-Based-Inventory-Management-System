@@ -1,0 +1,138 @@
+﻿using System;
+using System.Drawing.Printing;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class PrinterSettingsForm : Form
+    {
+        private BarcodePrinter barcodePrinter;
+
+        public PrinterSettingsForm()
+        {
+            InitializeComponent();
+            barcodePrinter = new BarcodePrinter();
+        }
+
+        private void PrinterSettingsForm_Load(object sender, EventArgs e)
+        {
+            LoadInstalledPrinters();
+            LoadCurrentSettings();
+        }
+
+        /// <summary>
+        /// Loads all installed printers into the combo box
+        /// </summary>
+        private void LoadInstalledPrinters()
+        {
+            cmbPrinters.Items.Clear();
+            foreach (string printer in PrinterSettings.InstalledPrinters)
+            {
+                cmbPrinters.Items.Add(printer);
+            }
+        }
+
+        /// <summary>
+        /// Loads the current printer settings
+        /// </summary>
+        private void LoadCurrentSettings()
+        {
+            // Select the current printer in the combo box
+            if (!string.IsNullOrEmpty(barcodePrinter.PrinterName))
+            {
+                int index = cmbPrinters.Items.IndexOf(barcodePrinter.PrinterName);
+                if (index >= 0)
+                {
+                    cmbPrinters.SelectedIndex = index;
+                }
+            }
+            else if (cmbPrinters.Items.Count > 0)
+            {
+                // Select default printer
+                string defaultPrinter = new PrinterSettings().PrinterName;
+                int defaultIndex = cmbPrinters.Items.IndexOf(defaultPrinter);
+                if (defaultIndex >= 0)
+                {
+                    cmbPrinters.SelectedIndex = defaultIndex;
+                }
+                else
+                {
+                    cmbPrinters.SelectedIndex = 0;
+                }
+            }
+        }
+
+        private void btnTestPrint_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (cmbPrinters.SelectedItem != null)
+                {
+                    barcodePrinter.PrinterName = cmbPrinters.SelectedItem.ToString();
+                    
+                    if (barcodePrinter.PrintTestLabel())
+                    {
+                        MessageBox.Show("Test label sent to printer successfully.", 
+                            "Test Print", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to send test label to printer.", 
+                            "Test Print Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please select a printer first.", 
+                        "No Printer Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error during test print: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (cmbPrinters.SelectedItem != null)
+                {
+                    // Save the selected printer name to settings
+                    Properties.Settings.Default.PrinterName = cmbPrinters.SelectedItem.ToString();
+                    Properties.Settings.Default.Save();
+                    
+                    MessageBox.Show("Printer settings saved successfully.", 
+                        "Settings Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Please select a printer.", 
+                        "No Printer Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving settings: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            LoadInstalledPrinters();
+            LoadCurrentSettings();
+        }
+    }
+}

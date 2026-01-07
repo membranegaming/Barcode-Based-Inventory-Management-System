@@ -1,0 +1,126 @@
+﻿-- ============================================
+-- Store Parts Database Creation Script
+-- ============================================
+-- Run this script on your SQL Server to create
+-- the database and all required tables
+-- ============================================
+
+-- Create Database (if not exists)
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'MainDB')
+BEGIN
+    CREATE DATABASE MainDB;
+    PRINT 'Database MainDB created successfully.';
+END
+ELSE
+BEGIN
+    PRINT 'Database MainDB already exists.';
+END
+GO
+
+USE MainDB;
+GO
+
+-- ============================================
+-- Table: machinery_item_inward_unit2 (Main Data)
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'machinery_item_inward_unit2')
+BEGIN
+    CREATE TABLE machinery_item_inward_unit2 (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        challan_no NVARCHAR(50) NOT NULL,
+        date DATE NOT NULL DEFAULT GETDATE(),
+        party_name NVARCHAR(100) NOT NULL,
+        item NVARCHAR(100) NOT NULL,
+        qty INT NOT NULL DEFAULT 0,
+        used_qty INT NOT NULL DEFAULT 0,
+        reference_bill_no NVARCHAR(50) NULL,
+        bill_date DATE NULL,
+        used_in_machine NVARCHAR(100) NULL DEFAULT '',
+        taken_by NVARCHAR(100) NULL DEFAULT ''
+    );
+    PRINT 'Table machinery_item_inward_unit2 created.';
+END
+GO
+
+-- ============================================
+-- Table: PartyMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PartyMaster')
+BEGIN
+    CREATE TABLE PartyMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        party_name NVARCHAR(100) NOT NULL,
+        address NVARCHAR(255) NULL,
+        contact NVARCHAR(50) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table PartyMaster created.';
+    
+    -- Insert default party
+    INSERT INTO PartyMaster (party_name, is_active) VALUES ('Default Party', 1);
+END
+GO
+
+-- ============================================
+-- Table: ItemMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ItemMaster')
+BEGIN
+    CREATE TABLE ItemMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        item_name NVARCHAR(100) NOT NULL,
+        description NVARCHAR(255) NULL,
+        unit NVARCHAR(20) NULL DEFAULT 'PCS',
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table ItemMaster created.';
+    
+    -- Insert default item
+    INSERT INTO ItemMaster (item_name, is_active) VALUES ('Default Item', 1);
+END
+GO
+
+-- ============================================
+-- Table: MachineMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MachineMaster')
+BEGIN
+    CREATE TABLE MachineMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        machine_name NVARCHAR(100) NOT NULL,
+        location NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table MachineMaster created.';
+END
+GO
+
+-- ============================================
+-- Table: PersonMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PersonMaster')
+BEGIN
+    CREATE TABLE PersonMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        person_name NVARCHAR(100) NOT NULL,
+        department NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table PersonMaster created.';
+END
+GO
+
+-- ============================================
+-- Verify all tables created
+-- ============================================
+PRINT '';
+PRINT '============================================';
+PRINT 'Database Setup Complete!';
+PRINT '============================================';
+PRINT 'Tables created:';
+SELECT name AS TableName FROM sys.tables WHERE type = 'U' ORDER BY name;
+GO

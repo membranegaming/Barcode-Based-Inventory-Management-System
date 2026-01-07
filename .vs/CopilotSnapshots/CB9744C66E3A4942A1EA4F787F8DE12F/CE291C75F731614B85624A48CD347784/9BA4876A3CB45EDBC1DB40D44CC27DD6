@@ -1,0 +1,339 @@
+﻿-- ============================================
+-- Store Parts Database Creation Script
+-- ============================================
+-- Run this script on your SQL Server to create
+-- the database and all required tables
+-- ============================================
+
+-- Create Database (if not exists)
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'MainDB')
+BEGIN
+    CREATE DATABASE MainDB;
+    PRINT 'Database MainDB created successfully.';
+END
+ELSE
+BEGIN
+    PRINT 'Database MainDB already exists.';
+END
+GO
+
+USE MainDB;
+GO
+
+-- ============================================
+-- Table: machinery_item_inward_unit2 (Main Data)
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'machinery_item_inward_unit2')
+BEGIN
+    CREATE TABLE machinery_item_inward_unit2 (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        challan_no NVARCHAR(50) NOT NULL,
+        date DATE NOT NULL DEFAULT GETDATE(),
+        party_name NVARCHAR(100) NOT NULL,
+        item NVARCHAR(100) NOT NULL,
+        qty INT NOT NULL DEFAULT 0,
+        used_qty INT NOT NULL DEFAULT 0,
+        reference_bill_no NVARCHAR(50) NULL,
+        bill_date DATE NULL,
+        used_in_machine NVARCHAR(100) NULL DEFAULT '',
+        taken_by NVARCHAR(100) NULL DEFAULT ''
+    );
+    PRINT 'Table machinery_item_inward_unit2 created.';
+END
+GO
+
+-- ============================================
+-- Table: PartsUsageHistory (NEW - Usage History)
+-- ============================================
+-- This table stores historical records of each parts usage
+-- Instead of just updating used_qty, we now track every usage event
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PartsUsageHistory')
+BEGIN
+    CREATE TABLE PartsUsageHistory (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        inward_item_id INT NOT NULL,                    -- FK to machinery_item_inward_unit2.id
+        quantity_used INT NOT NULL DEFAULT 1,           -- How many were used in this event
+        used_in_machine NVARCHAR(100) NOT NULL,         -- Machine where parts were used
+        taken_by NVARCHAR(100) NOT NULL,                -- Person who took the parts
+        usage_date DATETIME NOT NULL DEFAULT GETDATE(), -- When the parts were used
+        remarks NVARCHAR(500) NULL,                     -- Optional notes
+        created_date DATETIME NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT FK_PartsUsageHistory_InwardItem 
+            FOREIGN KEY (inward_item_id) REFERENCES machinery_item_inward_unit2(id)
+    );
+    
+    -- Create index for faster lookups by inward_item_id
+    CREATE INDEX IX_PartsUsageHistory_InwardItemId ON PartsUsageHistory(inward_item_id);
+    
+    -- Create index for date-based queries
+    CREATE INDEX IX_PartsUsageHistory_UsageDate ON PartsUsageHistory(usage_date);
+    
+    -- Create index for machine-based queries
+    CREATE INDEX IX_PartsUsageHistory_Machine ON PartsUsageHistory(used_in_machine);
+    
+    PRINT 'Table PartsUsageHistory created.';
+END
+GO
+
+-- ============================================
+-- Migration: Move existing usage data to history table
+-- ============================================
+-- If there's existing data with used_qty > 0 but no history,
+-- create initial history records for migration
+-- ============================================
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PartsUsageHistory')
+BEGIN
+    -- Only migrate if history table is empty and there's used data
+    IF NOT EXISTS (SELECT TOP 1 1 FROM PartsUsageHistory)
+    BEGIN
+        INSERT INTO PartsUsageHistory (inward_item_id, quantity_used, used_in_machine, taken_by, usage_date, remarks)
+        SELECT 
+            id,
+            used_qty,
+            ISNULL(NULLIF(used_in_machine, ''), 'Unknown Machine'),
+            ISNULL(NULLIF(taken_by, ''), 'Unknown Person'),
+            ISNULL(date, GETDATE()),
+            'Migrated from legacy data'
+        FROM machinery_item_inward_unit2
+        WHERE ISNULL(used_qty, 0) > 0;
+        
+        DECLARE @migratedCount INT = @@ROWCOUNT;
+        IF @migratedCount > 0
+            PRINT 'Migrated ' + CAST(@migratedCount AS NVARCHAR(10)) + ' existing usage records to PartsUsageHistory.';
+    END
+END
+GO
+
+-- ============================================
+-- Table: PartyMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PartyMaster')
+BEGIN
+    CREATE TABLE PartyMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        party_name NVARCHAR(100) NOT NULL,
+        address NVARCHAR(255) NULL,
+        contact NVARCHAR(50) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table PartyMaster created.';
+    
+    -- Insert default party
+    INSERT INTO PartyMaster (party_name, is_active) VALUES ('Default Party', 1);
+END
+GO
+
+-- ============================================
+-- Table: ItemMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ItemMaster')
+BEGIN
+    CREATE TABLE ItemMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        item_name NVARCHAR(100) NOT NULL,
+        description NVARCHAR(255) NULL,
+        unit NVARCHAR(20) NULL DEFAULT 'PCS',
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table ItemMaster created.';
+    
+    -- Insert default item
+    INSERT INTO ItemMaster (item_name, is_active) VALUES ('Default Item', 1);
+END
+GO
+
+-- ============================================
+-- Table: MachineMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MachineMaster')
+BEGIN
+    CREATE TABLE MachineMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        machine_name NVARCHAR(100) NOT NULL,
+        location NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table MachineMaster created.';
+END
+GO
+
+-- ============================================
+-- Table: PersonMaster
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PersonMaster')
+BEGIN
+    CREATE TABLE PersonMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        person_name NVARCHAR(100) NOT NULL,
+        department NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table PersonMaster created.';
+END
+GO
+
+-- ============================================
+-- View: vw_PartsWithUsageSummary
+-- ============================================
+-- This view provides parts data with calculated used_qty from history
+-- ============================================
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'vw_PartsWithUsageSummary')
+    DROP VIEW vw_PartsWithUsageSummary;
+GO
+
+CREATE VIEW vw_PartsWithUsageSummary AS
+SELECT 
+    p.id,
+    p.challan_no,
+    p.date,
+    p.party_name,
+    p.item,
+    p.qty,
+    ISNULL(h.total_used, 0) as used_qty,
+    p.qty - ISNULL(h.total_used, 0) as remaining_qty,
+    p.reference_bill_no,
+    p.bill_date,
+    h.last_machine as used_in_machine,
+    h.last_person as taken_by,
+    h.last_usage_date
+FROM machinery_item_inward_unit2 p
+LEFT JOIN (
+    SELECT 
+        inward_item_id,
+        SUM(quantity_used) as total_used,
+        MAX(usage_date) as last_usage_date,
+        (SELECT TOP 1 used_in_machine FROM PartsUsageHistory h2 
+         WHERE h2.inward_item_id = PartsUsageHistory.inward_item_id 
+         ORDER BY usage_date DESC) as last_machine,
+        (SELECT TOP 1 taken_by FROM PartsUsageHistory h2 
+         WHERE h2.inward_item_id = PartsUsageHistory.inward_item_id 
+         ORDER BY usage_date DESC) as last_person
+    FROM PartsUsageHistory
+    GROUP BY inward_item_id
+) h ON p.id = h.inward_item_id;
+GO
+
+PRINT 'View vw_PartsWithUsageSummary created.';
+GO
+
+-- ============================================
+-- Stored Procedure: sp_RecordPartsUsage
+-- ============================================
+-- Call this to record a parts usage event
+-- ============================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'sp_RecordPartsUsage')
+    DROP PROCEDURE sp_RecordPartsUsage;
+GO
+
+CREATE PROCEDURE sp_RecordPartsUsage
+    @inward_item_id INT,
+    @quantity_used INT,
+    @used_in_machine NVARCHAR(100),
+    @taken_by NVARCHAR(100),
+    @usage_date DATETIME = NULL,
+    @remarks NVARCHAR(500) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Use current datetime if not provided
+    IF @usage_date IS NULL
+        SET @usage_date = GETDATE();
+    
+    -- Check if sufficient quantity is available
+    DECLARE @available_qty INT;
+    SELECT @available_qty = qty - ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = @inward_item_id), 0)
+    FROM machinery_item_inward_unit2 WHERE id = @inward_item_id;
+    
+    IF @available_qty IS NULL
+    BEGIN
+        RAISERROR('Item not found', 16, 1);
+        RETURN -1;
+    END
+    
+    IF @quantity_used > @available_qty
+    BEGIN
+        RAISERROR('Insufficient quantity available. Available: %d, Requested: %d', 16, 1, @available_qty, @quantity_used);
+        RETURN -2;
+    END
+    
+    -- Insert into history table
+    INSERT INTO PartsUsageHistory (inward_item_id, quantity_used, used_in_machine, taken_by, usage_date, remarks)
+    VALUES (@inward_item_id, @quantity_used, @used_in_machine, @taken_by, @usage_date, @remarks);
+    
+    -- Update the main table's used_qty for backward compatibility
+    UPDATE machinery_item_inward_unit2
+    SET used_qty = ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = @inward_item_id), 0),
+        used_in_machine = @used_in_machine,
+        taken_by = @taken_by
+    WHERE id = @inward_item_id;
+    
+    -- Return the new history record id
+    SELECT SCOPE_IDENTITY() as new_history_id;
+END
+GO
+
+PRINT 'Stored procedure sp_RecordPartsUsage created.';
+GO
+
+-- ============================================
+-- Stored Procedure: sp_GetUsageHistory
+-- ============================================
+-- Get usage history for a specific item or all items
+-- ============================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'sp_GetUsageHistory')
+    DROP PROCEDURE sp_GetUsageHistory;
+GO
+
+CREATE PROCEDURE sp_GetUsageHistory
+    @inward_item_id INT = NULL,
+    @from_date DATETIME = NULL,
+    @to_date DATETIME = NULL,
+    @machine NVARCHAR(100) = NULL,
+    @person NVARCHAR(100) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        h.id as history_id,
+        h.inward_item_id,
+        p.challan_no,
+        p.item,
+        p.party_name,
+        h.quantity_used,
+        h.used_in_machine,
+        h.taken_by,
+        h.usage_date,
+        h.remarks,
+        p.qty as total_qty,
+        (SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = h.inward_item_id) as total_used
+    FROM PartsUsageHistory h
+    INNER JOIN machinery_item_inward_unit2 p ON h.inward_item_id = p.id
+    WHERE (@inward_item_id IS NULL OR h.inward_item_id = @inward_item_id)
+      AND (@from_date IS NULL OR h.usage_date >= @from_date)
+      AND (@to_date IS NULL OR h.usage_date <= @to_date)
+      AND (@machine IS NULL OR h.used_in_machine = @machine)
+      AND (@person IS NULL OR h.taken_by = @person)
+    ORDER BY h.usage_date DESC;
+END
+GO
+
+PRINT 'Stored procedure sp_GetUsageHistory created.';
+GO
+
+-- ============================================
+-- Verify all tables created
+-- ============================================
+PRINT '';
+PRINT '============================================';
+PRINT 'Database Setup Complete!';
+PRINT '============================================';
+PRINT 'Tables created:';
+SELECT name AS TableName FROM sys.tables WHERE type = 'U' ORDER BY name;
+GO

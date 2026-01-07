@@ -1,0 +1,414 @@
+﻿using System;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    /// <summary>
+    /// Form for configuring database connection settings
+    /// </summary>
+    public class DatabaseConfigForm : Form
+    {
+        private TextBox txtServer;
+        private TextBox txtDatabase;
+        private RadioButton rbWindowsAuth;
+        private RadioButton rbSqlAuth;
+        private TextBox txtUsername;
+        private TextBox txtPassword;
+        private Button btnTest;
+        private Button btnSave;
+        private Button btnCancel;
+        private Label lblStatus;
+        private CheckBox chkCreateDatabase;
+
+        public string ConnectionString { get; private set; }
+
+        public DatabaseConfigForm()
+        {
+            InitializeFormComponents();
+            LoadCurrentSettings();
+        }
+
+        private void InitializeFormComponents()
+        {
+            this.Text = "Database Configuration";
+            this.Size = new Size(650, 620);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.BackColor = Color.White;
+            this.Font = new Font("Segoe UI", 10);
+
+            int y = 30;
+            int labelWidth = 150;
+            int controlLeft = 180;
+            int controlWidth = 420;
+
+            // Title
+            Label lblTitle = new Label
+            {
+                Text = "Database Connection Settings",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                Location = new Point(30, y),
+                AutoSize = true
+            };
+            this.Controls.Add(lblTitle);
+            y += 60;
+
+            // Server
+            Label lblServer = new Label
+            {
+                Text = "Server Name:",
+                Location = new Point(30, y + 5),
+                Size = new Size(labelWidth, 25),
+                Font = new Font("Segoe UI", 11)
+            };
+            this.Controls.Add(lblServer);
+
+            txtServer = new TextBox
+            {
+                Location = new Point(controlLeft, y),
+                Size = new Size(controlWidth, 30),
+                Font = new Font("Segoe UI", 11),
+                Text = ".\\SQLEXPRESS"
+            };
+            this.Controls.Add(txtServer);
+            y += 45;
+
+            // Database
+            Label lblDatabase = new Label
+            {
+                Text = "Database Name:",
+                Location = new Point(30, y + 5),
+                Size = new Size(labelWidth, 25),
+                Font = new Font("Segoe UI", 11)
+            };
+            this.Controls.Add(lblDatabase);
+
+            txtDatabase = new TextBox
+            {
+                Location = new Point(controlLeft, y),
+                Size = new Size(controlWidth, 30),
+                Font = new Font("Segoe UI", 11),
+                Text = "MainDB"
+            };
+            this.Controls.Add(txtDatabase);
+            y += 45;
+
+            // Authentication GroupBox
+            GroupBox grpAuth = new GroupBox
+            {
+                Text = "Authentication",
+                Location = new Point(30, y),
+                Size = new Size(570, 90),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold)
+            };
+
+            rbWindowsAuth = new RadioButton
+            {
+                Text = "Windows Authentication",
+                Location = new Point(20, 35),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10),
+                Checked = true
+            };
+            rbWindowsAuth.CheckedChanged += RbAuth_CheckedChanged;
+            grpAuth.Controls.Add(rbWindowsAuth);
+
+            rbSqlAuth = new RadioButton
+            {
+                Text = "SQL Server Authentication",
+                Location = new Point(280, 35),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10)
+            };
+            rbSqlAuth.CheckedChanged += RbAuth_CheckedChanged;
+            grpAuth.Controls.Add(rbSqlAuth);
+
+            this.Controls.Add(grpAuth);
+            y += 105;
+
+            // Username
+            Label lblUsername = new Label
+            {
+                Text = "Username:",
+                Location = new Point(30, y + 5),
+                Size = new Size(labelWidth, 25),
+                Font = new Font("Segoe UI", 11)
+            };
+            this.Controls.Add(lblUsername);
+
+            txtUsername = new TextBox
+            {
+                Location = new Point(controlLeft, y),
+                Size = new Size(controlWidth, 30),
+                Font = new Font("Segoe UI", 11),
+                Enabled = false
+            };
+            this.Controls.Add(txtUsername);
+            y += 45;
+
+            // Password
+            Label lblPassword = new Label
+            {
+                Text = "Password:",
+                Location = new Point(30, y + 5),
+                Size = new Size(labelWidth, 25),
+                Font = new Font("Segoe UI", 11)
+            };
+            this.Controls.Add(lblPassword);
+
+            txtPassword = new TextBox
+            {
+                Location = new Point(controlLeft, y),
+                Size = new Size(controlWidth, 30),
+                Font = new Font("Segoe UI", 11),
+                UseSystemPasswordChar = true,
+                Enabled = false
+            };
+            this.Controls.Add(txtPassword);
+            y += 45;
+
+            // Create Database checkbox
+            chkCreateDatabase = new CheckBox
+            {
+                Text = "Create database and tables if they don't exist",
+                Location = new Point(30, y),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10),
+                Checked = true
+            };
+            this.Controls.Add(chkCreateDatabase);
+            y += 40;
+
+            // Status label
+            lblStatus = new Label
+            {
+                Text = "",
+                Location = new Point(30, y),
+                Size = new Size(570, 50),
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.Blue
+            };
+            this.Controls.Add(lblStatus);
+            y += 60;
+
+            // Buttons
+            btnTest = new Button
+            {
+                Text = "Test Connection",
+                Location = new Point(30, y),
+                Size = new Size(160, 45),
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnTest.FlatAppearance.BorderSize = 0;
+            btnTest.Click += BtnTest_Click;
+            this.Controls.Add(btnTest);
+
+            btnSave = new Button
+            {
+                Text = "Save and Connect",
+                Location = new Point(210, y),
+                Size = new Size(180, 45),
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnSave.FlatAppearance.BorderSize = 0;
+            btnSave.Click += BtnSave_Click;
+            this.Controls.Add(btnSave);
+
+            btnCancel = new Button
+            {
+                Text = "Cancel",
+                Location = new Point(410, y),
+                Size = new Size(190, 45),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnCancel.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
+            this.Controls.Add(btnCancel);
+        }
+
+        private void LoadCurrentSettings()
+        {
+            try
+            {
+                // Try to load custom connection string first
+                string currentConnStr = "";
+                if (Properties.Settings.Default.UseCustomConnection && 
+                    !string.IsNullOrEmpty(Properties.Settings.Default.CustomConnectionString))
+                {
+                    currentConnStr = Properties.Settings.Default.CustomConnectionString;
+                }
+                else
+                {
+                    currentConnStr = Properties.Settings.Default.MainDBConnectionString;
+                }
+
+                if (!string.IsNullOrEmpty(currentConnStr))
+                {
+                    SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(currentConnStr);
+                    txtServer.Text = builder.DataSource;
+                    txtDatabase.Text = builder.InitialCatalog;
+
+                    if (builder.IntegratedSecurity)
+                    {
+                        rbWindowsAuth.Checked = true;
+                    }
+                    else
+                    {
+                        rbSqlAuth.Checked = true;
+                        txtUsername.Text = builder.UserID;
+                        txtPassword.Text = builder.Password;
+                    }
+                }
+            }
+            catch
+            {
+                // Use defaults if parsing fails
+            }
+        }
+
+        private void RbAuth_CheckedChanged(object sender, EventArgs e)
+        {
+            bool sqlAuth = rbSqlAuth.Checked;
+            txtUsername.Enabled = sqlAuth;
+            txtPassword.Enabled = sqlAuth;
+        }
+
+        private string BuildConnectionString(bool useMaster = false)
+        {
+            string database = useMaster ? "master" : txtDatabase.Text.Trim();
+            return DatabaseHelper.BuildConnectionString(
+                txtServer.Text.Trim(),
+                database,
+                rbWindowsAuth.Checked,
+                txtUsername.Text.Trim(),
+                txtPassword.Text
+            );
+        }
+
+        private void BtnTest_Click(object sender, EventArgs e)
+        {
+            lblStatus.Text = "Testing connection...";
+            lblStatus.ForeColor = Color.Blue;
+            Application.DoEvents();
+
+            try
+            {
+                string connStr = BuildConnectionString();
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    lblStatus.Text = "Connection successful!";
+                    lblStatus.ForeColor = Color.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Try connecting to master to see if server is reachable
+                try
+                {
+                    string masterConnStr = BuildConnectionString(true);
+                    using (SqlConnection conn = new SqlConnection(masterConnStr))
+                    {
+                        conn.Open();
+                        lblStatus.Text = "Server OK, but database '" + txtDatabase.Text + "' not found.\nCheck 'Create database' option and click Save.";
+                        lblStatus.ForeColor = Color.Orange;
+                    }
+                }
+                catch
+                {
+                    lblStatus.Text = "Connection failed: " + ex.Message;
+                    lblStatus.ForeColor = Color.Red;
+                }
+            }
+        }
+
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            lblStatus.Text = "Connecting...";
+            lblStatus.ForeColor = Color.Blue;
+            Application.DoEvents();
+
+            try
+            {
+                // If create database is checked, try to create it first
+                if (chkCreateDatabase.Checked)
+                {
+                    CreateDatabaseIfNotExists();
+                }
+
+                string connStr = BuildConnectionString();
+
+                // Test the connection
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                }
+
+                // Save to settings using the helper
+                DatabaseHelper.SaveConnectionString(connStr);
+
+                // Initialize database tables
+                DatabaseHelper.InitializeDatabase();
+
+                ConnectionString = connStr;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = "Error: " + ex.Message;
+                lblStatus.ForeColor = Color.Red;
+                MessageBox.Show("Failed to connect to database:\n\n" + ex.Message, "Connection Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void CreateDatabaseIfNotExists()
+        {
+            try
+            {
+                string masterConnStr = BuildConnectionString(true);
+                using (SqlConnection conn = new SqlConnection(masterConnStr))
+                {
+                    conn.Open();
+                    string dbName = txtDatabase.Text.Trim();
+
+                    // Check if database exists
+                    string checkSql = "SELECT COUNT(*) FROM sys.databases WHERE name = @dbName";
+                    using (SqlCommand cmd = new SqlCommand(checkSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@dbName", dbName);
+                        int count = (int)cmd.ExecuteScalar();
+
+                        if (count == 0)
+                        {
+                            // Create database
+                            string createSql = "CREATE DATABASE [" + dbName + "]";
+                            using (SqlCommand createCmd = new SqlCommand(createSql, conn))
+                            {
+                                createCmd.ExecuteNonQuery();
+                            }
+                            lblStatus.Text = "Database created successfully!";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Create database error: " + ex.Message);
+                // Continue anyway - database might already exist
+            }
+        }
+    }
+}

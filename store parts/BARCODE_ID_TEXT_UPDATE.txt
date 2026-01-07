@@ -1,0 +1,97 @@
+# Barcode Label Update - ID Text Under Barcode
+
+## Changes Made
+
+### 1. BarcodePrinter.cs - TSPL Command Generation
+**File:** `store parts\BarcodePrinter.cs`
+
+**What was changed:**
+Updated the `GenerateTSPLCommands()` method to include a TEXT command that prints the ID under the barcode.
+
+**Change Details:**
+```csharp
+private string GenerateTSPLCommands(string id, int quantity)
+{
+    // Calculate text position (centered under barcode)
+    // Text Y position = Barcode Y + Barcode Height + small gap
+    int textY = BarcodeY + BarcodeHeight + 10;
+    
+    // TSPL command format for TSC printers
+    string commands = $@"SIZE {LabelWidth} mm, {LabelHeight} mm
+GAP {LabelGap} mm, 0 mm
+DIRECTION 1
+CLS
+BARCODE {BarcodeX}, {BarcodeY}, ""128"", {BarcodeHeight}, 0, 0, 2, 2, ""{id}""
+TEXT {BarcodeX}, {textY}, ""3"", 0, 1, 1, ""{id}""
+PRINT {quantity}, 1
+";
+    return commands;
+}
+```
+
+**Key Addition:**
+- Added `TEXT {BarcodeX}, {textY}, "3", 0, 1, 1, "{id}"` command
+- This prints the ID text below the barcode
+- Text position is calculated as: `BarcodeY + BarcodeHeight + 10 dots`
+- Font "3" is used (standard TSPL font)
+- The text is centered at the same X position as the barcode
+
+### 2. BarcodePrintPreviewForm.cs - Preview Display
+**File:** `store parts\store parts\BarcodePrintPreviewForm.cs`
+
+**Status:** Already implemented ?
+
+The preview form already displays the ID text under the barcode in the `PreviewBox_Paint()` method:
+```csharp
+// Draw barcode text
+using (Font font = new Font("Consolas", 10 * finalScale, FontStyle.Bold))
+{
+    SizeF textSize = g.MeasureString(_barcodeData, font);
+    float textX = barcodeX + (barcodeWidth - textSize.Width) / 2;
+    float textY = barcodeY + barcodeHeight + 5;
+    g.DrawString(_barcodeData, font, Brushes.Black, textX, textY);
+}
+```
+
+## How It Works
+
+### For TSPL Printing (Direct to TSC Printers):
+When you save a new record and print labels:
+1. The barcode (Code 128) is printed at the configured position
+2. The ID text is printed 10 dots below the barcode
+3. Both the barcode and text are visible on the physical label
+
+### For Preview:
+- The preview window shows exactly how the label will look
+- The ID is displayed in Consolas font (monospaced, good for numbers)
+- The text is centered under the barcode
+
+### For BarTender Printing:
+If using BarTender templates, the ID text should be configured in your .btw template file. The BarTender template typically includes both barcode and text fields.
+
+## Testing
+
+To test the changes:
+1. Save a new part/item record
+2. The barcode print preview will appear
+3. Verify that the ID number appears under the barcode in the preview
+4. Click "Print" to print the label
+5. Check the physical label - it should have:
+   - The barcode (scannable)
+   - The ID number printed below it (human-readable)
+
+## TSPL Command Explanation
+
+```
+TEXT {X}, {Y}, "Font", Rotation, XMultiplier, YMultiplier, "Content"
+```
+- **X, Y**: Position in dots
+- **Font "3"**: Standard TSPL font (readable size)
+- **Rotation 0**: No rotation
+- **XMultiplier 1, YMultiplier 1**: Normal size (1x1)
+- **Content**: The ID to print
+
+## Build Status
+? Build successful - No errors
+
+The changes are complete and ready to use!

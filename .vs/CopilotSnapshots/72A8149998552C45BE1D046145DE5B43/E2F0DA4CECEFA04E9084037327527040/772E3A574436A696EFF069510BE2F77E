@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void machinery_item_inward_unit2BindingNavigatorSaveItem_Click(object sender, EventArgs e)
+        {
+            this.Validate();
+            this.machinery_item_inward_unit2BindingSource.EndEdit();
+            this.tableAdapterManager.UpdateAll(this.mainDB);
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // TODO: This line of code loads data into the 'mainDB.machinery_item_inward_unit2' table. You can move, or remove it, as needed.
+            this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+
+        }
+
+        private void btnAddData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Add a new row to the binding source
+                this.machinery_item_inward_unit2BindingSource.AddNew();
+                
+                // Focus on the first input field for data entry
+                this.challan_noTextBox.Focus();
+                
+                MessageBox.Show("Ready to add new data. Fill in the fields and click Save.", 
+                    "Add New Record", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding new record: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Validate the form
+                this.Validate();
+                
+                // End any edits in progress
+                this.machinery_item_inward_unit2BindingSource.EndEdit();
+                
+                // Save changes to the database
+                this.tableAdapterManager.UpdateAll(this.mainDB);
+                
+                MessageBox.Show("Data saved successfully!", 
+                    "Save Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void machinery_item_inward_unit2DataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+    }
+}

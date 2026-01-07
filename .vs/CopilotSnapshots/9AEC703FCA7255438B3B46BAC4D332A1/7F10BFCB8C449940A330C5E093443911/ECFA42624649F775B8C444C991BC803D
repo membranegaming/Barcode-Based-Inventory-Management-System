@@ -1,0 +1,133 @@
+﻿# Parts Usage History - Database Update
+
+## Overview
+
+This update fixes the bug where only the latest parts usage was saved. Now, **every usage event** is recorded with:
+- **Date and Time** when the parts were used
+- **Machine/Venue** where parts were used
+- **Person** who took the parts
+- **Quantity** used in each event
+- **Optional Remarks**
+
+## Database Changes
+
+### New Table: `PartsUsageHistory`
+
+A new table has been created to store historical usage records:
+
+```sql
+CREATE TABLE PartsUsageHistory (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    inward_item_id INT NOT NULL,          -- Links to machinery_item_inward_unit2.id
+    quantity_used INT NOT NULL,            -- How many were used in this event
+    used_in_machine NVARCHAR(100) NOT NULL, -- Machine where parts were used
+    taken_by NVARCHAR(100) NOT NULL,       -- Person who took the parts
+    usage_date DATETIME NOT NULL,          -- When the parts were used
+    remarks NVARCHAR(500) NULL,            -- Optional notes
+    created_date DATETIME NOT NULL
+);
+```
+
+### How It Works
+
+1. **Recording Usage**: When you record parts usage, a new row is inserted into `PartsUsageHistory`
+2. **Calculating Used Qty**: The `used_qty` is now calculated as `SUM(quantity_used)` from all history records for that item
+3. **Backward Compatibility**: The original table still has `used_qty`, `used_in_machine`, and `taken_by` columns which are updated with the latest values
+
+## Application Changes
+
+### Parts Usage Form (`PartsUsageForm`)
+
+**New Features:**
+- **Usage Date/Time Picker**: Select when the parts were used (defaults to current date/time)
+- **Remarks Field**: Add optional notes for each usage
+- **Usage History Grid**: Shows all historical usage records for the selected part
+- **Export History**: Export usage history to CSV
+
+**How to Use:**
+1. Select a part from the top grid
+2. Fill in Machine Name, Taken By, and Quantity
+3. Set the Usage Date (defaults to now)
+4. Add optional remarks
+5. Click "Record Usage"
+6. The history grid below shows all usage events for that part
+
+### Dashboard
+
+**Updated Reports:**
+- All reports now pull data from `PartsUsageHistory` for accuracy
+- New "Usage History" tab showing all usage events across all parts
+- Filter by date range, machine, or person
+- Export any report to CSV
+
+### Main Form
+
+- Data grid now shows accurate `used_qty` calculated from history table
+- Application automatically creates the `PartsUsageHistory` table if it doesn't exist
+- Existing usage data is automatically migrated to the history table
+
+## Running the Database Update
+
+### Option 1: Automatic (Recommended)
+Simply run the application - it will automatically:
+1. Check if `PartsUsageHistory` table exists
+2. Create the table if missing
+3. Migrate existing usage data from the main table
+
+### Option 2: Manual SQL Script
+Run the updated `DatabaseSetup.sql` script on your SQL Server:
+1. Open SQL Server Management Studio
+2. Connect to your database
+3. Open and execute `DatabaseSetup.sql`
+
+## Migration of Existing Data
+
+If you had parts with usage recorded before this update:
+- The application automatically migrates existing `used_qty` values to the history table
+- One history record is created per part that had usage
+- The remarks will show "Migrated from legacy data"
+- The usage date will be the original inward date
+
+## Benefits of This Update
+
+1. **Complete History**: Track every single usage event with date, location, and person
+2. **Audit Trail**: Know exactly when and where each item was used
+3. **Better Reporting**: Generate reports by date range, machine, or person
+4. **No Data Loss**: Even if an item is used multiple times in different machines, all records are preserved
+5. **Export Capabilities**: Export history to CSV for external analysis
+
+## Example Scenarios
+
+### Before (Bug)
+- Part A received: 100 pcs
+- Used 20 pcs in Machine X by John on Jan 1
+- Used 30 pcs in Machine Y by Jane on Jan 15
+- **Result**: Only shows "Machine Y, Jane, 50 used" - lost the Jan 1 event!
+
+### After (Fixed)
+- Part A received: 100 pcs
+- History shows:
+  | Date | Qty | Machine | Person |
+  |------|-----|---------|--------|
+  | Jan 1 | 20 | Machine X | John |
+  | Jan 15 | 30 | Machine Y | Jane |
+- **Total Used**: 50 pcs (calculated from history)
+- **Complete audit trail preserved!**
+
+## Troubleshooting
+
+### "PartsUsageHistory table not found"
+The application should create this automatically. If it doesn't:
+1. Run `DatabaseSetup.sql` manually
+2. Or check SQL Server permissions
+
+### "Used qty doesn't match history"
+After migration, the `used_qty` in the main table is kept in sync. If you see discrepancies:
+1. Check the `PartsUsageHistory` table records
+2. The displayed `used_qty` is calculated from history, not the column
+
+### Performance
+Indexes are created on:
+- `inward_item_id` - for fast lookups by part
+- `usage_date` - for date-based queries
+- `used_in_machine` - for machine-based reports

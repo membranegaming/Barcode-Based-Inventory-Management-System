@@ -1,0 +1,618 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class Form1 : Form
+    {
+        private bool _isLoading = false;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void machinery_item_inward_unit2BindingNavigatorSaveItem_Click(object sender, EventArgs e)
+        {
+            this.Validate();
+            this.machinery_item_inward_unit2BindingSource.EndEdit();
+            this.tableAdapterManager.UpdateAll(this.mainDB);
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                _isLoading = true;
+                // Load master data for dropdowns
+                LoadMasterData();
+                
+                // Load data into the 'mainDB.machinery_item_inward_unit2' table
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                
+                // Subscribe to binding source events to handle ID display
+                this.machinery_item_inward_unit2BindingSource.CurrentChanged += 
+                    new EventHandler(BindingSource_CurrentChanged);
+                
+                // Update record count
+                UpdateRecordCount();
+                
+                // Automatically prepare for new data entry
+                PrepareForNewEntry();
+                _isLoading = false;
+            }
+            catch (Exception ex)
+            {
+                _isLoading = false;
+                ShowError("Error loading form", ex);
+            }
+        }
+
+        private void PrepareForNewEntry()
+        {
+            try
+            {
+                // FIXED: Better logic to prevent row detachment
+                bool shouldCreateNewRow = true;
+                
+                if (this.machinery_item_inward_unit2BindingSource.Current != null)
+                {
+                    var currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+                    if (currentRowView != null && currentRowView.Row != null)
+                    {
+                        var row = currentRowView.Row;
+                        
+                        // If row is already detached, don't try to work with it
+                        if (row.RowState == DataRowState.Detached)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Row already detached, creating new row");
+                            this.machinery_item_inward_unit2BindingSource.AddNew();
+                            shouldCreateNewRow = false;
+                        }
+                        // Check if it's a new row with data
+                        else if (currentRowView.IsNew)
+                        {
+                            // Check if row has any actual data
+                            bool hasData = false;
+                            
+                            if (row["challan_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["challan_no"].ToString()))
+                                hasData = true;
+                            if (row["party_name"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["party_name"].ToString()))
+                                hasData = true;
+                            if (row["item"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["item"].ToString()))
+                                hasData = true;
+                            
+                            if (hasData)
+                            {
+                                // Row has data, don't cancel it - reuse it
+                                shouldCreateNewRow = false;
+                                System.Diagnostics.Debug.WriteLine("Row has data, reusing existing row");
+                            }
+                            else
+                            {
+                                // Row is empty, we can cancel and create new
+                                this.machinery_item_inward_unit2BindingSource.CancelEdit();
+                                shouldCreateNewRow = true;
+                                System.Diagnostics.Debug.WriteLine("Row is empty, cancelled and will create new");
+                            }
+                        }
+                        else
+                        {
+                            // It's not a new row (it's saved), so we need a new one
+                            shouldCreateNewRow = true;
+                            System.Diagnostics.Debug.WriteLine("Current row is saved, will create new");
+                        }
+                    }
+                }
+
+                // Only create a new row if needed
+                if (shouldCreateNewRow)
+                {
+                    this.machinery_item_inward_unit2BindingSource.AddNew();
+                    System.Diagnostics.Debug.WriteLine("New row added via BindingSource.AddNew()");
+                }
+                
+                // Set default values for the current record
+                if (this.machinery_item_inward_unit2BindingSource.Current != null)
+                {
+                    var currentRowView = (DataRowView)this.machinery_item_inward_unit2BindingSource.Current;
+                    var currentRow = currentRowView.Row;
+                    
+                    if (currentRow.RowState != DataRowState.Detached)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Setting default values. Row state: " + currentRow.RowState.ToString());
+                        
+                        // Set default values only if they're not already set
+                        if (currentRow["date"] == DBNull.Value)
+                            currentRow["date"] = DateTime.Today;
+                        
+                        if (currentRow["bill_date"] == DBNull.Value)
+                            currentRow["bill_date"] = DateTime.Today;
+                        
+                        if (currentRow["used_in_machine"] == DBNull.Value)
+                            currentRow["used_in_machine"] = string.Empty;
+                        
+                        if (currentRow["taken_by"] == DBNull.Value)
+                            currentRow["taken_by"] = string.Empty;
+                        
+                        System.Diagnostics.Debug.WriteLine("Default values set. Row state: " + currentRow.RowState.ToString());
+                    }
+                }
+                
+                // Focus on the first editable field
+                this.challan_noTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error preparing for new entry", ex);
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            try
+            {
+                // Load PartyMaster data for dropdown (only active parties)
+                this.partyMasterTableAdapter.Fill(this.mainDB.PartyMaster);
+                
+                // Load ItemMaster data for dropdown (only active items)
+                this.itemMasterTableAdapter.Fill(this.mainDB.ItemMaster);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading master data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void RefreshMasterData()
+        {
+            try
+            {
+                // Store current selections
+                string selectedParty = this.party_nameComboBox.Text;
+                string selectedItem = this.itemComboBox.Text;
+                
+                // Reload master data
+                LoadMasterData();
+                
+                // Restore selections if they still exist
+                if (!string.IsNullOrEmpty(selectedParty))
+                {
+                    this.party_nameComboBox.Text = selectedParty;
+                }
+                if (!string.IsNullOrEmpty(selectedItem))
+                {
+                    this.itemComboBox.Text = selectedItem;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing master data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BindingSource_CurrentChanged(object sender, EventArgs e)
+        {
+            // Show "Auto" for new records (negative ID), actual ID for saved records
+            if (this.machinery_item_inward_unit2BindingSource.Current != null)
+            {
+                var currentRow = ((DataRowView)this.machinery_item_inward_unit2BindingSource.Current).Row;
+                if (currentRow != null && currentRow.Table.Columns.Contains("id"))
+                {
+                    var id = currentRow["id"];
+                    if (id == DBNull.Value || Convert.ToInt32(id) <= 0)
+                    {
+                        this.idTextBox.Text = "Auto";
+                    }
+                }
+            }
+        }
+
+        private void btnAddData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Check if current row has unsaved data
+                if (HasUnsavedData())
+                {
+                    DialogResult result = MessageBox.Show(
+                        "You have unsaved data in the current form. Do you want to save it first?",
+                        "Unsaved Data",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question);
+                    
+                    if (result == DialogResult.Yes)
+                    {
+                        // Save first, then prepare for new entry
+                        if (SaveCurrentRecord())
+                        {
+                            // SaveCurrentRecord already calls PrepareForNewEntry
+                            return;
+                        }
+                        else
+                        {
+                            // Save failed, don't proceed
+                            return;
+                        }
+                    }
+                    else if (result == DialogResult.Cancel)
+                    {
+                        // User cancelled, don't do anything
+                        return;
+                    }
+                    // If No, proceed to discard and create new
+                }
+                
+                PrepareForNewEntry();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error adding new record", ex);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            SaveCurrentRecord();
+        }
+
+        private bool SaveCurrentRecord()
+        {
+            try
+            {
+                if (!ValidateRequiredFields())
+                    return false;
+                
+                string savedChallanNo = this.challan_noTextBox.Text;
+                string savedPartyName = this.party_nameComboBox.Text;
+                
+                if (this.machinery_item_inward_unit2BindingSource.Current == null)
+                {
+                    MessageBox.Show("No record to save. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PrepareForNewEntry();
+                    return false;
+                }
+
+                // Get the current row to check its state
+                var currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+                if (currentRowView == null)
+                {
+                    MessageBox.Show("Unable to get current row. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                DataRow currentRow = currentRowView.Row;
+                
+                // CRITICAL FIX: Check if row is detached
+                if (currentRow.RowState == DataRowState.Detached)
+                {
+                    MessageBox.Show("The row is detached from the table. This typically happens when you click 'Add New' after entering data.\n\nPlease re-enter your data and click Save directly without clicking 'Add New' first.", 
+                        "Row Detached Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    
+                    // Try to recover by preparing a new entry
+                    PrepareForNewEntry();
+                    return false;
+                }
+                
+                // WORKAROUND: Ensure used_in_machine and taken_by are not NULL to avoid concurrency issues
+                if (currentRow["used_in_machine"] == DBNull.Value)
+                    currentRow["used_in_machine"] = string.Empty;
+                if (currentRow["taken_by"] == DBNull.Value)
+                    currentRow["taken_by"] = string.Empty;
+                
+                // Log row state for debugging
+                System.Diagnostics.Debug.WriteLine("Row State before save: " + currentRow.RowState.ToString());
+                System.Diagnostics.Debug.WriteLine("Challan No: " + currentRow["challan_no"]);
+                System.Diagnostics.Debug.WriteLine("Party: " + currentRow["party_name"]);
+                System.Diagnostics.Debug.WriteLine("Item: " + currentRow["item"]);
+                
+                // CRITICAL: Force validation before EndEdit
+                this.Validate();
+                
+                // End the edit to commit changes to the DataRow
+                this.machinery_item_inward_unit2BindingSource.EndEdit();
+                
+                // Check row state after EndEdit
+                System.Diagnostics.Debug.WriteLine("Row State after EndEdit: " + currentRow.RowState.ToString());
+                
+                // Check again after EndEdit
+                if (currentRow.RowState == DataRowState.Detached)
+                {
+                    MessageBox.Show("Row became detached after EndEdit. Please try again.", 
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PrepareForNewEntry();
+                    return false;
+                }
+                
+                // WORKAROUND: For new rows (Added state), force them to be recognized
+                if (currentRow.RowState == DataRowState.Added)
+                {
+                    // New rows should be inserted - no special handling needed
+                    System.Diagnostics.Debug.WriteLine("Row is in Added state - will be inserted");
+                }
+                // If row is unchanged, try to set it as modified
+                else if (currentRow.RowState == DataRowState.Unchanged)
+                {
+                    // This might happen if default values match exactly - force modification
+                    currentRow.SetModified();
+                    System.Diagnostics.Debug.WriteLine("Row State after SetModified: " + currentRow.RowState.ToString());
+                }
+
+                // Get count of rows with changes
+                DataTable changesTable = this.mainDB.machinery_item_inward_unit2.GetChanges();
+                int totalChanges = changesTable != null ? changesTable.Rows.Count : 0;
+                
+                int addedRows = this.mainDB.machinery_item_inward_unit2.GetChanges(DataRowState.Added) != null ? 
+                    this.mainDB.machinery_item_inward_unit2.GetChanges(DataRowState.Added).Rows.Count : 0;
+                int modifiedRows = this.mainDB.machinery_item_inward_unit2.GetChanges(DataRowState.Modified) != null ? 
+                    this.mainDB.machinery_item_inward_unit2.GetChanges(DataRowState.Modified).Rows.Count : 0;
+                
+                System.Diagnostics.Debug.WriteLine("Total changes: " + totalChanges);
+                System.Diagnostics.Debug.WriteLine("Rows to add: " + addedRows + ", Rows to modify: " + modifiedRows);
+
+                if (totalChanges == 0)
+                {
+                    MessageBox.Show("No changes detected to save.\n\nRow State: " + currentRow.RowState.ToString() + 
+                        "\n\nPlease make sure you've entered data in the required fields.", 
+                        "No Changes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                // Save to database using TableAdapter directly for better control
+                try
+                {
+                    int recordsSaved = this.machinery_item_inward_unit2TableAdapter.Update(this.mainDB.machinery_item_inward_unit2);
+                    
+                    if (recordsSaved > 0)
+                    {
+                        this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                        MessageBox.Show("Data saved successfully! (" + recordsSaved + " record(s))", "Save Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        RefreshDataGridView();
+                        PrepareForNewEntry();
+                        this.challan_noTextBox.Text = savedChallanNo;
+                        this.party_nameComboBox.Text = savedPartyName;
+                        this.itemComboBox.SelectedIndex = -1;
+                        this.itemComboBox.Focus();
+                        return true;
+                    }
+                    else
+                    {
+                        MessageBox.Show("No changes were saved.\n\nRow State: " + currentRow.RowState.ToString() + 
+                            "\nRows marked for add: " + addedRows + 
+                            "\nRows marked for modify: " + modifiedRows + 
+                            "\n\nPossible causes:\n" +
+                            "1. The data hasn't actually changed\n" +
+                            "2. Database concurrency check failed (UPDATE WHERE clause didn't match)\n" +
+                            "3. A database constraint was violated\n\n" +
+                            "Check the Output window (View -> Output) for more details.", 
+                            "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return false;
+                    }
+                }
+                catch (System.Data.DBConcurrencyException dbEx)
+                {
+                    MessageBox.Show("Database Concurrency Error!\n\n" +
+                        "This means the UPDATE or INSERT command failed because:\n" +
+                        "- The WHERE clause in the UPDATE command is checking too many fields\n" +
+                        "- NULL values or empty strings don't match the expected values\n\n" +
+                        "SOLUTION: You need to fix the MainDB.xsd file.\n" +
+                        "Open VISUAL_FIX_GUIDE.md in your project for step-by-step instructions.\n\n" +
+                        "Error: " + dbEx.Message,
+                        "Concurrency Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    
+                    System.Diagnostics.Debug.WriteLine("DBConcurrencyException: " + dbEx.Message);
+                    System.Diagnostics.Debug.WriteLine("Stack Trace: " + dbEx.StackTrace);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error saving data", ex);
+                return false;
+            }
+        }
+
+        private bool ValidateRequiredFields()
+        {
+            if (string.IsNullOrWhiteSpace(this.party_nameComboBox.Text))
+            {
+                MessageBox.Show("Please select a party name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.party_nameComboBox.Focus();
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(this.itemComboBox.Text))
+            {
+                MessageBox.Show("Please select an item.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.itemComboBox.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.challan_noTextBox.Text))
+            {
+                MessageBox.Show("Please enter a challan number.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.challan_noTextBox.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool HasUnsavedData()
+        {
+            if (this.machinery_item_inward_unit2BindingSource.Current == null)
+                return false;
+
+            var currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+            if (currentRowView == null || !currentRowView.IsNew)
+                return false;
+
+            var row = currentRowView.Row;
+            
+            if (row["challan_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["challan_no"].ToString()))
+                return true;
+            if (row["party_name"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["party_name"].ToString()))
+                return true;
+            if (row["item"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["item"].ToString()))
+                return true;
+            
+            return false;
+        }
+
+        private void ShowError(string message, Exception ex)
+        {
+            string errorMessage = message + ": " + ex.Message;
+            System.Diagnostics.Debug.WriteLine(errorMessage);
+            System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void btnManageParties_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartyMasterForm partyMasterForm = new PartyMasterForm())
+                {
+                    partyMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Party Master form", ex);
+            }
+        }
+
+        private void btnManageItems_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ItemMasterForm itemMasterForm = new ItemMasterForm())
+                {
+                    itemMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Item Master form", ex);
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (HasUnsavedData())
+                {
+                    DialogResult result = MessageBox.Show(
+                        "Are you sure you want to clear all unsaved data?",
+                        "Confirm Clear",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (result == DialogResult.No)
+                        return;
+                }
+
+                this.machinery_item_inward_unit2BindingSource.CancelEdit();
+                PrepareForNewEntry();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error clearing form", ex);
+            }
+        }
+
+        private void btnShowTable_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ShowTableForm showTableForm = new ShowTableForm())
+                {
+                    showTableForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening table view", ex);
+            }
+        }
+
+        private void btnPartsUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartsUsageForm partsUsageForm = new PartsUsageForm())
+                {
+                    partsUsageForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening parts usage form", ex);
+            }
+        }
+
+        private void RefreshDataGridView()
+        {
+            try
+            {
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.mainDB.machinery_item_inward_unit2.Rows.Count;
+            lblRecordCount.Text = "Total Records: " + totalRecords.ToString();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+
+            if (HasUnsavedData())
+            {
+                DialogResult result = MessageBox.Show(
+                    "You have unsaved changes. Do you want to save them before closing?",
+                    "Unsaved Changes",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    if (!SaveCurrentRecord())
+                        e.Cancel = true;
+                }
+                else if (result == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                }
+            }
+        }
+
+        private void challan_noTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}

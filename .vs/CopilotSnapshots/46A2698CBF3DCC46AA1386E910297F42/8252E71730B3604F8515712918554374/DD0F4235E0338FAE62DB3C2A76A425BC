@@ -1,0 +1,224 @@
+﻿using System;
+using System.Data;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class ShowTableForm : Form
+    {
+        public ShowTableForm()
+        {
+            InitializeComponent();
+        }
+
+        private void ShowTableForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                // Load data into the machinery_item_inward_unit2 table
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                
+                // Set default sort
+                this.machinery_item_inward_unit2DataGridView.Sort(
+                    this.machinery_item_inward_unit2DataGridView.Columns["dataGridViewTextBoxColumn1"], 
+                    System.ComponentModel.ListSortDirection.Descending);
+                
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Reload data from database
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                UpdateRecordCount();
+                
+                MessageBox.Show("Data refreshed successfully!", 
+                    "Refresh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string searchText = txtSearch.Text.Trim();
+                
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    // Clear filter
+                    this.machinery_item_inward_unit2BindingSource.RemoveFilter();
+                }
+                else
+                {
+                    // Apply filter to search across multiple columns
+                    string filter = string.Format(
+                        "challan_no LIKE '%{0}%' OR " +
+                        "party_name LIKE '%{0}%' OR " +
+                        "item LIKE '%{0}%' OR " +
+                        "reference_bill_no LIKE '%{0}%' OR " +
+                        "party_outward_challan_no LIKE '%{0}%'",
+                        searchText.Replace("'", "''"));
+                    
+                    this.machinery_item_inward_unit2BindingSource.Filter = filter;
+                }
+                
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error searching: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Clear();
+            this.machinery_item_inward_unit2BindingSource.RemoveFilter();
+            UpdateRecordCount();
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (this.machinery_item_inward_unit2DataGridView.SelectedRows.Count == 0)
+                {
+                    MessageBox.Show("Please select a row to delete.", 
+                        "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                DialogResult result = MessageBox.Show(
+                    "Are you sure you want to delete the selected record(s)?", 
+                    "Confirm Delete", 
+                    MessageBoxButtons.YesNo, 
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    foreach (DataGridViewRow row in this.machinery_item_inward_unit2DataGridView.SelectedRows)
+                    {
+                        if (!row.IsNewRow)
+                        {
+                            this.machinery_item_inward_unit2DataGridView.Rows.Remove(row);
+                        }
+                    }
+
+                    // Save changes
+                    this.machinery_item_inward_unit2BindingSource.EndEdit();
+                    this.tableAdapterManager.UpdateAll(this.mainDB);
+                    
+                    UpdateRecordCount();
+                    
+                    MessageBox.Show("Record(s) deleted successfully!", 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting record: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnExportCSV_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+                saveFileDialog.FilterIndex = 1;
+                saveFileDialog.RestoreDirectory = true;
+                saveFileDialog.FileName = "machinery_parts_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+                    // Add column headers
+                    for (int i = 0; i < machinery_item_inward_unit2DataGridView.Columns.Count; i++)
+                    {
+                        sb.Append(machinery_item_inward_unit2DataGridView.Columns[i].HeaderText);
+                        if (i < machinery_item_inward_unit2DataGridView.Columns.Count - 1)
+                            sb.Append(",");
+                    }
+                    sb.AppendLine();
+
+                    // Add rows
+                    foreach (DataGridViewRow row in machinery_item_inward_unit2DataGridView.Rows)
+                    {
+                        if (!row.IsNewRow)
+                        {
+                            for (int i = 0; i < machinery_item_inward_unit2DataGridView.Columns.Count; i++)
+                            {
+                                object cellValue = row.Cells[i].Value;
+                                if (cellValue != null)
+                                {
+                                    string value = cellValue.ToString().Replace(",", ";");
+                                    sb.Append(value);
+                                }
+                                if (i < machinery_item_inward_unit2DataGridView.Columns.Count - 1)
+                                    sb.Append(",");
+                            }
+                            sb.AppendLine();
+                        }
+                    }
+
+                    System.IO.File.WriteAllText(saveFileDialog.FileName, sb.ToString());
+                    
+                    MessageBox.Show("Data exported successfully to:\n" + saveFileDialog.FileName, 
+                        "Export Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error exporting data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.machinery_item_inward_unit2BindingSource.Count;
+            lblRecordCount.Text = string.Format("Total Records: {0}", totalRecords);
+        }
+
+        private void txtSearch_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                btnSearch_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
+        private void machinery_item_inward_unit2DataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                MessageBox.Show("Double-click to edit feature can be added here.\n" +
+                    "Or you can edit directly in the grid.", 
+                    "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+    }
+}

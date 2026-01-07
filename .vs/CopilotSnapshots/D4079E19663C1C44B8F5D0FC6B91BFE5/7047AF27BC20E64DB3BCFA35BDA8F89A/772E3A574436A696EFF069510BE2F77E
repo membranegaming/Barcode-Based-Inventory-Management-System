@@ -1,0 +1,498 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class Form1 : Form
+    {
+        private bool _isLoading = false;
+
+        public Form1()
+        {
+            InitializeComponent();
+            // REMOVE: AddingNew handler that injected external DataRowView
+            // This caused "Cannot add external objects to this list" when BindingSource tried to add.
+        }
+
+        private void machinery_item_inward_unit2BindingNavigatorSaveItem_Click(object sender, EventArgs e)
+        {
+            this.Validate();
+            this.machinery_item_inward_unit2BindingSource.EndEdit();
+            this.tableAdapterManager.UpdateAll(this.mainDB);
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                _isLoading = true;
+                LoadMasterData();
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                this.machinery_item_inward_unit2BindingSource.CurrentChanged += 
+                    new EventHandler(BindingSource_CurrentChanged);
+                UpdateRecordCount();
+                PrepareForNewEntry();
+                _isLoading = false;
+            }
+            catch (Exception ex)
+            {
+                _isLoading = false;
+                ShowError("Error loading form", ex);
+            }
+        }
+
+        private void PrepareForNewEntry()
+        {
+            try
+            {
+                bool shouldCreateNewRow = true;
+                
+                var currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+                if (currentRowView != null)
+                {
+                    var row = currentRowView.Row;
+                    if (row != null)
+                    {
+                        if (row.RowState == DataRowState.Detached)
+                        {
+                            shouldCreateNewRow = true;
+                        }
+                        else if (currentRowView.IsNew)
+                        {
+                            bool hasData = false;
+                            if (row["challan_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["challan_no"].ToString())) hasData = true;
+                            if (row["party_name"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["party_name"].ToString())) hasData = true;
+                            if (row["item"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["item"].ToString())) hasData = true;
+                            shouldCreateNewRow = !hasData;
+                        }
+                        else
+                        {
+                            shouldCreateNewRow = true;
+                        }
+                    }
+                }
+
+                if (shouldCreateNewRow)
+                {
+                    // Let BindingSource create the DataRowView internally
+                    this.machinery_item_inward_unit2BindingSource.AddNew();
+                }
+
+                // Now set safe defaults on the newly created current row
+                currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+                if (currentRowView != null && currentRowView.Row != null && currentRowView.Row.RowState != DataRowState.Detached)
+                {
+                    var r = currentRowView.Row;
+                    if (r["date"] == DBNull.Value) r["date"] = DateTime.Today;
+                    if (r["bill_date"] == DBNull.Value) r["bill_date"] = DateTime.Today;
+                    if (r["challan_no"] == DBNull.Value) r["challan_no"] = string.Empty;
+                    if (r["party_name"] == DBNull.Value) r["party_name"] = string.Empty;
+                    if (r["item"] == DBNull.Value) r["item"] = string.Empty;
+                    if (r["qty"] == DBNull.Value) r["qty"] = 0;
+                    if (r["reference_bill_no"] == DBNull.Value) r["reference_bill_no"] = string.Empty;
+                    if (r["used_in_machine"] == DBNull.Value) r["used_in_machine"] = string.Empty;
+                    if (r["taken_by"] == DBNull.Value) r["taken_by"] = string.Empty;
+                }
+                
+                this.challan_noTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error preparing for new entry", ex);
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            try
+            {
+                this.partyMasterTableAdapter.Fill(this.mainDB.PartyMaster);
+                this.itemMasterTableAdapter.Fill(this.mainDB.ItemMaster);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading master data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void RefreshMasterData()
+        {
+            try
+            {
+                string selectedParty = this.party_nameComboBox.Text;
+                string selectedItem = this.itemComboBox.Text;
+                LoadMasterData();
+                if (!string.IsNullOrEmpty(selectedParty)) this.party_nameComboBox.Text = selectedParty;
+                if (!string.IsNullOrEmpty(selectedItem)) this.itemComboBox.Text = selectedItem;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing master data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BindingSource_CurrentChanged(object sender, EventArgs e)
+        {
+            if (this.machinery_item_inward_unit2BindingSource.Current != null)
+            {
+                var currentRow = ((DataRowView)this.machinery_item_inward_unit2BindingSource.Current).Row;
+                if (currentRow != null && currentRow.Table.Columns.Contains("id"))
+                {
+                    var id = currentRow["id"];
+                    if (id == DBNull.Value || Convert.ToInt32(id) <= 0)
+                    {
+                        this.idTextBox.Text = "Auto";
+                    }
+                }
+            }
+        }
+
+        private void btnAddData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (HasUnsavedData())
+                {
+                    DialogResult result = MessageBox.Show(
+                        "You have unsaved data in the current form. Do you want to save it first?",
+                        "Unsaved Data",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question);
+                    
+                    if (result == DialogResult.Yes)
+                    {
+                        if (SaveCurrentRecord())
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                    else if (result == DialogResult.Cancel)
+                    {
+                        return;
+                    }
+                }
+                
+                PrepareForNewEntry();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error adding new record", ex);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            SaveCurrentRecord();
+        }
+
+        private bool SaveCurrentRecord()
+        {
+            try
+            {
+                if (!ValidateRequiredFields())
+                    return false;
+                
+                string savedChallanNo = this.challan_noTextBox.Text;
+                string savedPartyName = this.party_nameComboBox.Text;
+                
+                if (this.machinery_item_inward_unit2BindingSource.Current == null)
+                {
+                    MessageBox.Show("No record to save. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PrepareForNewEntry();
+                    return false;
+                }
+
+                var currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+                if (currentRowView == null)
+                {
+                    MessageBox.Show("Unable to get current row. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                DataRow currentRow = currentRowView.Row;
+                
+                // Sync date pickers to DataRow handling checkbox state
+                if (this.dateDateTimePicker.Checked)
+                    currentRow["date"] = this.dateDateTimePicker.Value.Date;
+                else
+                    currentRow["date"] = DBNull.Value;
+
+                if (this.bill_dateDateTimePicker.Checked)
+                    currentRow["bill_date"] = this.bill_dateDateTimePicker.Value.Date;
+                else
+                    currentRow["bill_date"] = DBNull.Value;
+
+                if (currentRow.RowState == DataRowState.Detached)
+                {
+                    MessageBox.Show("The row is detached from the table. Please try saving again.", 
+                        "Row Detached Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PrepareForNewEntry();
+                    return false;
+                }
+                
+                if (currentRow["used_in_machine"] == DBNull.Value)
+                    currentRow["used_in_machine"] = string.Empty;
+                if (currentRow["taken_by"] == DBNull.Value)
+                    currentRow["taken_by"] = string.Empty;
+                
+                this.Validate();
+                this.machinery_item_inward_unit2BindingSource.EndEdit();
+                
+                if (currentRow.RowState == DataRowState.Unchanged)
+                {
+                    currentRow.SetModified();
+                }
+
+                DataTable changesTable = this.mainDB.machinery_item_inward_unit2.GetChanges();
+                int totalChanges = changesTable != null ? changesTable.Rows.Count : 0;
+                
+                if (totalChanges == 0)
+                {
+                    MessageBox.Show("No changes detected to save.", "No Changes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                try
+                {
+                    int recordsSaved = this.machinery_item_inward_unit2TableAdapter.Update(this.mainDB.machinery_item_inward_unit2);
+                    
+                    if (recordsSaved > 0)
+                    {
+                        this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                        MessageBox.Show("Data saved successfully! (" + recordsSaved + " record(s))", "Save Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        RefreshDataGridView();
+                        PrepareForNewEntry();
+                        this.challan_noTextBox.Text = savedChallanNo;
+                        this.party_nameComboBox.Text = savedPartyName;
+                        this.itemComboBox.SelectedIndex = -1;
+                        this.itemComboBox.Focus();
+                        return true;
+                    }
+                    else
+                    {
+                        MessageBox.Show("No changes were saved.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return false;
+                    }
+                }
+                catch (System.Data.DBConcurrencyException dbEx)
+                {
+                    MessageBox.Show("Database Concurrency Error!\n\n" + dbEx.Message,
+                        "Concurrency Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error saving data", ex);
+                return false;
+            }
+        }
+
+        private bool ValidateRequiredFields()
+        {
+            if (string.IsNullOrWhiteSpace(this.party_nameComboBox.Text))
+            {
+                MessageBox.Show("Please select a party name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.party_nameComboBox.Focus();
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(this.itemComboBox.Text))
+            {
+                MessageBox.Show("Please select an item.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.itemComboBox.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(this.challan_noTextBox.Text))
+            {
+                MessageBox.Show("Please enter a challan number.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.challan_noTextBox.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool HasUnsavedData()
+        {
+            if (this.machinery_item_inward_unit2BindingSource.Current == null)
+                return false;
+
+            var currentRowView = this.machinery_item_inward_unit2BindingSource.Current as DataRowView;
+            if (currentRowView == null || !currentRowView.IsNew)
+                return false;
+
+            var row = currentRowView.Row;
+            
+            if (row["challan_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["challan_no"].ToString()))
+                return true;
+            if (row["party_name"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["party_name"].ToString()))
+                return true;
+            if (row["item"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["item"].ToString()))
+                return true;
+            
+            return false;
+        }
+
+        private void ShowError(string message, Exception ex)
+        {
+            string errorMessage = message + ": " + ex.Message;
+            System.Diagnostics.Debug.WriteLine(errorMessage);
+            System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void btnManageParties_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartyMasterForm partyMasterForm = new PartyMasterForm())
+                {
+                    partyMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Party Master form", ex);
+            }
+        }
+
+        private void btnManageItems_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ItemMasterForm itemMasterForm = new ItemMasterForm())
+                {
+                    itemMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening Item Master form", ex);
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (HasUnsavedData())
+                {
+                    DialogResult result = MessageBox.Show(
+                        "Are you sure you want to clear all unsaved data?",
+                        "Confirm Clear",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (result == DialogResult.No)
+                        return;
+                }
+
+                this.machinery_item_inward_unit2BindingSource.CancelEdit();
+                PrepareForNewEntry();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error clearing form", ex);
+            }
+        }
+
+        private void btnShowTable_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ShowTableForm showTableForm = new ShowTableForm())
+                {
+                    showTableForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening table view", ex);
+            }
+        }
+
+        private void btnPartsUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartsUsageForm partsUsageForm = new PartsUsageForm())
+                {
+                    partsUsageForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error opening parts usage form", ex);
+            }
+        }
+
+        private void RefreshDataGridView()
+        {
+            try
+            {
+                this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.mainDB.machinery_item_inward_unit2.Rows.Count;
+            lblRecordCount.Text = "Total Records: " + totalRecords.ToString();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+
+            if (HasUnsavedData())
+            {
+                DialogResult result = MessageBox.Show(
+                    "You have unsaved changes. Do you want to save them before closing?",
+                    "Unsaved Changes",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    if (!SaveCurrentRecord())
+                        e.Cancel = true;
+                }
+                else if (result == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                }
+            }
+        }
+
+        private void challan_noTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}

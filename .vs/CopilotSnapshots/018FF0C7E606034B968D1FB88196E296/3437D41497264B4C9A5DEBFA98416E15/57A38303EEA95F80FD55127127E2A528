@@ -1,0 +1,196 @@
+﻿using System;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class PersonMasterForm : Form
+    {
+        public PersonMasterForm()
+        {
+            InitializeComponent();
+        }
+
+        private void PersonMasterForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.personMasterTableAdapter.Fill(this.mainDB.PersonMaster);
+                
+                // Automatically prepare for new data entry
+                this.personMasterBindingSource.AddNew();
+                
+                // Set is_active to true directly on the data row
+                SetCurrentRowActive();
+                
+                this.person_nameTextBox.Focus();
+                
+                this.personMasterBindingSource.CurrentChanged += new EventHandler(BindingSource_CurrentChanged);
+                UpdateRecordCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading person data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BindingSource_CurrentChanged(object sender, EventArgs e)
+        {
+            if (this.personMasterBindingSource.Current != null)
+            {
+                var currentRow = ((System.Data.DataRowView)this.personMasterBindingSource.Current).Row;
+                if (currentRow != null)
+                {
+                    var id = currentRow["id"];
+                    if (id != DBNull.Value && Convert.ToInt32(id) < 0)
+                    {
+                        this.idTextBox.Text = "Auto";
+                    }
+                }
+            }
+            UpdateRecordCount();
+        }
+
+        private void SetCurrentRowActive()
+        {
+            // Set is_active to true for the current row
+            if (this.personMasterBindingSource.Current != null)
+            {
+                var currentRow = ((System.Data.DataRowView)this.personMasterBindingSource.Current).Row as MainDB.PersonMasterRow;
+                if (currentRow != null)
+                {
+                    currentRow.is_active = true;
+                }
+            }
+        }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.personMasterBindingSource.AddNew();
+                
+                // Set is_active to true directly on the data row
+                SetCurrentRowActive();
+                
+                this.person_nameTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding new person: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(this.person_nameTextBox.Text))
+                {
+                    MessageBox.Show("Please enter a person name.", 
+                        "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.person_nameTextBox.Focus();
+                    return;
+                }
+
+                this.Validate();
+                this.personMasterBindingSource.EndEdit();
+                this.tableAdapterManager.UpdateAll(this.mainDB);
+                
+                MessageBox.Show("Person data saved successfully!", 
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                this.personMasterBindingSource.AddNew();
+                
+                // Set is_active to true directly on the data row
+                SetCurrentRowActive();
+                
+                this.person_nameTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving person data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (this.personMasterBindingSource.Current == null)
+                {
+                    MessageBox.Show("Please select a person to delete.", 
+                        "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (MessageBox.Show("Are you sure you want to delete this person?", 
+                    "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    this.personMasterBindingSource.RemoveCurrent();
+                    this.tableAdapterManager.UpdateAll(this.mainDB);
+                    
+                    MessageBox.Show("Person deleted successfully!", 
+                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting person: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.personMasterBindingSource.CancelEdit();
+                this.personMasterBindingSource.AddNew();
+                
+                // Set is_active to true directly on the data row
+                SetCurrentRowActive();
+                
+                this.person_nameTextBox.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error clearing form: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.personMasterTableAdapter.Fill(this.mainDB.PersonMaster);
+                UpdateRecordCount();
+                MessageBox.Show("Data refreshed successfully!", 
+                    "Refresh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing data: " + ex.Message, 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateRecordCount()
+        {
+            int totalRecords = this.personMasterBindingSource.Count;
+            lblRecordCount.Text = string.Format("Total Persons: {0}", totalRecords);
+        }
+
+        private void personMasterDataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+        }
+    }
+}

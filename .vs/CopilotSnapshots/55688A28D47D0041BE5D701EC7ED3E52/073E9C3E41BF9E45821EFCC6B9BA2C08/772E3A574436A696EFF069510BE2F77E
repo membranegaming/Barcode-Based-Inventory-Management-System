@@ -1,0 +1,257 @@
+﻿using System;
+using System.Data;
+using System.Windows.Forms;
+
+namespace store_parts
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                LoadMasterData();
+                RefreshDataGridView();
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadMasterData()
+        {
+            this.partyMasterTableAdapter.Fill(this.mainDB.PartyMaster);
+            this.itemMasterTableAdapter.Fill(this.mainDB.ItemMaster);
+        }
+
+        private void RefreshMasterData()
+        {
+            string selectedParty = this.party_nameComboBox.Text;
+            string selectedItem = this.itemComboBox.Text;
+            
+            LoadMasterData();
+            
+            // Restore selections
+            if (!string.IsNullOrEmpty(selectedParty))
+            {
+                int idx = this.party_nameComboBox.FindStringExact(selectedParty);
+                if (idx >= 0) this.party_nameComboBox.SelectedIndex = idx;
+            }
+            if (!string.IsNullOrEmpty(selectedItem))
+            {
+                int idx = this.itemComboBox.FindStringExact(selectedItem);
+                if (idx >= 0) this.itemComboBox.SelectedIndex = idx;
+            }
+        }
+
+        private void RefreshDataGridView()
+        {
+            this.machinery_item_inward_unit2TableAdapter.Fill(this.mainDB.machinery_item_inward_unit2);
+            UpdateRecordCount();
+        }
+
+        private void UpdateRecordCount()
+        {
+            int count = this.mainDB.machinery_item_inward_unit2.Rows.Count;
+            lblRecordCount.Text = "Total Records: " + count.ToString();
+        }
+
+        private void ClearForm()
+        {
+            this.idTextBox.Text = "Auto";
+            this.challan_noTextBox.Text = string.Empty;
+            this.dateDateTimePicker.Value = DateTime.Today;
+            this.bill_dateDateTimePicker.Value = DateTime.Today;
+            this.qtyTextBox.Text = string.Empty;
+            this.reference_bill_noTextBox.Text = string.Empty;
+            
+            if (this.party_nameComboBox.Items.Count > 0)
+                this.party_nameComboBox.SelectedIndex = 0;
+            if (this.itemComboBox.Items.Count > 0)
+                this.itemComboBox.SelectedIndex = 0;
+            
+            this.challan_noTextBox.Focus();
+        }
+
+        private void btnAddData_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            SaveRecord();
+        }
+
+        private void SaveRecord()
+        {
+            try
+            {
+                // Validate required fields
+                if (string.IsNullOrWhiteSpace(this.challan_noTextBox.Text))
+                {
+                    MessageBox.Show("Please enter a challan number.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.challan_noTextBox.Focus();
+                    return;
+                }
+
+                if (this.party_nameComboBox.SelectedIndex < 0 || string.IsNullOrWhiteSpace(this.party_nameComboBox.Text))
+                {
+                    MessageBox.Show("Please select a party name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.party_nameComboBox.Focus();
+                    return;
+                }
+
+                if (this.itemComboBox.SelectedIndex < 0 || string.IsNullOrWhiteSpace(this.itemComboBox.Text))
+                {
+                    MessageBox.Show("Please select an item.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.itemComboBox.Focus();
+                    return;
+                }
+
+                // Parse qty (default to 0 if empty)
+                int qty = 0;
+                if (!string.IsNullOrWhiteSpace(this.qtyTextBox.Text))
+                {
+                    if (!int.TryParse(this.qtyTextBox.Text, out qty))
+                    {
+                        MessageBox.Show("Please enter a valid quantity.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        this.qtyTextBox.Focus();
+                        return;
+                    }
+                }
+
+                // Create a new row directly in the DataTable
+                var newRow = this.mainDB.machinery_item_inward_unit2.Newmachinery_item_inward_unit2Row();
+                
+                newRow.challan_no = this.challan_noTextBox.Text.Trim();
+                newRow.date = this.dateDateTimePicker.Value.Date;
+                newRow.party_name = this.party_nameComboBox.Text;
+                newRow.item = this.itemComboBox.Text;
+                newRow.qty = qty;
+                newRow.reference_bill_no = this.reference_bill_noTextBox.Text.Trim();
+                newRow.bill_date = this.bill_dateDateTimePicker.Value.Date;
+                
+                // CRITICAL: Set non-null columns that don't allow nulls
+                newRow.used_in_machine = string.Empty;
+                newRow.taken_by = string.Empty;
+                
+                // Add to the table
+                this.mainDB.machinery_item_inward_unit2.Addmachinery_item_inward_unit2Row(newRow);
+                
+                // Save to database
+                int result = this.machinery_item_inward_unit2TableAdapter.Update(this.mainDB.machinery_item_inward_unit2);
+                
+                if (result > 0)
+                {
+                    this.mainDB.machinery_item_inward_unit2.AcceptChanges();
+                    MessageBox.Show("Record saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
+                    // Store values to retain for next entry
+                    string savedChallanNo = this.challan_noTextBox.Text;
+                    string savedPartyName = this.party_nameComboBox.Text;
+                    
+                    RefreshDataGridView();
+                    ClearForm();
+                    
+                    // Restore some values for quick entry of multiple items
+                    this.challan_noTextBox.Text = savedChallanNo;
+                    int partyIdx = this.party_nameComboBox.FindStringExact(savedPartyName);
+                    if (partyIdx >= 0) this.party_nameComboBox.SelectedIndex = partyIdx;
+                    
+                    this.itemComboBox.Focus();
+                }
+                else
+                {
+                    MessageBox.Show("No changes were saved to the database.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving record: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                System.Diagnostics.Debug.WriteLine("Save Error: " + ex.ToString());
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+
+        private void btnManageParties_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartyMasterForm partyMasterForm = new PartyMasterForm())
+                {
+                    partyMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening Party Master form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnManageItems_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ItemMasterForm itemMasterForm = new ItemMasterForm())
+                {
+                    itemMasterForm.ShowDialog();
+                }
+                RefreshMasterData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening Item Master form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnShowTable_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (ShowTableForm showTableForm = new ShowTableForm())
+                {
+                    showTableForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening table view: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnPartsUsage_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (PartsUsageForm partsUsageForm = new PartsUsageForm())
+                {
+                    partsUsageForm.ShowDialog();
+                }
+                RefreshDataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening parts usage form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void challan_noTextBox_TextChanged(object sender, EventArgs e)
+        {
+            // Empty handler kept for compatibility
+        }
+    }
+}

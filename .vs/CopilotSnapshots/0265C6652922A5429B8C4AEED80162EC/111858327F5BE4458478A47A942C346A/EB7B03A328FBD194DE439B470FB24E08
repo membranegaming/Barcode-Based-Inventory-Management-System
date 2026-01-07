@@ -1,0 +1,499 @@
+﻿namespace store_parts
+{
+    partial class Form1
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.Label idLabel;
+            System.Windows.Forms.Label challan_noLabel;
+            System.Windows.Forms.Label dateLabel;
+            System.Windows.Forms.Label party_nameLabel;
+            System.Windows.Forms.Label itemLabel;
+            System.Windows.Forms.Label qtyLabel;
+            System.Windows.Forms.Label reference_bill_noLabel;
+            System.Windows.Forms.Label bill_dateLabel;
+            this.mainDB = new store_parts.MainDB();
+            this.machinery_item_inward_unit2BindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.machinery_item_inward_unit2TableAdapter = new store_parts.MainDBTableAdapters.machinery_item_inward_unit2TableAdapter();
+            this.tableAdapterManager = new store_parts.MainDBTableAdapters.TableAdapterManager();
+            this.itemMasterTableAdapter = new store_parts.MainDBTableAdapters.ItemMasterTableAdapter();
+            this.partyMasterTableAdapter = new store_parts.MainDBTableAdapters.PartyMasterTableAdapter();
+            this.idTextBox = new System.Windows.Forms.TextBox();
+            this.challan_noTextBox = new System.Windows.Forms.TextBox();
+            this.dateDateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.party_nameComboBox = new System.Windows.Forms.ComboBox();
+            this.partyMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.itemComboBox = new System.Windows.Forms.ComboBox();
+            this.itemMasterBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.qtyTextBox = new System.Windows.Forms.TextBox();
+            this.reference_bill_noTextBox = new System.Windows.Forms.TextBox();
+            this.bill_dateDateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.btnAddData = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.btnManageParties = new System.Windows.Forms.Button();
+            this.btnManageItems = new System.Windows.Forms.Button();
+            this.btnShowTable = new System.Windows.Forms.Button();
+            this.btnPartsUsage = new System.Windows.Forms.Button();
+            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnPrinterSettings = new System.Windows.Forms.Button();
+            this.btnDashboard = new System.Windows.Forms.Button();
+            this.btnReprintBarcode = new System.Windows.Forms.Button();
+            this.gbEntryForm = new System.Windows.Forms.GroupBox();
+            this.gbActions = new System.Windows.Forms.GroupBox();
+            idLabel = new System.Windows.Forms.Label();
+            challan_noLabel = new System.Windows.Forms.Label();
+            dateLabel = new System.Windows.Forms.Label();
+            party_nameLabel = new System.Windows.Forms.Label();
+            itemLabel = new System.Windows.Forms.Label();
+            qtyLabel = new System.Windows.Forms.Label();
+            reference_bill_noLabel = new System.Windows.Forms.Label();
+            bill_dateLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.partyMasterBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterBindingSource)).BeginInit();
+            this.gbEntryForm.SuspendLayout();
+            this.gbActions.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // idLabel
+            // 
+            idLabel.AutoSize = true;
+            idLabel.Location = new System.Drawing.Point(20, 30);
+            idLabel.Name = "idLabel";
+            idLabel.Size = new System.Drawing.Size(29, 18);
+            idLabel.TabIndex = 1;
+            idLabel.Text = "ID:";
+            // 
+            // challan_noLabel
+            // 
+            challan_noLabel.AutoSize = true;
+            challan_noLabel.Location = new System.Drawing.Point(20, 60);
+            challan_noLabel.Name = "challan_noLabel";
+            challan_noLabel.Size = new System.Drawing.Size(96, 18);
+            challan_noLabel.TabIndex = 3;
+            challan_noLabel.Text = "Challan No:";
+            // 
+            // dateLabel
+            // 
+            dateLabel.AutoSize = true;
+            dateLabel.Location = new System.Drawing.Point(20, 90);
+            dateLabel.Name = "dateLabel";
+            dateLabel.Size = new System.Drawing.Size(48, 18);
+            dateLabel.TabIndex = 5;
+            dateLabel.Text = "Date:";
+            // 
+            // party_nameLabel
+            // 
+            party_nameLabel.AutoSize = true;
+            party_nameLabel.Location = new System.Drawing.Point(20, 120);
+            party_nameLabel.Name = "party_nameLabel";
+            party_nameLabel.Size = new System.Drawing.Size(101, 18);
+            party_nameLabel.TabIndex = 7;
+            party_nameLabel.Text = "Party Name:";
+            // 
+            // itemLabel
+            // 
+            itemLabel.AutoSize = true;
+            itemLabel.Location = new System.Drawing.Point(20, 150);
+            itemLabel.Name = "itemLabel";
+            itemLabel.Size = new System.Drawing.Size(45, 18);
+            itemLabel.TabIndex = 9;
+            itemLabel.Text = "Item:";
+            // 
+            // qtyLabel
+            // 
+            qtyLabel.AutoSize = true;
+            qtyLabel.Location = new System.Drawing.Point(20, 180);
+            qtyLabel.Name = "qtyLabel";
+            qtyLabel.Size = new System.Drawing.Size(75, 18);
+            qtyLabel.TabIndex = 11;
+            qtyLabel.Text = "Quantity:";
+            // 
+            // reference_bill_noLabel
+            // 
+            reference_bill_noLabel.AutoSize = true;
+            reference_bill_noLabel.Location = new System.Drawing.Point(20, 210);
+            reference_bill_noLabel.Name = "reference_bill_noLabel";
+            reference_bill_noLabel.Size = new System.Drawing.Size(99, 18);
+            reference_bill_noLabel.TabIndex = 13;
+            reference_bill_noLabel.Text = "Ref. Bill No:";
+            // 
+            // bill_dateLabel
+            // 
+            bill_dateLabel.AutoSize = true;
+            bill_dateLabel.Location = new System.Drawing.Point(20, 240);
+            bill_dateLabel.Name = "bill_dateLabel";
+            bill_dateLabel.Size = new System.Drawing.Size(76, 18);
+            bill_dateLabel.TabIndex = 15;
+            bill_dateLabel.Text = "Bill Date:";
+            // 
+            // mainDB
+            // 
+            this.mainDB.DataSetName = "MainDB";
+            this.mainDB.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // machinery_item_inward_unit2BindingSource
+            // 
+            this.machinery_item_inward_unit2BindingSource.DataMember = "machinery_item_inward_unit2";
+            this.machinery_item_inward_unit2BindingSource.DataSource = this.mainDB;
+            // 
+            // machinery_item_inward_unit2TableAdapter
+            // 
+            this.machinery_item_inward_unit2TableAdapter.ClearBeforeFill = true;
+            // 
+            // tableAdapterManager
+            // 
+            this.tableAdapterManager.BackupDataSetBeforeUpdate = false;
+            this.tableAdapterManager.ItemMasterTableAdapter = this.itemMasterTableAdapter;
+            this.tableAdapterManager.MachineMasterTableAdapter = null;
+            this.tableAdapterManager.machinery_item_inward_unit2TableAdapter = this.machinery_item_inward_unit2TableAdapter;
+            this.tableAdapterManager.PartyMasterTableAdapter = this.partyMasterTableAdapter;
+            this.tableAdapterManager.PersonMasterTableAdapter = null;
+            this.tableAdapterManager.UpdateOrder = store_parts.MainDBTableAdapters.TableAdapterManager.UpdateOrderOption.InsertUpdateDelete;
+            // 
+            // itemMasterTableAdapter
+            // 
+            this.itemMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // partyMasterTableAdapter
+            // 
+            this.partyMasterTableAdapter.ClearBeforeFill = true;
+            // 
+            // idTextBox
+            // 
+            this.idTextBox.BackColor = System.Drawing.SystemColors.Control;
+            this.idTextBox.Location = new System.Drawing.Point(130, 27);
+            this.idTextBox.Name = "idTextBox";
+            this.idTextBox.ReadOnly = true;
+            this.idTextBox.Size = new System.Drawing.Size(200, 24);
+            this.idTextBox.TabIndex = 2;
+            this.idTextBox.TabStop = false;
+            // 
+            // challan_noTextBox
+            // 
+            this.challan_noTextBox.Location = new System.Drawing.Point(130, 57);
+            this.challan_noTextBox.Name = "challan_noTextBox";
+            this.challan_noTextBox.Size = new System.Drawing.Size(200, 24);
+            this.challan_noTextBox.TabIndex = 4;
+            // 
+            // dateDateTimePicker
+            // 
+            this.dateDateTimePicker.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.dateDateTimePicker.Location = new System.Drawing.Point(130, 87);
+            this.dateDateTimePicker.Name = "dateDateTimePicker";
+            this.dateDateTimePicker.Size = new System.Drawing.Size(200, 24);
+            this.dateDateTimePicker.TabIndex = 6;
+            // 
+            // party_nameComboBox
+            // 
+            this.party_nameComboBox.DataSource = this.partyMasterBindingSource;
+            this.party_nameComboBox.DisplayMember = "party_name";
+            this.party_nameComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.party_nameComboBox.FormattingEnabled = true;
+            this.party_nameComboBox.Location = new System.Drawing.Point(130, 117);
+            this.party_nameComboBox.Name = "party_nameComboBox";
+            this.party_nameComboBox.Size = new System.Drawing.Size(200, 26);
+            this.party_nameComboBox.TabIndex = 8;
+            this.party_nameComboBox.ValueMember = "party_name";
+            // 
+            // partyMasterBindingSource
+            // 
+            this.partyMasterBindingSource.DataMember = "PartyMaster";
+            this.partyMasterBindingSource.DataSource = this.mainDB;
+            this.partyMasterBindingSource.Filter = "is_active = true";
+            // 
+            // itemComboBox
+            // 
+            this.itemComboBox.DataSource = this.itemMasterBindingSource;
+            this.itemComboBox.DisplayMember = "item_name";
+            this.itemComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.itemComboBox.FormattingEnabled = true;
+            this.itemComboBox.Location = new System.Drawing.Point(130, 147);
+            this.itemComboBox.Name = "itemComboBox";
+            this.itemComboBox.Size = new System.Drawing.Size(200, 26);
+            this.itemComboBox.TabIndex = 10;
+            this.itemComboBox.ValueMember = "item_name";
+            // 
+            // itemMasterBindingSource
+            // 
+            this.itemMasterBindingSource.DataMember = "ItemMaster";
+            this.itemMasterBindingSource.DataSource = this.mainDB;
+            this.itemMasterBindingSource.Filter = "is_active = true";
+            // 
+            // qtyTextBox
+            // 
+            this.qtyTextBox.Location = new System.Drawing.Point(130, 177);
+            this.qtyTextBox.Name = "qtyTextBox";
+            this.qtyTextBox.Size = new System.Drawing.Size(200, 24);
+            this.qtyTextBox.TabIndex = 12;
+            // 
+            // reference_bill_noTextBox
+            // 
+            this.reference_bill_noTextBox.Location = new System.Drawing.Point(130, 207);
+            this.reference_bill_noTextBox.Name = "reference_bill_noTextBox";
+            this.reference_bill_noTextBox.Size = new System.Drawing.Size(200, 24);
+            this.reference_bill_noTextBox.TabIndex = 14;
+            // 
+            // bill_dateDateTimePicker
+            // 
+            this.bill_dateDateTimePicker.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.bill_dateDateTimePicker.Location = new System.Drawing.Point(130, 237);
+            this.bill_dateDateTimePicker.Name = "bill_dateDateTimePicker";
+            this.bill_dateDateTimePicker.Size = new System.Drawing.Size(200, 24);
+            this.bill_dateDateTimePicker.TabIndex = 16;
+            // 
+            // btnAddData
+            // 
+            this.btnAddData.Location = new System.Drawing.Point(20, 30);
+            this.btnAddData.Name = "btnAddData";
+            this.btnAddData.Size = new System.Drawing.Size(120, 35);
+            this.btnAddData.TabIndex = 20;
+            this.btnAddData.Text = "Add New";
+            this.btnAddData.UseVisualStyleBackColor = true;
+            this.btnAddData.Click += new System.EventHandler(this.btnAddData_Click);
+            // 
+            // btnSave
+            // 
+            this.btnSave.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(204)))), ((int)(((byte)(113)))));
+            this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.btnSave.ForeColor = System.Drawing.Color.White;
+            this.btnSave.Location = new System.Drawing.Point(150, 30);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(120, 35);
+            this.btnSave.TabIndex = 21;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = false;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.Location = new System.Drawing.Point(20, 75);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(120, 35);
+            this.btnClear.TabIndex = 25;
+            this.btnClear.Text = "Clear Form";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnManageParties
+            // 
+            this.btnManageParties.Location = new System.Drawing.Point(20, 120);
+            this.btnManageParties.Name = "btnManageParties";
+            this.btnManageParties.Size = new System.Drawing.Size(120, 35);
+            this.btnManageParties.TabIndex = 22;
+            this.btnManageParties.Text = "Parties";
+            this.btnManageParties.UseVisualStyleBackColor = true;
+            this.btnManageParties.Click += new System.EventHandler(this.btnManageParties_Click);
+            // 
+            // btnManageItems
+            // 
+            this.btnManageItems.Location = new System.Drawing.Point(150, 120);
+            this.btnManageItems.Name = "btnManageItems";
+            this.btnManageItems.Size = new System.Drawing.Size(120, 35);
+            this.btnManageItems.TabIndex = 23;
+            this.btnManageItems.Text = "Items";
+            this.btnManageItems.UseVisualStyleBackColor = true;
+            this.btnManageItems.Click += new System.EventHandler(this.btnManageItems_Click);
+            // 
+            // btnShowTable
+            // 
+            this.btnShowTable.Location = new System.Drawing.Point(20, 165);
+            this.btnShowTable.Name = "btnShowTable";
+            this.btnShowTable.Size = new System.Drawing.Size(120, 35);
+            this.btnShowTable.TabIndex = 24;
+            this.btnShowTable.Text = "View All Data";
+            this.btnShowTable.UseVisualStyleBackColor = true;
+            this.btnShowTable.Click += new System.EventHandler(this.btnShowTable_Click);
+            // 
+            // btnPartsUsage
+            // 
+            this.btnPartsUsage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(52)))), ((int)(((byte)(152)))), ((int)(((byte)(219)))));
+            this.btnPartsUsage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPartsUsage.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.btnPartsUsage.ForeColor = System.Drawing.Color.White;
+            this.btnPartsUsage.Location = new System.Drawing.Point(150, 165);
+            this.btnPartsUsage.Name = "btnPartsUsage";
+            this.btnPartsUsage.Size = new System.Drawing.Size(120, 35);
+            this.btnPartsUsage.TabIndex = 28;
+            this.btnPartsUsage.Text = "Parts Usage";
+            this.btnPartsUsage.UseVisualStyleBackColor = false;
+            this.btnPartsUsage.Click += new System.EventHandler(this.btnPartsUsage_Click);
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(150, 75);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(120, 35);
+            this.btnRefresh.TabIndex = 29;
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
+            // btnPrinterSettings
+            // 
+            this.btnPrinterSettings.Location = new System.Drawing.Point(20, 210);
+            this.btnPrinterSettings.Name = "btnPrinterSettings";
+            this.btnPrinterSettings.Size = new System.Drawing.Size(120, 35);
+            this.btnPrinterSettings.TabIndex = 30;
+            this.btnPrinterSettings.Text = "Printer Settings";
+            this.btnPrinterSettings.UseVisualStyleBackColor = true;
+            this.btnPrinterSettings.Click += new System.EventHandler(this.btnPrinterSettings_Click);
+            // 
+            // btnDashboard
+            // 
+            this.btnDashboard.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(89)))), ((int)(((byte)(182)))));
+            this.btnDashboard.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnDashboard.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.btnDashboard.ForeColor = System.Drawing.Color.White;
+            this.btnDashboard.Location = new System.Drawing.Point(20, 255);
+            this.btnDashboard.Name = "btnDashboard";
+            this.btnDashboard.Size = new System.Drawing.Size(250, 40);
+            this.btnDashboard.TabIndex = 31;
+            this.btnDashboard.Text = "📊 Dashboard && Reports";
+            this.btnDashboard.UseVisualStyleBackColor = false;
+            this.btnDashboard.Click += new System.EventHandler(this.btnDashboard_Click);
+            // 
+            // btnReprintBarcode
+            // 
+            this.btnReprintBarcode.Location = new System.Drawing.Point(150, 210);
+            this.btnReprintBarcode.Name = "btnReprintBarcode";
+            this.btnReprintBarcode.Size = new System.Drawing.Size(120, 35);
+            this.btnReprintBarcode.TabIndex = 32;
+            this.btnReprintBarcode.Text = "Reprint Barcode";
+            this.btnReprintBarcode.UseVisualStyleBackColor = true;
+            this.btnReprintBarcode.Click += new System.EventHandler(this.btnReprintBarcode_Click);
+            // 
+            // gbEntryForm
+            // 
+            this.gbEntryForm.Controls.Add(idLabel);
+            this.gbEntryForm.Controls.Add(this.idTextBox);
+            this.gbEntryForm.Controls.Add(challan_noLabel);
+            this.gbEntryForm.Controls.Add(this.challan_noTextBox);
+            this.gbEntryForm.Controls.Add(dateLabel);
+            this.gbEntryForm.Controls.Add(this.dateDateTimePicker);
+            this.gbEntryForm.Controls.Add(party_nameLabel);
+            this.gbEntryForm.Controls.Add(this.party_nameComboBox);
+            this.gbEntryForm.Controls.Add(itemLabel);
+            this.gbEntryForm.Controls.Add(this.itemComboBox);
+            this.gbEntryForm.Controls.Add(qtyLabel);
+            this.gbEntryForm.Controls.Add(this.qtyTextBox);
+            this.gbEntryForm.Controls.Add(reference_bill_noLabel);
+            this.gbEntryForm.Controls.Add(this.reference_bill_noTextBox);
+            this.gbEntryForm.Controls.Add(bill_dateLabel);
+            this.gbEntryForm.Controls.Add(this.bill_dateDateTimePicker);
+            this.gbEntryForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.gbEntryForm.Location = new System.Drawing.Point(20, 20);
+            this.gbEntryForm.Name = "gbEntryForm";
+            this.gbEntryForm.Size = new System.Drawing.Size(360, 280);
+            this.gbEntryForm.TabIndex = 33;
+            this.gbEntryForm.TabStop = false;
+            this.gbEntryForm.Text = "Parts Inward Entry";
+            // 
+            // gbActions
+            // 
+            this.gbActions.Controls.Add(this.btnAddData);
+            this.gbActions.Controls.Add(this.btnSave);
+            this.gbActions.Controls.Add(this.btnClear);
+            this.gbActions.Controls.Add(this.btnRefresh);
+            this.gbActions.Controls.Add(this.btnManageParties);
+            this.gbActions.Controls.Add(this.btnManageItems);
+            this.gbActions.Controls.Add(this.btnShowTable);
+            this.gbActions.Controls.Add(this.btnPartsUsage);
+            this.gbActions.Controls.Add(this.btnPrinterSettings);
+            this.gbActions.Controls.Add(this.btnReprintBarcode);
+            this.gbActions.Controls.Add(this.btnDashboard);
+            this.gbActions.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.gbActions.Location = new System.Drawing.Point(400, 20);
+            this.gbActions.Name = "gbActions";
+            this.gbActions.Size = new System.Drawing.Size(290, 310);
+            this.gbActions.TabIndex = 34;
+            this.gbActions.TabStop = false;
+            this.gbActions.Text = "Actions";
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.ClientSize = new System.Drawing.Size(710, 350);
+            this.Controls.Add(this.gbEntryForm);
+            this.Controls.Add(this.gbActions);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Machinery Parts Inward Entry";
+            this.Load += new System.EventHandler(this.Form1_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.mainDB)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.machinery_item_inward_unit2BindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.partyMasterBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemMasterBindingSource)).EndInit();
+            this.gbEntryForm.ResumeLayout(false);
+            this.gbEntryForm.PerformLayout();
+            this.gbActions.ResumeLayout(false);
+            this.ResumeLayout(false);
+
+        }
+
+        #endregion
+
+        private MainDB mainDB;
+        private System.Windows.Forms.BindingSource machinery_item_inward_unit2BindingSource;
+        private MainDBTableAdapters.machinery_item_inward_unit2TableAdapter machinery_item_inward_unit2TableAdapter;
+        private MainDBTableAdapters.TableAdapterManager tableAdapterManager;
+        private MainDBTableAdapters.PartyMasterTableAdapter partyMasterTableAdapter;
+        private MainDBTableAdapters.ItemMasterTableAdapter itemMasterTableAdapter;
+        private System.Windows.Forms.BindingSource partyMasterBindingSource;
+        private System.Windows.Forms.BindingSource itemMasterBindingSource;
+        private System.Windows.Forms.TextBox idTextBox;
+        private System.Windows.Forms.TextBox challan_noTextBox;
+        private System.Windows.Forms.DateTimePicker dateDateTimePicker;
+        private System.Windows.Forms.ComboBox party_nameComboBox;
+        private System.Windows.Forms.ComboBox itemComboBox;
+        private System.Windows.Forms.TextBox qtyTextBox;
+        private System.Windows.Forms.TextBox reference_bill_noTextBox;
+        private System.Windows.Forms.DateTimePicker bill_dateDateTimePicker;
+        private System.Windows.Forms.Button btnAddData;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnManageParties;
+        private System.Windows.Forms.Button btnManageItems;
+        private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.Button btnShowTable;
+        private System.Windows.Forms.Button btnPartsUsage;
+        private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnPrinterSettings;
+        private System.Windows.Forms.Button btnDashboard;
+        private System.Windows.Forms.Button btnReprintBarcode;
+        private System.Windows.Forms.GroupBox gbEntryForm;
+        private System.Windows.Forms.GroupBox gbActions;
+    }
+}
+

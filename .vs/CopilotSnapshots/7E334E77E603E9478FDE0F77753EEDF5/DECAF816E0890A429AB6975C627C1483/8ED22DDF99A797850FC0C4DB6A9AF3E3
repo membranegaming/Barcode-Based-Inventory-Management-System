@@ -1,0 +1,79 @@
+﻿# ?? URGENT: Data Persistence Fix Applied
+
+## ? What Was Fixed
+Your application was losing all data after closing because Visual Studio was overwriting the database file on every build. This has now been **FIXED**.
+
+## ?? How to Apply the Fix (3 Simple Steps)
+
+### Step 1: Close Visual Studio
+**IMPORTANT**: Close Visual Studio completely right now!
+
+### Step 2: Clean Up Old Database (Recommended)
+Double-click this file to clean up old database copies:
+```
+CleanupOldDatabase.bat
+```
+
+Or manually delete these files if they exist:
+```
+store parts\bin\Debug\MainDB.mdf
+store parts\bin\Debug\MainDB_log.ldf
+```
+
+### Step 3: Reopen and Test
+1. Open Visual Studio
+2. Open your project
+3. Run the application
+4. Add test data (a machine, a person, or a part)
+5. Close the application
+6. Run it again
+7. **Your data should still be there!** ?
+
+## ?? What Changed
+
+### Configuration Files Updated:
+- ? `App.config` - Connection string now uses absolute path
+- ? `Properties\Settings.settings` - Connection string updated
+- ? `store parts.csproj` - Database no longer copies to bin\Debug
+
+### Database Location:
+All data is now stored in:
+```
+C:\Users\Vardh\Desktop\EUP\store parts\store parts\MainDB.mdf
+```
+
+## ?? Important Notes
+
+### Backup Your Data
+Since all data is in ONE location now, back it up regularly:
+- Copy `MainDB.mdf` and `MainDB_log.ldf` to a safe location
+- Do this especially before making schema changes
+
+### If You Move the Project
+If you move the project folder to a different location, you'll need to update the connection string paths in:
+1. `App.config`
+2. `Properties\Settings.settings`
+
+## ?? Testing Checklist
+
+Test each form to ensure data persists:
+
+- [ ] **MachineMasterForm**: Add a machine ? Close app ? Reopen ? Machine still there?
+- [ ] **PersonMasterForm**: Add a person ? Close app ? Reopen ? Person still there?
+- [ ] **PartyMasterForm**: Add a party ? Close app ? Reopen ? Party still there?
+- [ ] **ItemMasterForm**: Add an item ? Close app ? Reopen ? Item still there?
+- [ ] **Form1** (Parts Inward): Add parts entry ? Close app ? Reopen ? Entry still there?
+- [ ] **PartsUsageForm**: Record usage ? Close app ? Reopen ? Usage still recorded?
+
+## ?? More Information
+For detailed technical information about the fix, see:
+```
+DATA_PERSISTENCE_FIX.md
+```
+
+## ? Build Status
+The project has been built successfully with all changes applied.
+
+---
+**Status**: ? FIXED AND READY TO USE
+**Date**: December 2024

@@ -1,0 +1,1072 @@
+﻿Complete Step-by-Step Guide: Deploying Store Parts with Centralized Database
+============================================================================
+
+Version: 2.0
+Last Updated: 2024
+
+============================================================================
+TABLE OF CONTENTS
+============================================================================
+1. OVERVIEW - Application Features
+2. PHASE 1A - Server Setup (SQL Server Express - Recommended)
+3. PHASE 1B - Server Setup (ALTERNATIVE: MySQL - Easier Setup)
+4. PHASE 1C - SQL Server Express Troubleshooting
+5. PHASE 2 - Build the Application
+6. PHASE 3 - Deploy to Client Computers
+7. PHASE 4 - Verification & Testing
+8. PHASE 5 - Backup & Maintenance
+9. PHASE 6 - Troubleshooting Guide
+10. PHASE 7 - Advanced Configuration
+11. PHASE 8 - User Management
+APPENDICES
+
+============================================================================
+1. OVERVIEW - APPLICATION FEATURES
+============================================================================
+
+Store Parts Management is a comprehensive inventory management system for 
+tracking machinery parts with the following features:
+
+CORE FEATURES:
+- Parts Entry (Inward) - Record new parts received
+- Parts Usage Tracking - Track usage with full history
+- Barcode Printing - Print barcode labels for parts (TSC/TSPL printers)
+- Dashboard & Reports - Analytics and usage reports
+- Multi-user Support - Admin and regular users
+- Database Configuration - Easy setup for local or network databases
+
+SUPPORTED DATABASES:
+- SQL Server Express (Recommended for Windows environments)
+- MySQL Community Server (Easier setup alternative)
+- SQL Server Standard/Enterprise (For production environments)
+
+DATABASE TABLES:
+- machinery_item_inward_unit2 - Main parts data
+- PartsUsageHistory - Complete usage history (NEW)
+- PartyMaster - Suppliers
+- ItemMaster - Item types
+- MachineMaster - Machines
+- PersonMaster - Employees
+
+KEY IMPROVEMENTS IN VERSION 2.0:
+- Parts Usage History table - Tracks every usage event
+- Fixed bug where only last usage was stored
+- Dashboard pulls accurate data from history
+- Barcode prints ID text under barcode
+- Database configuration form for easy setup
+
+============================================================================
+PHASE 1A: SERVER SETUP - SQL SERVER EXPRESS (RECOMMENDED)
+============================================================================
+
+**CHOOSE THIS IF:**
+- You're in a Windows-only environment
+- You want best integration with .NET applications
+- You have Windows Server or Windows 10/11 Pro
+
+---
+
+Step 1A.1: Download SQL Server 2019 Express (LATEST VERSION)
+------------------------------------------------------------
+1. Go to: https://www.microsoft.com/en-us/sql-server/sql-server-downloads
+
+2. Click "Download now" under "Express" edition
+
+3. Save the installer (SQL2019-SSEI-Expr.exe)
+
+---
+
+Step 1A.2: Install SQL Server Express (SIMPLIFIED METHOD)
+---------------------------------------------------------
+⚠️ IMPORTANT: Choose "Custom" installation for better control!
+
+1. Run the downloaded installer
+
+2. Choose Installation Type:
+   ✅ SELECT: "Custom" (NOT Basic!)
+   - This gives you more control
+   - Installation Path: Accept default or choose your own
+   - Click "Install"
+
+3. Wait for SQL Server Installation Center to open
+
+4. In SQL Server Installation Center:
+   - Click "Installation" (left menu)
+   - Click "New SQL Server stand-alone installation..."
+
+5. Product Key Screen:
+   - Select "Specify a free edition: Express"
+   - Click "Next"
+
+6. License Terms:
+   - Accept terms
+   - Click "Next"
+
+7. Microsoft Update:
+   - Recommended: Check "Use Microsoft Update"
+   - Click "Next"
+
+8. **Feature Selection (IMPORTANT!):**
+   ✅ Check these boxes:
+   - [X] Database Engine Services
+   - [X] SQL Server Replication
+   - [X] Client Tools Connectivity
+   - [X] Management Tools - Basic (includes SSMS)
+   
+   Click "Next"
+
+9. **Instance Configuration (CRITICAL!):**
+   ✅ Select: "Default instance"
+   OR
+   ✅ Named instance: SQLEXPRESS
+   
+   ⚠️ REMEMBER THIS NAME - You'll use it to connect!
+   
+   Click "Next"
+
+10. **Server Configuration:**
+    - SQL Server Database Engine: Set to "Automatic" startup
+    - SQL Server Browser: Set to "Automatic" startup
+    
+    ⚠️ IMPORTANT: Set "Account Name" to:
+    - Select "NT AUTHORITY\NETWORK SERVICE" (for better network access)
+    OR
+    - Keep default "NT Service\MSSQLSERVER"
+    
+    Click "Next"
+
+11. **Database Engine Configuration (VERY IMPORTANT!):**
+    
+    Authentication Mode:
+    ✅ SELECT: "Mixed Mode" (SQL Server and Windows authentication)
+    
+    - Enter a strong password for 'sa' account
+    - WRITE DOWN THIS PASSWORD!
+    - Password example: Admin@123456
+    
+    Specify SQL Server administrators:
+    - Click "Add Current User" button
+    - This adds your Windows account as admin
+    
+    Data Directories (Optional):
+    - Accept defaults or customize if needed
+    
+    Click "Next"
+
+12. Ready to Install:
+    - Review settings
+    - Click "Install"
+    - Wait 10-20 minutes for installation
+
+13. Installation Complete:
+    - Note down the instance name (e.g., COMPUTERNAME\SQLEXPRESS)
+    - Click "Close"
+
+---
+
+Step 1A.3: Verify SQL Server Service is Running
+-----------------------------------------------
+⚠️ THIS IS WHERE MOST PROBLEMS OCCUR!
+
+METHOD 1: Using Services Manager
+1. Press Windows + R
+2. Type: services.msc
+3. Press Enter
+4. Look for these services:
+
+   Service Name                          | Status     | Startup Type
+   ------------------------------------- | ---------- | ------------
+   SQL Server (SQLEXPRESS)               | Running    | Automatic
+   SQL Server Browser                    | Running    | Automatic
+   SQL Server Agent (SQLEXPRESS)         | Optional   | Manual/Disabled
+
+5. If "SQL Server (SQLEXPRESS)" is NOT running:
+   - Right-click → Properties
+   - Set "Startup type" to "Automatic"
+   - Click "Apply"
+   - Click "Start"
+   - Wait 30 seconds
+   - Check if "Status" shows "Running"
+
+6. If it STILL won't start, see Phase 1C for troubleshooting!
+
+METHOD 2: Using Command Prompt (Administrative)
+1. Press Windows + X
+2. Select "Command Prompt (Admin)" or "PowerShell (Admin)"
+3. Run these commands:
+
+   net start MSSQL$SQLEXPRESS
+   net start SQLBrowser
+
+4. You should see "The service was started successfully"
+
+---
+
+Step 1A.4: Install SQL Server Management Studio (SSMS)
+------------------------------------------------------
+1. Download SSMS from:
+   https://aka.ms/ssmsfullsetup
+
+2. Run the installer (SSMS-Setup-ENU.exe)
+
+3. Follow the wizard (simple installation)
+
+4. Click "Install" and wait 10-15 minutes
+
+5. Click "Close" when done
+
+---
+
+Step 1A.5: Test Database Connection Locally
+-------------------------------------------
+1. Open SQL Server Management Studio (SSMS)
+
+2. In Connect to Server dialog:
+   - Server type: Database Engine
+   - Server name: .\SQLEXPRESS
+     (or: localhost\SQLEXPRESS)
+   - Authentication: Windows Authentication
+   - Click "Connect"
+
+3. If connection FAILS:
+   - Try: (local)\SQLEXPRESS
+   - Try: YOUR-COMPUTER-NAME\SQLEXPRESS
+   - Try: 127.0.0.1\SQLEXPRESS
+   - See Phase 1C for more troubleshooting!
+
+4. If connection succeeds:
+   ✅ SQL Server is working locally!
+   - You'll see "Object Explorer" on the left
+   - Expand "Databases" to see system databases
+
+---
+
+Step 1A.6: Enable Network Access (For Multi-PC Setup)
+-----------------------------------------------------
+⚠️ SKIP THIS if using single PC only!
+
+**A. Enable TCP/IP Protocol:**
+
+1. Open SQL Server Configuration Manager:
+   - Press Windows + R
+   - Type: SQLServerManager15.msc
+     (Or try SQLServerManager14.msc, SQLServerManager13.msc)
+   - Press Enter
+   
+   ⚠️ If file not found, search for "SQL Server Configuration Manager" in Start Menu
+
+2. Expand "SQL Server Network Configuration"
+
+3. Click "Protocols for SQLEXPRESS"
+
+4. In right pane, find "TCP/IP":
+   - Current Status: Disabled (red down arrow)
+   - Right-click → Enable
+   - Status should change to Enabled (green up arrow)
+
+5. Double-click "TCP/IP" to open Properties
+
+6. Go to "IP Addresses" tab
+
+7. Scroll to bottom, find "IPAll" section:
+   - TCP Dynamic Ports: DELETE any value (leave EMPTY)
+   - TCP Port: Enter 1433
+   - Click "OK"
+
+8. Click "OK" to confirmation dialogs
+
+**B. Enable SQL Server Browser:**
+
+1. Still in SQL Server Configuration Manager
+2. Click "SQL Server Services" in left panel
+3. Find "SQL Server Browser":
+   - Right-click → Properties
+   - Service tab:
+     - Start Mode: Change to "Automatic"
+   - Click "OK"
+   - Right-click → Start
+
+**C. Restart SQL Server:**
+
+1. Find "SQL Server (SQLEXPRESS)"
+2. Right-click → Restart
+3. Wait for service to restart (30 seconds)
+
+---
+
+Step 1A.7: Configure Windows Firewall
+-------------------------------------
+⚠️ Required for multi-PC setup!
+
+1. Press Windows + R, type: wf.msc, press Enter
+
+2. Click "Inbound Rules" (left panel)
+
+3. Click "New Rule..." (right panel)
+
+4. Create Rule for Port 1433:
+   - Rule Type: Port → Next
+   - Protocol: TCP → Specific local ports: 1433 → Next
+   - Action: Allow the connection → Next
+   - Profile: Check ALL (Domain, Private, Public) → Next
+   - Name: SQL Server Port 1433 → Finish
+
+5. Create Rule for SQL Browser (Port 1434):
+   - Click "New Rule..." again
+   - Rule Type: Port → Next
+   - Protocol: UDP → Specific local ports: 1434 → Next
+   - Action: Allow the connection → Next
+   - Profile: Check ALL → Next
+   - Name: SQL Server Browser 1434 → Finish
+
+6. Alternative: Create program rule:
+   - New Rule → Program → Next
+   - This program path: C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\Binn\sqlservr.exe
+   - Allow the connection → Next
+   - Check all profiles → Next
+   - Name: SQL Server Express → Finish
+
+---
+
+Step 1A.8: Get Server Information
+---------------------------------
+1. Get Computer Name:
+   - Press Windows + Pause/Break
+   OR
+   - Right-click "This PC" → Properties
+   - Note: "Device name" (e.g., OFFICE-SERVER)
+
+2. Get IP Address:
+   - Press Windows + R, type: cmd, Enter
+   - Type: ipconfig
+   - Note "IPv4 Address" (e.g., 192.168.1.100)
+
+3. Your connection strings will be:
+   - By Computer Name: OFFICE-SERVER\SQLEXPRESS
+   - By IP Address: 192.168.1.100\SQLEXPRESS
+   - Local: .\SQLEXPRESS or localhost\SQLEXPRESS
+
+---
+
+Step 1A.9: Create the Database
+------------------------------
+1. Open SSMS
+
+2. Connect to: .\SQLEXPRESS (Windows Authentication)
+
+3. Right-click "Databases" → New Database
+
+4. Database name: MainDB
+
+5. Click "OK"
+
+6. Run the Setup Script:
+   - Click "New Query"
+   - Copy and paste the script from APPENDIX F
+   - Click "Execute" (or press F5)
+   - You should see "Database setup complete!"
+
+---
+
+Step 1A.10: Test Network Access from Another PC
+-----------------------------------------------
+1. On CLIENT computer (not server):
+
+2. Press Windows + R, type: cmd, Enter
+
+3. Test ping:
+   ping 192.168.1.100
+   (Use your server IP)
+   
+   ✅ Should see: Reply from 192.168.1.100
+   ❌ If "Request timed out": Check network/firewall
+
+4. Test SQL port:
+   telnet 192.168.1.100 1433
+   
+   ✅ Success: Screen goes blank (port is open)
+   ❌ Failure: "Could not open connection"
+   
+   If telnet command not found:
+   - Enable it: Control Panel → Programs → Turn Windows features on/off
+   - Check "Telnet Client"
+
+5. Test SQL connection using SSMS (if installed on client):
+   - Open SSMS on client PC
+   - Server name: 192.168.1.100\SQLEXPRESS
+   - Authentication: SQL Server Authentication
+   - Login: sa
+   - Password: (the password you set during installation)
+   - Click "Connect"
+   
+   ✅ If connects: Network setup is complete!
+   ❌ If fails: See troubleshooting Phase 1C
+
+---
+
+============================================================================
+PHASE 1B: ALTERNATIVE SERVER SETUP - MYSQL (EASIER!)
+============================================================================
+
+**CHOOSE THIS IF:**
+- SQL Server Express service won't start after troubleshooting
+- You want simpler, more reliable service startup
+- You're comfortable with MySQL (works great with .NET)
+
+⚠️ NOTE: You'll need to modify your application's connection string
+
+---
+
+Step 1B.1: Download MySQL Community Server
+------------------------------------------
+1. Go to: https://dev.mysql.com/downloads/mysql/
+
+2. Select:
+   - Operating System: Microsoft Windows
+   - OS Version: Windows (x86, 64-bit)
+
+3. Download: "MySQL Installer for Windows" (mysql-installer-community-8.x.x.msi)
+   - Choose "mysql-installer-web-community" (smaller download)
+
+4. Click "No thanks, just start my download"
+
+---
+
+Step 1B.2: Install MySQL Server
+-------------------------------
+1. Run the MySQL Installer
+
+2. Choose Setup Type:
+   ✅ SELECT: "Server only"
+   (This installs just the database server)
+   
+   OR "Developer Default" (includes tools)
+   
+   Click "Next"
+
+3. Check Requirements:
+   - Installer will check for required components
+   - Install any missing requirements
+   - Click "Next"
+
+4. Installation:
+   - Click "Execute" to install
+   - Wait for completion
+   - Click "Next"
+
+5. Product Configuration:
+   - Click "Next"
+
+6. **Type and Networking (IMPORTANT!):**
+   - Config Type: "Development Computer" (or "Server Computer")
+   - Port: 3306 (default - leave as is)
+   - ✅ CHECK: "Open Windows Firewall ports for network access"
+   - Click "Next"
+
+7. **Authentication Method:**
+   ✅ SELECT: "Use Strong Password Encryption for Authentication"
+   - Click "Next"
+
+8. **Accounts and Roles:**
+   - Root Password: Enter a strong password
+   - WRITE DOWN THIS PASSWORD! (e.g., Root@123456)
+   - Repeat Password
+   
+   Optional: Add MySQL User Account:
+   - Click "Add User"
+   - Username: storeparts
+   - Password: StoreP@rts123
+   - Role: DB Admin
+   - Click "OK"
+   
+   Click "Next"
+
+9. **Windows Service:**
+   - ✅ CHECK: "Configure MySQL Server as a Windows Service"
+   - Windows Service Name: MySQL80 (default)
+   - ✅ CHECK: "Start the MySQL Server at System Startup"
+   - Click "Next"
+
+10. Apply Configuration:
+    - Click "Execute"
+    - Wait for all steps to complete (green checkmarks)
+    - Click "Finish"
+
+11. Product Configuration Complete:
+    - Click "Next" → "Finish"
+
+---
+
+Step 1B.3: Install MySQL Workbench (Optional but Recommended)
+------------------------------------------------------------
+1. Download from: https://dev.mysql.com/downloads/workbench/
+
+2. Run installer
+
+3. Follow the wizard (simple installation)
+
+4. Launch MySQL Workbench
+
+5. Click on "Local instance MySQL80"
+
+6. Enter root password
+
+7. You should see the MySQL Workbench interface!
+
+---
+
+Step 1B.4: Create Database and Tables
+-------------------------------------
+**METHOD 1: Using MySQL Workbench**
+
+1. Open MySQL Workbench
+
+2. Connect to "Local instance MySQL80"
+
+3. Enter root password
+
+4. Click on "Schemas" tab (left panel)
+
+5. Right-click in schemas area → "Create Schema"
+
+6. Schema name: MainDB
+
+7. Click "Apply" → "Apply" → "Finish"
+
+8. Click on "Query" tab
+
+9. Copy and paste the MySQL version of the setup script (see APPENDIX G)
+
+10. Click the lightning bolt icon to execute
+
+11. You should see "Database setup complete!"
+
+**METHOD 2: Using Command Line**
+
+1. Press Windows + R, type: cmd, Enter
+
+2. Navigate to MySQL bin folder:
+   cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+
+3. Login to MySQL:
+   mysql -u root -p
+
+4. Enter root password
+
+5. Create database:
+   CREATE DATABASE MainDB;
+   USE MainDB;
+
+6. Copy and paste table creation commands
+
+7. Type: exit
+
+---
+
+Step 1B.5: Verify MySQL Service is Running
+------------------------------------------
+1. Press Windows + R, type: services.msc, Enter
+
+2. Find "MySQL80" service
+
+3. Status should be "Running", Startup Type "Automatic"
+
+4. If not running:
+   - Right-click → Start
+   - If fails, check Event Viewer for errors
+
+✅ MySQL is MUCH more reliable than SQL Express in starting!
+
+---
+
+Step 1B.6: Get Connection Information
+-------------------------------------
+Your MySQL connection string format:
+
+Server=localhost;Database=MainDB;Uid=root;Pwd=YourPassword;
+
+For network access:
+Server=192.168.1.100;Database=MainDB;Uid=storeparts;Pwd=StoreP@rts123;
+
+---
+
+Step 1B.7: Test Connection from Client PC
+-----------------------------------------
+1. On client PC, download MySQL Workbench (or use telnet)
+
+2. Test with telnet:
+   telnet 192.168.1.100 3306
+   
+   ✅ Should connect (weird characters = success!)
+
+3. Test with MySQL Workbench:
+   - New Connection
+   - Connection Name: Store Parts Server
+   - Hostname: 192.168.1.100
+   - Port: 3306
+   - Username: storeparts (or root)
+   - Click "Test Connection"
+   - Enter password
+   - Should see "Successfully connected"
+
+---
+
+============================================================================
+PHASE 1C: SQL SERVER EXPRESS TROUBLESHOOTING
+============================================================================
+
+If SQL Server Express service won't start, try these solutions in order:
+
+---
+
+Problem 1C.1: Service Won't Start - Error 1053
+----------------------------------------------
+**Symptoms:**
+- "The service did not respond to the start or control request in a timely manner"
+- Service starts then immediately stops
+
+**Solutions:**
+
+A. Check SQL Server Error Logs:
+   1. Go to: C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\Log
+   2. Open the latest ERRORLOG file (no extension) with Notepad
+   3. Look for errors at the bottom
+   4. Common issues:
+      - Port already in use
+      - Insufficient permissions
+      - Corrupted files
+
+B. Reset TCP/IP Configuration:
+   1. Open SQL Server Configuration Manager
+   2. Protocols for SQLEXPRESS → TCP/IP → Properties
+   3. IP Addresses tab
+   4. For IPAll: Set TCP Port to 1433, clear Dynamic Ports
+   5. For IP1, IP2, etc.: Disable all except IPAll
+   6. Click OK → Restart service
+
+C. Run as Local System Account:
+   1. Open services.msc
+   2. Right-click SQL Server (SQLEXPRESS) → Properties
+   3. Log On tab
+   4. Select "Local System account"
+   5. Click "Apply" → Try to start service
+
+D. Rebuild Master Database (Advanced):
+   ⚠️ This will reset SQL Server - use as last resort!
+   
+   1. Open Command Prompt as Administrator
+   2. Navigate to: cd "C:\Program Files\Microsoft SQL Server\150\Setup Bootstrap\SQLServer2019"
+   3. Run:
+      Setup.exe /QUIET /ACTION=REBUILDDATABASE /INSTANCENAME=SQLEXPRESS /SQLSYSADMINACCOUNTS="BUILTIN\Administrators"
+   4. Wait for completion
+   5. Try starting service
+
+---
+
+Problem 1C.2: Port 1433 Already in Use
+--------------------------------------
+**Symptoms:**
+- Error log shows "port is already in use"
+- Service won't start
+
+**Solutions:**
+
+A. Find what's using port 1433:
+   1. Open Command Prompt as Administrator
+   2. Run: netstat -ano | findstr :1433
+   3. Note the PID (last column)
+   4. Run: tasklist | findstr PID
+   5. See what application is using it
+
+B. Change SQL Server Port:
+   1. SQL Server Configuration Manager
+   2. TCP/IP Properties → IP Addresses
+   3. IPAll: Change TCP Port to 1434 or 1435
+   4. Remember new port for connection strings!
+   5. Restart SQL Server service
+
+C. Stop conflicting service:
+   - If another SQL instance is using 1433
+   - Stop that service or change its port
+
+---
+
+Problem 1C.3: Windows Update Broke SQL Server
+---------------------------------------------
+**Symptoms:**
+- Was working before, stopped after Windows Update
+- Event Viewer shows .NET errors
+
+**Solutions:**
+
+A. Repair SQL Server Installation:
+   1. Go to Control Panel → Programs
+   2. Find Microsoft SQL Server 2019
+   3. Right-click → Change
+   4. Select "Repair"
+   5. Follow wizard
+
+B. Reinstall .NET Framework:
+   1. Download .NET Framework 4.8
+   2. Install it
+   3. Restart computer
+   4. Try starting SQL Server
+
+---
+
+Problem 1C.4: "Login failed for user 'NT AUTHORITY\SYSTEM'"
+----------------------------------------------------------
+**Symptoms:**
+- Service starts but can't connect
+- Login errors
+
+**Solutions:**
+
+A. Add your Windows account to SQL Server:
+   1. Open SQL Server Configuration Manager
+   2. Right-click SQL Server (SQLEXPRESS) → Properties
+   3. Log On tab → This account
+   4. Enter your Windows username and password
+   5. Apply → Restart service
+
+B. Enable 'sa' account:
+   1. Connect with Windows Authentication in SSMS
+   2. Security → Logins → Right-click 'sa' → Properties
+   3. Status page: Login: Enabled
+   4. General page: Set strong password
+   5. OK
+
+---
+
+Problem 1C.5: Complete SQL Server Removal and Reinstall
+-------------------------------------------------------
+**When to use:** After trying everything else!
+
+**Steps:**
+
+1. **Uninstall SQL Server:**
+   - Control Panel → Programs
+   - Uninstall ALL SQL Server 2019 components
+   - Reboot
+
+2. **Delete leftover files:**
+   - Delete folder: C:\Program Files\Microsoft SQL Server
+   - Delete folder: C:\Program Files (x86)\Microsoft SQL Server
+   - Delete folder: C:\ProgramData\Microsoft\Microsoft SQL Server
+
+3. **Clean Registry (Advanced):**
+   ⚠️ BACKUP REGISTRY FIRST!
+   - Run regedit
+   - Delete: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server
+   - Delete: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSSQLServer
+
+4. **Reboot**
+
+5. **Reinstall SQL Server** following Phase 1A from the beginning
+
+---
+
+============================================================================
+PHASE 2: BUILD THE APPLICATION
+============================================================================
+
+Step 2.1: Build Release Version in Visual Studio
+------------------------------------------------
+1. Open Visual Studio
+2. Open store parts.sln
+3. Set Build Configuration to "Release"
+4. Build → Build Solution (Ctrl + Shift + B)
+5. Verify output in bin\Release\
+
+---
+
+Step 2.2: Create Installer with Inno Setup
+------------------------------------------
+1. Download and Install Inno Setup:
+   - Go to: https://jrsoftware.org/isdl.php
+   - Download the latest version
+   - Run installer
+
+2. Use the existing installer script:
+   - Open StorePartsSetup.iss in the project folder
+   - Or create a new one based on the template in INSTALLER_GUIDE.md
+
+3. Compile the Installer:
+   - Open the .iss file in Inno Setup
+   - Press Ctrl + F9 or click Build → Compile
+   - Wait for compilation to complete
+   - Installer will be created in: Installer_Output\
+
+---
+
+============================================================================
+PHASE 3: DEPLOY TO CLIENT COMPUTERS
+============================================================================
+
+Step 3.1: Prerequisites
+-----------------------
+- Windows 7 SP1 or later
+- .NET Framework 4.7.2 or later
+- Network connectivity to database server
+
+Step 3.2: Install Application
+-----------------------------
+1. Run StorePartsSetup.exe installer
+2. Follow installation wizard
+3. Complete installation
+
+Step 3.3: Configure Database Connection
+---------------------------------------
+**For SQL Server:**
+1. Launch application
+2. Click "Configure Database"
+3. Enter:
+   - Server: 192.168.1.100\SQLEXPRESS
+   - Database: MainDB
+   - Authentication: Windows Authentication or SQL Server
+4. Test Connection
+5. Save and Connect
+
+**For MySQL:**
+1. Launch application
+2. Click "Configure Database"
+3. Enter:
+   - Server: 192.168.1.100
+   - Port: 3306
+   - Database: MainDB
+   - Username: storeparts
+   - Password: StoreP@rts123
+4. Test Connection
+5. Save and Connect
+
+---
+
+============================================================================
+APPENDIX F: SQL SERVER DATABASE SETUP SCRIPT
+============================================================================
+
+USE MainDB;
+GO
+
+-- ============================================
+-- Store Parts Database Creation Script v2.0
+-- ============================================
+
+-- Table: machinery_item_inward_unit2 (Main Data)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'machinery_item_inward_unit2')
+BEGIN
+    CREATE TABLE machinery_item_inward_unit2 (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        challan_no NVARCHAR(50) NOT NULL,
+        date DATE NOT NULL DEFAULT GETDATE(),
+        party_name NVARCHAR(100) NOT NULL,
+        item NVARCHAR(100) NOT NULL,
+        qty INT NOT NULL DEFAULT 0,
+        unit NVARCHAR(20) NULL DEFAULT 'pcs',
+        used_qty INT NOT NULL DEFAULT 0,
+        reference_bill_no NVARCHAR(50) NULL,
+        bill_date DATE NULL
+    );
+    PRINT 'Table machinery_item_inward_unit2 created.';
+END
+GO
+
+-- Add unit column if not exists
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'unit' AND Object_ID = Object_ID(N'machinery_item_inward_unit2'))
+BEGIN
+    ALTER TABLE machinery_item_inward_unit2 ADD unit NVARCHAR(20) NULL DEFAULT 'pcs';
+    PRINT 'Column unit added.';
+END
+GO
+
+-- Table: PartsUsageHistory (NEW - Tracks all usage events)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PartsUsageHistory')
+BEGIN
+    CREATE TABLE PartsUsageHistory (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        inward_item_id INT NOT NULL,
+        quantity_used INT NOT NULL DEFAULT 1,
+        used_in_machine NVARCHAR(100) NOT NULL,
+        taken_by NVARCHAR(100) NOT NULL,
+        usage_date DATETIME NOT NULL DEFAULT GETDATE(),
+        remarks NVARCHAR(500) NULL,
+        created_date DATETIME NOT NULL DEFAULT GETDATE()
+    );
+    CREATE INDEX IX_PartsUsageHistory_InwardItemId ON PartsUsageHistory(inward_item_id);
+    CREATE INDEX IX_PartsUsageHistory_UsageDate ON PartsUsageHistory(usage_date);
+    CREATE INDEX IX_PartsUsageHistory_Machine ON PartsUsageHistory(used_in_machine);
+    PRINT 'Table PartsUsageHistory created.';
+END
+GO
+
+-- Table: PartyMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PartyMaster')
+BEGIN
+    CREATE TABLE PartyMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        party_name NVARCHAR(100) NOT NULL,
+        address NVARCHAR(255) NULL,
+        contact NVARCHAR(50) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    INSERT INTO PartyMaster (party_name, is_active) VALUES ('Default Party', 1);
+    PRINT 'Table PartyMaster created.';
+END
+GO
+
+-- Table: ItemMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ItemMaster')
+BEGIN
+    CREATE TABLE ItemMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        item_name NVARCHAR(100) NOT NULL,
+        description NVARCHAR(255) NULL,
+        unit NVARCHAR(20) NULL DEFAULT 'PCS',
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    INSERT INTO ItemMaster (item_name, is_active) VALUES ('Default Item', 1);
+    PRINT 'Table ItemMaster created.';
+END
+GO
+
+-- Table: MachineMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MachineMaster')
+BEGIN
+    CREATE TABLE MachineMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        machine_name NVARCHAR(100) NOT NULL,
+        location NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table MachineMaster created.';
+END
+GO
+
+-- Table: PersonMaster
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PersonMaster')
+BEGIN
+    CREATE TABLE PersonMaster (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        person_name NVARCHAR(100) NOT NULL,
+        department NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_date DATETIME DEFAULT GETDATE()
+    );
+    PRINT 'Table PersonMaster created.';
+END
+GO
+
+-- View: Parts with Usage Summary (for backward compatibility)
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'vw_PartsWithUsageSummary')
+    DROP VIEW vw_PartsWithUsageSummary;
+GO
+CREATE VIEW vw_PartsWithUsageSummary AS
+SELECT 
+    p.id, p.challan_no, p.date, p.party_name, p.item, p.qty, p.unit,
+    ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as used_qty,
+    p.qty - ISNULL((SELECT SUM(quantity_used) FROM PartsUsageHistory WHERE inward_item_id = p.id), 0) as remaining_qty,
+    p.reference_bill_no, p.bill_date,
+    (SELECT TOP 1 used_in_machine FROM PartsUsageHistory WHERE inward_item_id = p.id ORDER BY usage_date DESC) as last_used_in_machine,
+    (SELECT TOP 1 taken_by FROM PartsUsageHistory WHERE inward_item_id = p.id ORDER BY usage_date DESC) as last_taken_by,
+    (SELECT TOP 1 usage_date FROM PartsUsageHistory WHERE inward_item_id = p.id ORDER BY usage_date DESC) as last_usage_date,
+    (SELECT COUNT(*) FROM PartsUsageHistory WHERE inward_item_id = p.id) as usage_event_count
+FROM machinery_item_inward_unit2 p;
+GO
+
+PRINT '';
+PRINT 'Database setup complete!';
+GO
+
+---
+
+============================================================================
+APPENDIX G: MYSQL DATABASE SETUP SCRIPT
+============================================================================
+
+USE MainDB;
+
+-- Table: machinery_item_inward_unit2
+CREATE TABLE IF NOT EXISTS machinery_item_inward_unit2 (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    challan_no VARCHAR(50) NOT NULL,
+    date DATE NOT NULL DEFAULT (CURRENT_DATE),
+    party_name VARCHAR(100) NOT NULL,
+    item VARCHAR(100) NOT NULL,
+    qty INT NOT NULL DEFAULT 0,
+    unit VARCHAR(20) NULL DEFAULT 'pcs',
+    used_qty INT NOT NULL DEFAULT 0,
+    reference_bill_no VARCHAR(50) NULL,
+    bill_date DATE NULL
+);
+
+-- Table: PartsUsageHistory
+CREATE TABLE IF NOT EXISTS PartsUsageHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inward_item_id INT NOT NULL,
+    quantity_used INT NOT NULL DEFAULT 1,
+    used_in_machine VARCHAR(100) NOT NULL,
+    taken_by VARCHAR(100) NOT NULL,
+    usage_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    remarks VARCHAR(500) NULL,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX IX_PartsUsageHistory_InwardItemId (inward_item_id),
+    INDEX IX_PartsUsageHistory_UsageDate (usage_date),
+    INDEX IX_PartsUsageHistory_Machine (used_in_machine)
+);
+
+-- Table: PartyMaster
+CREATE TABLE IF NOT EXISTS PartyMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    party_name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NULL,
+    contact VARCHAR(50) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO PartyMaster (party_name, is_active) 
+VALUES ('Default Party', TRUE)
+ON DUPLICATE KEY UPDATE party_name=party_name;
+
+-- Table: ItemMaster
+CREATE TABLE IF NOT EXISTS ItemMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    item_name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NULL,
+    unit VARCHAR(20) NULL DEFAULT 'PCS',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO ItemMaster (item_name, is_active) 
+VALUES ('Default Item', TRUE)
+ON DUPLICATE KEY UPDATE item_name=item_name;
+
+-- Table: MachineMaster
+CREATE TABLE IF NOT EXISTS MachineMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    machine_name VARCHAR(100) NOT NULL,
+    location VARCHAR(100) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table: PersonMaster
+CREATE TABLE IF NOT EXISTS PersonMaster (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    person_name VARCHAR(100) NOT NULL,
+    department VARCHAR(100) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+SELECT 'Database setup complete!' AS Message;
+
+---
+
+============================================================================
+END OF DEPLOYMENT GUIDE
+============================================================================
